@@ -113,7 +113,7 @@
 
     async function carregar() {
         try {
-            const res = await fetch('http://localhost:3000/receipts');
+            const res = await fetch('https://onde-compensa-api.onrender.com/receipts');
             todasAsCompras = await res.json();
             
             renderizarTabela();
@@ -211,7 +211,7 @@
 
     async function buscar(texto) {
         if(texto.length < 3) { document.getElementById('area-busca').style.display='none'; return; }
-        const res = await fetch(`http://localhost:3000/search?q=${texto}`);
+        const res = await fetch(`https://onde-compensa-api.onrender.com/search?q=${texto}`);
         const prods = await res.json();
         const area = document.getElementById('area-busca');
         area.innerHTML = ''; area.style.display = 'block';
@@ -235,8 +235,8 @@
     }
 
     function fecharModal(e) { if(!e || e.target.className.includes('modal') || e.target.tagName==='BUTTON') document.getElementById('modalDetalhes').style.display='none'; }
-    async function deletarNota(id) { if(confirm('Apagar?')) { await fetch(`http://localhost:3000/receipts/${id}`, {method:'DELETE'}); carregar(); } }
-    async function fazerFaxina() { if(confirm('Limpar erros?')) { await fetch('http://localhost:3000/cleanup', {method:'DELETE'}); carregar(); } }
+    async function deletarNota(id) { if(confirm('Apagar?')) { await fetch(`https://onde-compensa-api.onrender.com/receipts/${id}`, {method:'DELETE'}); carregar(); } }
+    async function fazerFaxina() { if(confirm('Limpar erros?')) { await fetch('https://onde-compensa-api.onrender.com/cleanup', {method:'DELETE'}); carregar(); } }
 
     carregar();
 </script>
