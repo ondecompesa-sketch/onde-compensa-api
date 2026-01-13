@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model products {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  barcode         String?         @unique
+  normalized_name String
+  category        String?
+  created_at      DateTime?       @default(now()) @db.Timestamptz(6)
+  receipt_items   receipt_items[]
+}
+
+model receipt_items {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  receipt_id  String?   @db.Uuid
+  product_id  String?   @db.Uuid
+  raw_name    String?
+  quantity    Decimal?  @db.Decimal(10, 3)
+  unit_price  Decimal?  @db.Decimal(10, 2)
+  total_price Decimal?  @db.Decimal(10, 2)
+  unit_measure String?
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+  products    products? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  receipts    receipts? @relation(fields: [receipt_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model receipts {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id       String?         @db.Uuid
+  store_id      String?         @db.Uuid
+  status        String?         @default("PENDING")
+  total_amount  Decimal?        @db.Decimal(10, 2)
+  issue_date    DateTime?       @db.Timestamptz(6)
+  image_url     String?
+  raw_response  Json?
+  created_at    DateTime?       @default(now()) @db.Timestamptz(6)
+  receipt_items receipt_items[]
+  stores        stores?         @relation(fields: [store_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users         users?          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model stores {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cnpj         String?    @unique @db.VarChar(20)
+  name         String
+  address      String?
+  raw_ocr_name String?
+  created_at   DateTime?  @default(now()) @db.Timestamptz(6)
+  receipts     receipts[]
+}
+
+model users {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String     @unique
+  auth_id      String?    @unique
+  name         String?
+  city         String?
+  neighborhood String?
+  created_at   DateTime?  @default(now()) @db.Timestamptz(6)
+  receipts     receipts[]
+}

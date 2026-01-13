@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Teste de Upload - OndeCompensa</title>
+    <style>
+        body { font-family: sans-serif; padding: 50px; text-align: center; }
+        .box { border: 2px dashed #ccc; padding: 40px; border-radius: 10px; }
+        button { background-color: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer; font-size: 16px; margin-top: 10px;}
+        #resultado { margin-top: 20px; color: blue; font-weight: bold; }
+        img { max-width: 300px; margin-top: 20px; border: 5px solid #eee; }
+    </style>
+</head>
+<body>
+
+    <h1>Teste de Upload 🧾</h1>
+    
+    <div class="box">
+        <input type="file" id="arquivoInput" />
+        <br><br>
+        <button onclick="enviarFoto()">Enviar Nota Fiscal</button>
+    </div>
+
+    <div id="resultado"></div>
+    <div id="imagemPreview"></div>
+
+    <script>
+        async function enviarFoto() {
+            const input = document.getElementById('arquivoInput');
+            const resultado = document.getElementById('resultado');
+            const preview = document.getElementById('imagemPreview');
+
+            if (input.files.length === 0) {
+                alert("Selecione um arquivo primeiro!");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', input.files[0]); // 'file' deve bater com o backend
+
+            resultado.innerText = "Enviando...";
+            preview.innerHTML = "";
+
+            try {
+                const response = await fetch('http://localhost:3000/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultado.innerText = "Sucesso! URL gerada: " + data.url.publicUrl;
+                    // Mostra a imagem que voltou do Supabase
+                    preview.innerHTML = `<img src="${data.url.publicUrl}" alt="Nota enviada">`;
+                } else {
+                    resultado.innerText = "Erro: " + JSON.stringify(data);
+                }
+
+            } catch (error) {
+                console.error(error);
+                resultado.innerText = "Erro na conexão com o servidor.";
+            }
+        }
+    </script>
+</body>
+</html>
