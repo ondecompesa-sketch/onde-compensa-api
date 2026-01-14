@@ -12,15 +12,14 @@ export class AppService {
   ) {}
 
   async processReceipt(file: Express.Multer.File, userId: string) {
-    // 1. Upload
-    // CORREÇÃO AQUI: Usamos { publicUrl } para extrair apenas o texto da URL
+    // 1. Upload (Pega o Link para salvar no banco)
     const { publicUrl } = await this.supabaseService.uploadFile(file);
 
-    // 2. Gemini
-    // Agora passamos a string limpa para o Gemini
-    const receiptData = await this.geminiService.extractReceiptData(publicUrl);
+    // 2. Gemini (CORREÇÃO AQUI)
+    // O Gemini quer o arquivo cru (buffer) e o tipo dele, não o link.
+    const receiptData = await this.geminiService.extractReceiptData(file.buffer, file.mimetype);
 
-    // 3. Salvar Store (SINGULAR - Já corrigido antes)
+    // 3. Salvar Store (SINGULAR)
     const store = await this.prisma.store.upsert({
       where: { cnpj: receiptData.market.cnpj || 'UNKNOWN' },
       update: {},
@@ -31,10 +30,10 @@ export class AppService {
       },
     });
 
-    // 4. Salvar Recibo (SINGULAR - Já corrigido antes)
+    // 4. Salvar Recibo (SINGULAR)
     const receipt = await this.prisma.receipt.create({
       data: {
-        image_url: publicUrl, // Agora isso é uma string, o erro vai sumir!
+        image_url: publicUrl, // Aqui usamos o link que veio do Supabase
         status: 'PROCESSED',
         total_amount: receiptData.total,
         issue_date: new Date(receiptData.date),
@@ -45,7 +44,7 @@ export class AppService {
 
     // 5. Salvar Itens
     for (const item of receiptData.items) {
-      // Product (SINGULAR - Já corrigido antes)
+      // Product (SINGULAR)
       const product = await this.prisma.product.upsert({ 
         where: { code: item.code || 'UNKNOWN' },
         update: {},
@@ -56,7 +55,7 @@ export class AppService {
         },
       });
 
-      // ReceiptItem (SINGULAR - Já corrigido antes)
+      // ReceiptItem (SINGULAR)
       await this.prisma.receiptItem.create({
         data: {
           receipt_id: receipt.id,
