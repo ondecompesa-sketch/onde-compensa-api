@@ -8,14 +8,13 @@ export class ReceiptService {
   async findAll(userId: string) {
     if (!userId) return [];
     
-    // Tente 'receipts' (plural) pois o erro anterior pediu isso.
-    // Se der erro de novo dizendo que 'receipts' não existe, mude para 'receipt' (singular).
+    // CORREÇÃO: receipts (plural)
     return this.prisma.receipts.findMany({
       where: { user_id: userId },
       orderBy: { issue_date: 'desc' },
       include: {
-        store: true, // <--- CORREÇÃO: Singular (store), pois no schema é 'store Store?'
-        receipt_items: { // <--- CORREÇÃO: Com underline, pois no schema é 'receipt_items'
+        store: true, // Aqui é o nome da RELAÇÃO (dentro do model Receipt), então fica 'store' (singular)
+        receipt_items: { 
           include: { products: true },
         },
       },
@@ -25,15 +24,14 @@ export class ReceiptService {
   async search(query: string, userId: string) {
     if (!userId) return [];
     
-    // Aqui provavelmente é 'receiptItem' (Singular) pois o model é ReceiptItem
-    // Mas se o seu Prisma gerou diferente, olhe o erro. Vou tentar o padrão Singular.
-    return this.prisma.receiptItem.findMany({
+    // CORREÇÃO: receipt_items (Snake case, conforme o erro pediu)
+    return this.prisma.receipt_items.findMany({
       where: {
         raw_name: { contains: query, mode: 'insensitive' },
         receipt: { user_id: userId } 
       },
       include: {
-        receipt: { include: { store: true } }, // <--- CORREÇÃO: Singular (store)
+        receipt: { include: { store: true } },
         products: true
       },
       take: 20,

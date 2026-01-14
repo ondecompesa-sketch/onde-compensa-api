@@ -19,7 +19,8 @@ export class AppService {
     const receiptData = await this.geminiService.extractReceiptData(publicUrl);
 
     // 3. Salvar Store
-    const store = await this.prisma.store.upsert({
+    // CORREÇÃO: stores (Plural, seguindo o padrão do Prisma quando usa @@map("stores"))
+    const store = await this.prisma.stores.upsert({
       where: { cnpj: receiptData.market.cnpj || 'UNKNOWN' },
       update: {},
       create: {
@@ -29,7 +30,8 @@ export class AppService {
       },
     });
 
-    // 4. Salvar Recibo (Usando receipts plural conforme o erro anterior indicou)
+    // 4. Salvar Recibo
+    // CORREÇÃO: receipts (Plural)
     const receipt = await this.prisma.receipts.create({
       data: {
         image_url: publicUrl,
@@ -43,7 +45,7 @@ export class AppService {
 
     // 5. Salvar Itens
     for (const item of receiptData.items) {
-      const product = await this.prisma.product.upsert({
+      const product = await this.prisma.products.upsert({ // products (Plural tb por garantia)
         where: { code: item.code || 'UNKNOWN' },
         update: {},
         create: {
@@ -53,8 +55,8 @@ export class AppService {
         },
       });
 
-      // CORREÇÃO: receiptItem (Singular, padrão do Prisma para model ReceiptItem)
-      await this.prisma.receiptItem.create({
+      // CORREÇÃO: receipt_items (Snake case, conforme o erro pediu)
+      await this.prisma.receipt_items.create({
         data: {
           receipt_id: receipt.id,
           product_id: product.id,
