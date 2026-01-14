@@ -9,61 +9,89 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h1 { color: #333; margin-bottom: 10px; }
-        p { color: #666; margin-bottom: 30px; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h1 { color: #333; margin: 0 0 10px 0; font-size: 1.8rem; }
+        p { color: #666; margin-bottom: 30px; font-size: 0.95rem; }
         
-        .upload-area { border: 2px dashed #007bff; border-radius: 12px; padding: 40px 20px; cursor: pointer; transition: 0.2s; background: #f8fbff; margin-bottom: 20px; position: relative; }
-        .upload-area:hover { background: #eef6ff; }
-        .upload-icon { font-size: 3em; margin-bottom: 10px; display: block; }
-        
-        #fileInput { display: none; }
-        
-        .btn { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1em; transition: 0.2s; }
-        .btn:hover { background: #0056b3; }
-        .btn:disabled { background: #ccc; cursor: not-allowed; }
-        .btn-voltar { background: transparent; color: #666; border: 1px solid #ddd; margin-top: 10px; }
-        .btn-voltar:hover { background: #eee; }
+        /* Área de Preview */
+        .preview-container { 
+            width: 100%; height: 250px; background: #f8fbff; border-radius: 12px; 
+            border: 2px dashed #cfe2ff; margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;
+        }
+        .preview-placeholder { color: #99c2ff; font-size: 4rem; }
+        #preview { width: 100%; height: 100%; object-fit: contain; display: none; }
 
-        /* Animação de Loading */
-        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 100; justify-content: center; align-items: center; flex-direction: column; }
+        /* Botões de Ação (Grid) */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        
+        .btn-select {
+            padding: 15px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; gap: 8px; transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        .btn-camera { background: #e3f2fd; color: #1565c0; } /* Azul claro */
+        .btn-gallery { background: #fff3e0; color: #e65100; } /* Laranja claro */
+        
+        .btn-select:active { transform: scale(0.95); opacity: 0.8; }
+        .btn-icon { font-size: 1.8rem; }
+
+        /* Botão Enviar */
+        .btn-main { width: 100%; padding: 16px; background: #007bff; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,123,255,0.3); }
+        .btn-main:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+        
+        .btn-voltar { background: transparent; color: #666; border: none; margin-top: 15px; font-weight: 600; cursor: pointer; }
+
+        /* Inputs escondidos */
+        .hidden-input { display: none; }
+
+        /* Loading */
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 100; justify-content: center; align-items: center; flex-direction: column; }
         .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .loading-text { font-weight: bold; color: #555; font-size: 1.1em; }
-        .loading-subtext { font-size: 0.9em; color: #888; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h1>📸 Nova Compra</h1>
-    <p>Tire uma foto legível da sua nota fiscal (NFC-e).</p>
+    <p>Escolha como deseja enviar sua nota</p>
 
-    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-        <span class="upload-icon">📷</span>
-        <span id="upload-text">Toque para tirar foto ou escolher da galeria</span>
-        
-        <input type="file" id="fileInput" accept="image/*" onchange="mostrarPreview()">
-    
+    <div class="preview-container">
+        <span class="preview-placeholder" id="placeholder-icon">🧾</span>
+        <img id="preview">
     </div>
-    <img id="preview" style="max-width: 100%; border-radius: 8px; display: none; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
 
-    <button onclick="enviarNota()" id="btn-enviar" class="btn" disabled>Processar Nota</button>
-    <button onclick="voltar()" class="btn btn-voltar">Cancelar</button>
+    <div class="action-grid">
+        <button class="btn-select btn-camera" onclick="document.getElementById('cameraInput').click()">
+            <span class="btn-icon">📷</span>
+            Câmera
+        </button>
+        
+        <button class="btn-select btn-gallery" onclick="document.getElementById('galleryInput').click()">
+            <span class="btn-icon">🖼️</span>
+            Galeria
+        </button>
+    </div>
+
+    <input type="file" id="cameraInput" class="hidden-input" accept="image/*" capture="environment" onchange="processarArquivo(this)">
+    
+    <input type="file" id="galleryInput" class="hidden-input" accept="image/*" onchange="processarArquivo(this)">
+
+    <button onclick="enviarNota()" id="btn-enviar" class="btn-main" disabled>Processar Nota</button>
+    <button onclick="voltar()" class="btn-voltar">Cancelar</button>
 </div>
 
 <div class="loading-overlay" id="loading">
     <div class="spinner"></div>
-    <div class="loading-text">Analisando sua nota...</div>
-    <div class="loading-subtext">A Inteligência Artificial está lendo os itens.<br>Isso pode levar uns 15 segundos.</div>
+    <div style="font-weight:bold; color:#333">Lendo Nota Fiscal...</div>
+    <div style="color:#666; font-size:0.9rem; margin-top:5px">Aguarde a Inteligência Artificial</div>
 </div>
 
 <script>
-    // --- ⚠️ SUAS CHAVES DO SUPABASE ---
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
-    // -----------------------------------------------
-
+    
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const API_URL = 'https://onde-compensa-api.onrender.com';
 
@@ -77,20 +105,18 @@
     }
     checarLogin();
 
-    function mostrarPreview() {
-        const input = document.getElementById('fileInput');
-        const preview = document.getElementById('preview');
-        const btn = document.getElementById('btn-enviar');
-        const texto = document.getElementById('upload-text');
-
+    // Função unificada que recebe o arquivo de qualquer um dos dois inputs
+    function processarArquivo(input) {
         if (input.files && input.files[0]) {
             fileSelecionado = input.files[0];
             const reader = new FileReader();
             
             reader.onload = function(e) {
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-                texto.innerText = "Trocar foto";
+                document.getElementById('preview').src = e.target.result;
+                document.getElementById('preview').style.display = 'block';
+                document.getElementById('placeholder-icon').style.display = 'none';
+                
+                const btn = document.getElementById('btn-enviar');
                 btn.disabled = false;
                 btn.innerText = "Processar Nota";
             }
@@ -102,7 +128,6 @@
     async function enviarNota() {
         if (!fileSelecionado || !userId) return;
 
-        // Mostra Loading
         document.getElementById('loading').style.display = 'flex';
         
         const formData = new FormData();
@@ -110,35 +135,25 @@
         formData.append('userId', userId); 
 
         try {
-            console.log("Enviando para API...");
-            
             const response = await fetch(`${API_URL}/upload`, {
                 method: 'POST',
                 body: formData
             });
 
-            if (!response.ok) {
-                const erroTexto = await response.text();
-                throw new Error(erroTexto || 'Erro no servidor');
-            }
+            if (!response.ok) throw new Error(await response.text());
 
             const resultado = await response.json();
             console.log("Sucesso:", resultado);
-            
-            // CORREÇÃO: Vai para index.html (o novo dashboard)
-            window.location.href = 'index.html';
+            window.location.href = 'index.html'; // Volta para o Dashboard
 
         } catch (error) {
             console.error(error);
-            alert("Ocorreu um erro ao processar: " + error.message);
+            alert("Erro: " + error.message);
             document.getElementById('loading').style.display = 'none';
         }
     }
 
-    function voltar() {
-        // CORREÇÃO: Vai para index.html
-        window.location.href = 'index.html';
-    }
+    function voltar() { window.location.href = 'index.html'; }
 </script>
 
 </body>
