@@ -4,178 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard OndeCompensa 📊</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-   <script>
-    // --- MANTENHA AS SUAS CHAVES DO SUPABASE AQUI ---
-    const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
-   
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    let todasAsCompras = [];
-    let chartInstance = null;
-    let userId = null;
-
-    // 1. Verifica Login e Carrega Dados
-    async function iniciar() {
-        const { data } = await supabaseClient.auth.getSession();
-        if (!data.session) return window.location.href = 'login.html';
-        
-        userId = data.session.user.id;
-        carregar();
-    }
-
-    async function carregar() {
-        try {
-            // Agora enviamos o userId na URL
-            const res = await fetch(`https://onde-compensa-api.onrender.com/receipts?userId=${userId}`);
-            todasAsCompras = await res.json();
-            
-            preencherFiltroMeses(); // Cria o dropdown de meses
-            filtrarEAtualizar();    // Renderiza a tela
-        } catch(e) { console.error("Erro:", e); }
-    }
-
-    // 2. Lógica de Filtrar por Mês
-    function preencherFiltroMeses() {
-        const select = document.getElementById('filtro-mes');
-        if(!select) return; // Se você ainda não criou o HTML do select (ver abaixo)
-
-        const meses = new Set();
-        todasAsCompras.forEach(n => {
-            const data = new Date(n.issue_date);
-            const mesAno = `${data.getMonth() + 1}/${data.getFullYear()}`; // ex: 1/2026
-            meses.add(mesAno);
-        });
-
-        select.innerHTML = '<option value="todos">📅 Todo o Período</option>';
-        meses.forEach(m => {
-            select.innerHTML += `<option value="${m}">${m}</option>`;
-        });
-    }
-
-    function filtrarEAtualizar() {
-        const select = document.getElementById('filtro-mes');
-        const mesEscolhido = select ? select.value : 'todos';
-
-        // Filtra as compras
-        const comprasFiltradas = todasAsCompras.filter(n => {
-            if (mesEscolhido === 'todos') return true;
-            const data = new Date(n.issue_date);
-            const mesAno = `${data.getMonth() + 1}/${data.getFullYear()}`;
-            return mesAno === mesEscolhido;
-        });
-
-        renderizarTabela(comprasFiltradas);
-        calcularEstatisticas(comprasFiltradas);
-    }
-
-    // 3. Funções de Exibição (Recebem dados filtrados agora)
-    function calcularEstatisticas(dados) {
-        let gastosPorCategoria = {};
-        let totalGeral = 0;
-
-        dados.forEach(nota => {
-            totalGeral += parseFloat(nota.total_amount);
-            nota.receipt_items.forEach(item => {
-                let cat = item.products?.category || 'Outros';
-                if (!gastosPorCategoria[cat]) gastosPorCategoria[cat] = 0;
-                gastosPorCategoria[cat] += parseFloat(item.total_price);
-            });
-        });
-
-        document.getElementById('total-geral').innerText = totalGeral.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-        
-        // Categoria Top
-        let topCat = '-'; let maxVal = 0;
-        for (const [cat, val] of Object.entries(gastosPorCategoria)) {
-            if (val > maxVal) { maxVal = val; topCat = cat; }
-        }
-        document.getElementById('top-categoria').innerText = topCat;
-
-        renderizarGrafico(gastosPorCategoria);
-    }
-
-    // ... (Mantenha as funções renderizarGrafico, renderizarTabela, buscar, sair, etc. iguais) ...
-    // Apenas lembre que renderizarTabela agora recebe um argumento 'dados'
-
-    iniciar(); // Começa tudo
-</script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
-        /* --- ESTILOS GERAIS --- */
         body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; padding: 20px; color: #333; }
         .container { max-width: 1000px; margin: 0 auto; }
-        
-        /* HEADER & BOTÕES */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        h1 { margin: 0; font-size: 1.5em; display: flex; align-items: center; gap: 10px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 10px; }
+        h1 { margin: 0; font-size: 1.5em; }
         .btn { padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: 0.2s; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
         .btn:hover { background: #0056b3; }
         .btn-faxina { background: #fff0f0; color: #d32f2f; }
-        .btn-faxina:hover { background: #ffebee; }
-
-        /* ÁREA DO GRÁFICO (NOVO!) */
         .dashboard-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 30px; }
-        .chart-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; }
-        .stats-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: center; }
+        @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        .chart-card, .stats-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .stat-item { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         .stat-value { font-size: 1.8em; font-weight: bold; color: #2e7d32; }
-        .stat-label { color: #666; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; }
-
-        /* BARRA DE PESQUISA */
+        .stat-label { color: #666; font-size: 0.9em; text-transform: uppercase; }
         .search-container { position: relative; margin-bottom: 20px; }
-        .search-input { width: 100%; padding: 15px 20px; padding-left: 45px; border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); font-size: 1.1em; outline: none; }
+        .search-input { width: 100%; padding: 15px 20px; padding-left: 45px; border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); font-size: 1.1em; outline: none; box-sizing: border-box; }
         .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa; }
-
-        /* TABELAS E RESULTADOS */
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-        th { color: #888; font-size: 0.85em; text-transform: uppercase; }
-        tr:hover { background-color: #f9f9f9; }
-        
-        .result-card { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; margin-bottom: 10px; border-radius: 8px; cursor: pointer; border-left: 4px solid transparent; transition: 0.2s; }
-        .result-card:hover { border-left-color: #007bff; transform: translateX(5px); }
-
-        /* MODAL */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
-        .modal-content { background: white; width: 95%; max-width: 700px; max-height: 85vh; overflow-y: auto; border-radius: 16px; padding: 30px; animation: popIn 0.3s; }
-        @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 95%; max-width: 700px; max-height: 85vh; overflow-y: auto; border-radius: 16px; padding: 30px; }
+        .filter-bar { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; display:flex; align-items:center; gap:10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    
     <div class="header">
-
-<button onclick="sair()" class="btn" style="background:#666;">🚪 Sair</button>
-
+        <button onclick="sair()" class="btn" style="background:#666;">🚪 Sair</button>
         <h1>📊 OndeCompensa?</h1>
         <div style="display: flex; gap: 10px;">
-          <a href="nova-nota.html" class="btn">＋ Nova Nota</a>
+            <a href="nova-nota.html" class="btn">＋ Nova Nota</a>
             <button onclick="fazerFaxina()" class="btn btn-faxina">🧹 Faxina</button>
         </div>
     </div>
-<div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; display:flex; align-items:center; gap:10px;">
-    <span>Filtrar por data:</span>
-    <select id="filtro-mes" onchange="filtrarEAtualizar()" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; flex-grow:1;">
-        <option value="todos">Carregando...</option>
-    </select>
-</div>
+
+    <div class="filter-bar">
+        <span style="font-weight:bold; color:#555;">📅 Filtrar por Mês:</span>
+        <select id="filtro-mes" onchange="filtrarEAtualizar()" style="padding: 10px; border-radius: 6px; border: 1px solid #ddd; flex-grow:1; font-size:1em;">
+            <option value="todos">Carregando...</option>
+        </select>
+    </div>
+
     <div class="dashboard-grid">
         <div class="chart-card">
-            <h3 style="margin-bottom: 20px; color: #555;">Gastos por Categoria</h3>
-            <div style="width: 250px; height: 250px;">
+            <h3 style="margin-bottom: 20px; color: #555; text-align:center;">Gastos por Categoria</h3>
+            <div style="position: relative; height: 250px;">
                 <canvas id="meuGrafico"></canvas>
             </div>
         </div>
         
         <div class="stats-card">
             <div class="stat-item">
-                <div class="stat-label">Total Gasto (Histórico)</div>
+                <div class="stat-label">Total Gasto (Período)</div>
                 <div class="stat-value" id="total-geral">R$ 0,00</div>
             </div>
             <div class="stat-item" style="border:none">
@@ -187,16 +77,14 @@
 
     <div class="search-container">
         <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" placeholder="Pesquisar produto (ex: picanha, cerveja...)" onkeyup="buscar(this.value)">
+        <input type="text" class="search-input" placeholder="Pesquisar produto..." onkeyup="buscar(this.value)">
     </div>
     <div id="area-busca" style="display: none; margin-bottom: 20px;"></div>
 
     <div class="card">
-        <h3 style="margin-top:0; color: #555;">📅 Últimas Notas Fiscais</h3>
+        <h3 style="margin-top:0; color: #555;">🧾 Histórico de Notas</h3>
         <table id="tabela">
-            <thead>
-                <tr><th>Data</th><th>Mercado</th><th>Itens</th><th>Total</th><th>Ações</th></tr>
-            </thead>
+            <thead><tr><th>Data</th><th>Mercado</th><th>Itens</th><th>Total</th><th>Ações</th></tr></thead>
             <tbody id="corpo-tabela"></tbody>
         </table>
     </div>
@@ -213,91 +101,62 @@
 </div>
 
 <script>
+    // --- SUAS CHAVES DO SUPABASE (PREENCHA AQUI) ---
+    const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
+    const SUPABASE_KEY = 'SUA_CHAVE_ANON_PUBLIC_AQUI_NOVAMENTE';
+    // -----------------------------------------------
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let todasAsCompras = [];
-    let chartInstance = null; // Guarda o gráfico para poder atualizar
+    let chartInstance = null;
+    let userId = null;
+
+    async function iniciar() {
+        const { data } = await supabaseClient.auth.getSession();
+        if (!data.session) return window.location.href = 'login.html';
+        userId = data.session.user.id;
+        carregar();
+    }
 
     async function carregar() {
         try {
-            const res = await fetch('https://onde-compensa-api.onrender.com/receipts');
+            const res = await fetch(`https://onde-compensa-api.onrender.com/receipts?userId=${userId}`);
             todasAsCompras = await res.json();
-            
-            renderizarTabela();
-            calcularEstatisticas(); // <--- AQUI NASCE O GRÁFICO
+            preencherFiltroMeses();
+            filtrarEAtualizar();
         } catch(e) { console.error("Erro:", e); }
     }
 
-    function calcularEstatisticas() {
-        // 1. Somar totais por categoria
-        let gastosPorCategoria = {};
-        let totalGeral = 0;
-
-        todasAsCompras.forEach(nota => {
-            totalGeral += parseFloat(nota.total_amount);
-            
-            nota.receipt_items.forEach(item => {
-                // Pega a categoria (agora vindo do backend!) ou usa 'Outros'
-                let cat = 'Outros';
-                if (item.products && item.products.category) {
-                    cat = item.products.category;
-                }
-                
-                if (!gastosPorCategoria[cat]) gastosPorCategoria[cat] = 0;
-                gastosPorCategoria[cat] += parseFloat(item.total_price);
-            });
+    function preencherFiltroMeses() {
+        const select = document.getElementById('filtro-mes');
+        const meses = new Set();
+        todasAsCompras.forEach(n => {
+            const d = new Date(n.issue_date);
+            meses.add(`${d.getMonth() + 1}/${d.getFullYear()}`);
         });
-
-        // 2. Atualizar Textos na Tela
-        document.getElementById('total-geral').innerText = totalGeral.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-        
-        // Achar a categoria mais cara
-        let topCat = '-';
-        let maxVal = 0;
-        for (const [cat, val] of Object.entries(gastosPorCategoria)) {
-            if (val > maxVal) { maxVal = val; topCat = cat; }
-        }
-        document.getElementById('top-categoria').innerText = topCat;
-
-        // 3. Gerar o Gráfico
-        renderizarGrafico(gastosPorCategoria);
-    }
-
-    function renderizarGrafico(dados) {
-        const ctx = document.getElementById('meuGrafico').getContext('2d');
-        const labels = Object.keys(dados);
-        const values = Object.values(dados);
-
-        // Cores bonitas para o gráfico
-        const cores = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#2e7d32'];
-
-        if (chartInstance) chartInstance.destroy(); // Limpa gráfico anterior se existir
-
-        chartInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: cores,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
-                }
-            }
+        select.innerHTML = '<option value="todos">📅 Todo o Período</option>';
+        Array.from(meses).sort().reverse().forEach(m => {
+            select.innerHTML += `<option value="${m}">${m}</option>`;
         });
     }
 
-    // --- FUNÇÕES DE TABELA, BUSCA E MODAL (IGUAIS ANTES) ---
-    function renderizarTabela() {
+    function filtrarEAtualizar() {
+        const select = document.getElementById('filtro-mes');
+        const mesEscolhido = select.value;
+        const comprasFiltradas = todasAsCompras.filter(n => {
+            if (mesEscolhido === 'todos') return true;
+            const d = new Date(n.issue_date);
+            return `${d.getMonth() + 1}/${d.getFullYear()}` === mesEscolhido;
+        });
+        renderizarTabela(comprasFiltradas);
+        calcularEstatisticas(comprasFiltradas);
+    }
+
+    function renderizarTabela(dados) {
         const tbody = document.getElementById('corpo-tabela');
         tbody.innerHTML = '';
-        if (todasAsCompras.length === 0) return tbody.innerHTML = '<tr><td colspan="5" align="center">Sem dados.</td></tr>';
-        
-        todasAsCompras.forEach(nota => {
+        if (dados.length === 0) return tbody.innerHTML = '<tr><td colspan="5" align="center">Sem dados no período.</td></tr>';
+        dados.forEach(nota => {
             const data = new Date(nota.issue_date).toLocaleDateString('pt-BR');
             const total = parseFloat(nota.total_amount).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
             tbody.innerHTML += `
@@ -314,16 +173,46 @@
         });
     }
 
+    function calcularEstatisticas(dados) {
+        let gastosPorCategoria = {};
+        let totalGeral = 0;
+        dados.forEach(nota => {
+            totalGeral += parseFloat(nota.total_amount);
+            nota.receipt_items.forEach(item => {
+                let cat = item.products?.category || 'Outros';
+                if (!gastosPorCategoria[cat]) gastosPorCategoria[cat] = 0;
+                gastosPorCategoria[cat] += parseFloat(item.total_price);
+            });
+        });
+
+        document.getElementById('total-geral').innerText = totalGeral.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+        let topCat = '-'; let maxVal = 0;
+        for (const [cat, val] of Object.entries(gastosPorCategoria)) { if (val > maxVal) { maxVal = val; topCat = cat; } }
+        document.getElementById('top-categoria').innerText = topCat;
+
+        const ctx = document.getElementById('meuGrafico').getContext('2d');
+        const labels = Object.keys(gastosPorCategoria);
+        const values = Object.values(gastosPorCategoria);
+        const cores = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#2e7d32'];
+
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels: labels, datasets: [{ data: values, backgroundColor: cores, borderWidth: 1 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
     async function buscar(texto) {
         if(texto.length < 3) { document.getElementById('area-busca').style.display='none'; return; }
-        const res = await fetch(`https://onde-compensa-api.onrender.com/search?q=${texto}`);
+        const res = await fetch(`https://onde-compensa-api.onrender.com/search?q=${texto}&userId=${userId}`);
         const prods = await res.json();
         const area = document.getElementById('area-busca');
         area.innerHTML = ''; area.style.display = 'block';
         if(prods.length===0) area.innerHTML='<p style="padding:10px; color:#666">Nada encontrado.</p>';
         prods.forEach(p => {
             const pr = parseFloat(p.unit_price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-            area.innerHTML += `<div class="result-card" onclick="abrirNotaPorId('${p.receipt_id}')"><div><b>${p.raw_name}</b><br><small>${p.receipts?.stores?.name}</small></div><div style="color:#2e7d32; font-weight:bold">${pr}</div></div>`;
+            area.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee; cursor:pointer" onclick="abrirNotaPorId('${p.receipt_id}')"><b>${p.raw_name}</b> - <span style="color:green">${pr}</span> <small>(${p.receipts?.stores?.name})</small></div>`;
         });
     }
 
@@ -342,9 +231,9 @@
     function fecharModal(e) { if(!e || e.target.className.includes('modal') || e.target.tagName==='BUTTON') document.getElementById('modalDetalhes').style.display='none'; }
     async function deletarNota(id) { if(confirm('Apagar?')) { await fetch(`https://onde-compensa-api.onrender.com/receipts/${id}`, {method:'DELETE'}); carregar(); } }
     async function fazerFaxina() { if(confirm('Limpar erros?')) { await fetch('https://onde-compensa-api.onrender.com/cleanup', {method:'DELETE'}); carregar(); } }
+    async function sair() { await supabaseClient.auth.signOut(); window.location.href = 'login.html'; }
 
-    carregar();
+    iniciar();
 </script>
-
 </body>
 </html>

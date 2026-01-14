@@ -14,14 +14,13 @@ export class AppController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
-    @Body('userId') userId: string, // <--- Recebe o ID do usuário
+    @Body('userId') userId: string,
   ) {
-    // Passamos o userId para o processamento
     return this.appService.processReceipt(file, userId);
   }
 
   @Get('receipts')
-  getReceipts(@Query('userId') userId: string) { // <--- Recebe o ID na busca
+  getReceipts(@Query('userId') userId: string) {
     return this.receiptService.findAll(userId);
   }
 

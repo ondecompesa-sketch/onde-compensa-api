@@ -5,12 +5,11 @@ import { PrismaService } from './prisma.service';
 export class ReceiptService {
   constructor(private prisma: PrismaService) {}
 
-  // Agora filtra pelo userId
   async findAll(userId: string) {
-    if (!userId) return []; // Se não tiver ID, não devolve nada (Segurança)
+    if (!userId) return [];
     
     return this.prisma.receipt.findMany({
-      where: { user_id: userId }, // <--- O Filtro Mágico
+      where: { user_id: userId },
       orderBy: { issue_date: 'desc' },
       include: {
         stores: true,
@@ -27,7 +26,7 @@ export class ReceiptService {
     return this.prisma.receipt_item.findMany({
       where: {
         raw_name: { contains: query, mode: 'insensitive' },
-        receipts: { user_id: userId } // Busca só nas notas desse usuário
+        receipts: { user_id: userId }
       },
       include: {
         receipts: { include: { stores: true } },
