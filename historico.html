@@ -8,31 +8,28 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // --- ⚠️ AS MESMAS CHAVES DO LOGIN ---
-         const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
-         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
-   
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
+        
+        // MUDANÇA AQUI: 'supabaseClient'
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // O GRANDE GUARDA-COSTAS 🛡️
         async function checarLogin() {
-            const { data } = await supabase.auth.getSession();
+            // MUDANÇA AQUI
+            const { data } = await supabaseClient.auth.getSession();
             if (!data.session) {
-                // Se não tem sessão, manda pro login
                 window.location.href = 'login.html';
             }
         }
         checarLogin();
 
         async function sair() {
-            await supabase.auth.signOut();
+            // MUDANÇA AQUI
+            await supabaseClient.auth.signOut();
             window.location.href = 'login.html';
         }
     </script>
-
-
-
-    
     <style>
         /* --- ESTILOS GERAIS --- */
         body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; padding: 20px; color: #333; }

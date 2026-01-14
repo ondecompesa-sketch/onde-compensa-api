@@ -32,23 +32,23 @@
 </div>
 
 <script>
-    // --- ⚠️ COLE SUAS CHAVES AQUI (Pegue do .env) ---
+    // --- SUAS CHAVES (Já estão corretas!) ---
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
-    // ------------------------------------------------
-
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // MUDANÇA AQUI: De 'supabase' para 'supabaseClient'
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     async function fazerLogin() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        // MUDANÇA AQUI TAMBÉM
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
         if (error) {
             document.getElementById('mensagem').innerText = 'Erro: ' + error.message;
         } else {
-            // Sucesso! Vai para o dashboard
             window.location.href = 'historico.html';
         }
     }
@@ -57,12 +57,13 @@
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        // E AQUI TAMBÉM
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
 
         if (error) {
             document.getElementById('mensagem').innerText = 'Erro ao criar: ' + error.message;
         } else {
-            alert('Conta criada! Pode fazer login agora.');
+            alert('Conta criada! Verifique seu email ou tente fazer login.'); // Às vezes pede confirmação
         }
     }
 </script>
