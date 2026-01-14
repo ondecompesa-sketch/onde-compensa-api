@@ -1,67 +1,129 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"] 
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["public"]     // <--- REMOVA O "auth" DAQUI, DEIXE SÓ O "public"
 }
 
-model products {
-  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  barcode         String?         @unique
-  normalized_name String
-  category        String?
-  created_at      DateTime?       @default(now()) @db.Timestamptz(6)
-  receipt_items   receipt_items[]
+model Store {
+  id        String   @id @default(uuid())
+  name      String
+  cnpj      String?  @unique
+  address   String?
+  receipts  Receipt[]
+  
+  @@map("stores")
+  @@schema("public") // <--- ADICIONE ISSO AQUI
 }
 
-model receipt_items {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  receipt_id  String?   @db.Uuid
-  product_id  String?   @db.Uuid
-  raw_name    String?
-  quantity    Decimal?  @db.Decimal(10, 3)
-  unit_price  Decimal?  @db.Decimal(10, 2)
-  total_price Decimal?  @db.Decimal(10, 2)
+model Receipt {
+  id           String        @id @default(uuid())
+  image_url    String
+  status       String        @default("PROCESSING")
+  total_amount Decimal?      @db.Decimal(10, 2)
+  issue_date   DateTime?
+  created_at   DateTime      @default(now())
+  
+  store_id     String?
+  store        Store?        @relation(fields: [store_id], references: [id])
+  
+  user_id      String?       // ID do usuário (sem relação direta com auth por enquanto)
+  
+  receipt_items ReceiptItem[]
+
+  @@map("receipts")
+  @@schema("public") // <--- E AQUI TAMBÉM
+}
+
+model ReceiptItem {
+  id          String   @id @default(uuid())
+  receipt_id  String
+  receipt     Receipt  @relation(fields: [receipt_id], references: [id], onDelete: Cascade)
+  
+  product_id  String?
+  product     Product? @relation(fields: [product_id], references: [id])
+  
+  quantity    Decimal  @db.Decimal(10, 3)
+  unit_price  Decimal  @db.Decimal(10, 2)
+  total_price Decimal  @db.Decimal(10, 2)
+  raw_name    String
   unit_measure String?
-  created_at  DateTime? @default(now()) @db.Timestamptz(6)
-  products    products? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  receipts    receipts? @relation(fields: [receipt_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("receipt_items")
+  @@schema("public") // <--- AQUI TAMBÉM
 }
 
-model receipts {
-  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id       String?         @db.Uuid
-  store_id      String?         @db.Uuid
-  status        String?         @default("PENDING")
-  total_amount  Decimal?        @db.Decimal(10, 2)
-  issue_date    DateTime?       @db.Timestamptz(6)
-  image_url     String?
-  raw_response  Json?
-  created_at    DateTime?       @default(now()) @db.Timestamptz(6)
-  receipt_items receipt_items[]
-  stores        stores?         @relation(fields: [store_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users         users?          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model Product {
+  id              String        @id @default(uuid())
+  name            String
+  code            String        @unique // Código de barras ou interno
+  category        String?
+  normalized_name String?
+  barcode         String?
+  created_at      DateTime      @default(now())
+  
+  receipt_items   ReceiptItem[]
+
+  @@map("products")
+  @@schema("public") // <--- NÃO ESQUEÇA DESTE
 }
 
-model stores {
-  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  cnpj         String?    @unique @db.VarChar(20)
-  name         String
-  address      String?
-  raw_ocr_name String?
-  created_at   DateTime?  @default(now()) @db.Timestamptz(6)
-  receipts     receipts[]
+// --- 3. MODELS DO IBGE (LOCALIZAÇÃO) ---
+
+model State {
+  id        String   @id
+  name      String
+  uf        String
+  cities    City[]
+  
+  @@schema("public") // <--- AQUI
 }
 
-model users {
-  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email        String     @unique
-  auth_id      String?    @unique
-  name         String?
-  city         String?
-  neighborhood String?
-  created_at   DateTime?  @default(now()) @db.Timestamptz(6)
-  receipts     receipts[]
+model City {
+  id        String   @id
+  name      String
+  stateId   String   @map("state_id")
+  state     State    @relation(fields: [stateId], references: [id])
+  districts District[]
+
+  @@map("cities")
+  @@schema("public") // <--- AQUI
+}
+
+model District {
+  id        String   @id
+  name      String
+  cityId    String   @map("city_id")
+  city      City     @relation(fields: [cityId], references: [id])
+  profiles  Profile[]
+
+  @@map("districts")
+  @@schema("public") // <--- AQUI
+}
+
+// --- 4. PERFIL DO USUÁRIO ---
+
+model Profile {
+  id          String    @id @default(uuid())
+  email       String?
+  full_name   String?
+  bairro      String? 
+  cidade      String?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime?
+  
+  // Relação com IBGE
+  districtId  String?   @map("district_id")
+  district    District? @relation(fields: [districtId], references: [id])
+
+  // Campos auxiliares
+  cityName     String?   @map("city_name") 
+  districtName String?   @map("district_name")
+
+  @@map("profiles")   // Se sua tabela no banco chama "profiles"
+  @@schema("public") // <--- FINALMENTE AQUI
 }

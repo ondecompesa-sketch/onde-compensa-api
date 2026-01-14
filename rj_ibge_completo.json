@@ -1,0 +1,1761 @@
+{
+  "estado": {
+    "nome": "Rio de Janeiro",
+    "uf": "RJ",
+    "codigo_ibge": "33",
+    "municipios": [
+      {
+        "nome": "Angra dos Reis",
+        "codigo_ibge": "3300100",
+        "bairros": [
+          {
+            "nome": "Angra dos Reis",
+            "codigo_ibge": "330010005"
+          },
+          {
+            "nome": "Abraão",
+            "codigo_ibge": "330010010"
+          },
+          {
+            "nome": "Cunhambebe",
+            "codigo_ibge": "330010015"
+          },
+          {
+            "nome": "Mambucaba",
+            "codigo_ibge": "330010025"
+          }
+        ]
+      },
+      {
+        "nome": "Aperibé",
+        "codigo_ibge": "3300159",
+        "bairros": [
+          {
+            "nome": "Aperibé",
+            "codigo_ibge": "330015905"
+          }
+        ]
+      },
+      {
+        "nome": "Araruama",
+        "codigo_ibge": "3300209",
+        "bairros": [
+          {
+            "nome": "Araruama",
+            "codigo_ibge": "330020905"
+          },
+          {
+            "nome": "Iguabinha",
+            "codigo_ibge": "330020908"
+          },
+          {
+            "nome": "Morro Grande",
+            "codigo_ibge": "330020910"
+          },
+          {
+            "nome": "Praia Seca",
+            "codigo_ibge": "330020912"
+          },
+          {
+            "nome": "São Vicente de Paula",
+            "codigo_ibge": "330020915"
+          }
+        ]
+      },
+      {
+        "nome": "Areal",
+        "codigo_ibge": "3300225",
+        "bairros": [
+          {
+            "nome": "Areal",
+            "codigo_ibge": "330022505"
+          }
+        ]
+      },
+      {
+        "nome": "Armação dos Búzios",
+        "codigo_ibge": "3300233",
+        "bairros": [
+          {
+            "nome": "Armação dos Búzios",
+            "codigo_ibge": "330023305"
+          }
+        ]
+      },
+      {
+        "nome": "Arraial do Cabo",
+        "codigo_ibge": "3300258",
+        "bairros": [
+          {
+            "nome": "Arraial do Cabo",
+            "codigo_ibge": "330025805"
+          }
+        ]
+      },
+      {
+        "nome": "Barra do Piraí",
+        "codigo_ibge": "3300308",
+        "bairros": [
+          {
+            "nome": "Barra do Piraí",
+            "codigo_ibge": "330030805"
+          },
+          {
+            "nome": "Califórnia da Barra",
+            "codigo_ibge": "330030807"
+          },
+          {
+            "nome": "Dorândia",
+            "codigo_ibge": "330030810"
+          },
+          {
+            "nome": "Ipiabas",
+            "codigo_ibge": "330030815"
+          },
+          {
+            "nome": "São José do Turvo",
+            "codigo_ibge": "330030820"
+          },
+          {
+            "nome": "Vargem Alegre",
+            "codigo_ibge": "330030825"
+          }
+        ]
+      },
+      {
+        "nome": "Barra Mansa",
+        "codigo_ibge": "3300407",
+        "bairros": [
+          {
+            "nome": "Barra Mansa",
+            "codigo_ibge": "330040705"
+          },
+          {
+            "nome": "Antônio Rocha",
+            "codigo_ibge": "330040709"
+          },
+          {
+            "nome": "Floriano",
+            "codigo_ibge": "330040715"
+          },
+          {
+            "nome": "Nossa Senhora do Amparo",
+            "codigo_ibge": "330040720"
+          },
+          {
+            "nome": "Rialto",
+            "codigo_ibge": "330040730"
+          },
+          {
+            "nome": "Santa Rita de Cássia",
+            "codigo_ibge": "330040740"
+          }
+        ]
+      },
+      {
+        "nome": "Belford Roxo",
+        "codigo_ibge": "3300456",
+        "bairros": [
+          {
+            "nome": "Belford Roxo",
+            "codigo_ibge": "330045605"
+          }
+        ]
+      },
+      {
+        "nome": "Bom Jardim",
+        "codigo_ibge": "3300506",
+        "bairros": [
+          {
+            "nome": "Bom Jardim",
+            "codigo_ibge": "330050605"
+          },
+          {
+            "nome": "Banquete",
+            "codigo_ibge": "330050610"
+          },
+          {
+            "nome": "Barra Alegre",
+            "codigo_ibge": "330050615"
+          },
+          {
+            "nome": "São José do Ribeirão",
+            "codigo_ibge": "330050620"
+          }
+        ]
+      },
+      {
+        "nome": "Bom Jesus do Itabapoana",
+        "codigo_ibge": "3300605",
+        "bairros": [
+          {
+            "nome": "Bom Jesus do Itabapoana",
+            "codigo_ibge": "330060505"
+          },
+          {
+            "nome": "Calheiros",
+            "codigo_ibge": "330060510"
+          },
+          {
+            "nome": "Carabuçu",
+            "codigo_ibge": "330060515"
+          },
+          {
+            "nome": "Pirapetinga de Bom Jesus",
+            "codigo_ibge": "330060520"
+          },
+          {
+            "nome": "Rosal",
+            "codigo_ibge": "330060525"
+          },
+          {
+            "nome": "Serrinha",
+            "codigo_ibge": "330060530"
+          },
+          {
+            "nome": "Usina Santa Maria",
+            "codigo_ibge": "330060535"
+          },
+          {
+            "nome": "Santa Isabel",
+            "codigo_ibge": "330060540"
+          }
+        ]
+      },
+      {
+        "nome": "Cabo Frio",
+        "codigo_ibge": "3300704",
+        "bairros": [
+          {
+            "nome": "Cabo Frio",
+            "codigo_ibge": "330070405"
+          },
+          {
+            "nome": "Tamoios",
+            "codigo_ibge": "330070420"
+          }
+        ]
+      },
+      {
+        "nome": "Cachoeiras de Macacu",
+        "codigo_ibge": "3300803",
+        "bairros": [
+          {
+            "nome": "Cachoeiras de Macacu",
+            "codigo_ibge": "330080305"
+          }
+        ]
+      },
+      {
+        "nome": "Cambuci",
+        "codigo_ibge": "3300902",
+        "bairros": [
+          {
+            "nome": "Cambuci",
+            "codigo_ibge": "330090205"
+          },
+          {
+            "nome": "Cruzeiro",
+            "codigo_ibge": "330090207"
+          },
+          {
+            "nome": "Funil",
+            "codigo_ibge": "330090210"
+          },
+          {
+            "nome": "Monte Verde",
+            "codigo_ibge": "330090215"
+          },
+          {
+            "nome": "São João do Paraíso",
+            "codigo_ibge": "330090220"
+          },
+          {
+            "nome": "Três Irmãos",
+            "codigo_ibge": "330090230"
+          }
+        ]
+      },
+      {
+        "nome": "Carapebus",
+        "codigo_ibge": "3300936",
+        "bairros": [
+          {
+            "nome": "Carapebus",
+            "codigo_ibge": "330093605"
+          }
+        ]
+      },
+      {
+        "nome": "Comendador Levy Gasparian",
+        "codigo_ibge": "3300951",
+        "bairros": [
+          {
+            "nome": "Comendador Levy Gasparian",
+            "codigo_ibge": "330095105"
+          },
+          {
+            "nome": "Afonso Arinos",
+            "codigo_ibge": "330095110"
+          }
+        ]
+      },
+      {
+        "nome": "Campos dos Goytacazes",
+        "codigo_ibge": "3301009",
+        "bairros": [
+          {
+            "nome": "Campos dos Goytacazes",
+            "codigo_ibge": "330100905"
+          },
+          {
+            "nome": "Dores de Macabu",
+            "codigo_ibge": "330100915"
+          },
+          {
+            "nome": "Ibitioca",
+            "codigo_ibge": "330100920"
+          },
+          {
+            "nome": "Morangaba",
+            "codigo_ibge": "330100930"
+          },
+          {
+            "nome": "Morro do Coco",
+            "codigo_ibge": "330100935"
+          },
+          {
+            "nome": "Mussurepe",
+            "codigo_ibge": "330100940"
+          },
+          {
+            "nome": "Santa Maria",
+            "codigo_ibge": "330100945"
+          },
+          {
+            "nome": "Santo Amaro de Campos",
+            "codigo_ibge": "330100950"
+          },
+          {
+            "nome": "Santo Eduardo",
+            "codigo_ibge": "330100955"
+          },
+          {
+            "nome": "São Sebastião de Campos",
+            "codigo_ibge": "330100965"
+          },
+          {
+            "nome": "Serrinha",
+            "codigo_ibge": "330100970"
+          },
+          {
+            "nome": "Tocos",
+            "codigo_ibge": "330100975"
+          },
+          {
+            "nome": "Travessão",
+            "codigo_ibge": "330100980"
+          },
+          {
+            "nome": "Vila Nova de Campos",
+            "codigo_ibge": "330100985"
+          }
+        ]
+      },
+      {
+        "nome": "Cantagalo",
+        "codigo_ibge": "3301108",
+        "bairros": [
+          {
+            "nome": "Cantagalo",
+            "codigo_ibge": "330110805"
+          },
+          {
+            "nome": "Boa Sorte",
+            "codigo_ibge": "330110810"
+          },
+          {
+            "nome": "Euclidelândia",
+            "codigo_ibge": "330110815"
+          },
+          {
+            "nome": "Santa Rita da Floresta",
+            "codigo_ibge": "330110820"
+          },
+          {
+            "nome": "São Sebastião do Paraíba",
+            "codigo_ibge": "330110825"
+          }
+        ]
+      },
+      {
+        "nome": "Cardoso Moreira",
+        "codigo_ibge": "3301157",
+        "bairros": [
+          {
+            "nome": "Cardoso Moreira",
+            "codigo_ibge": "330115705"
+          },
+          {
+            "nome": "São Joaquim",
+            "codigo_ibge": "330115710"
+          }
+        ]
+      },
+      {
+        "nome": "Carmo",
+        "codigo_ibge": "3301207",
+        "bairros": [
+          {
+            "nome": "Carmo",
+            "codigo_ibge": "330120705"
+          },
+          {
+            "nome": "Córrego da Prata",
+            "codigo_ibge": "330120710"
+          },
+          {
+            "nome": "Porto Velho do Cunha",
+            "codigo_ibge": "330120715"
+          }
+        ]
+      },
+      {
+        "nome": "Casimiro de Abreu",
+        "codigo_ibge": "3301306",
+        "bairros": [
+          {
+            "nome": "Casimiro de Abreu",
+            "codigo_ibge": "330130605"
+          },
+          {
+            "nome": "Barra de São João",
+            "codigo_ibge": "330130610"
+          },
+          {
+            "nome": "Professor Souza",
+            "codigo_ibge": "330130618"
+          },
+          {
+            "nome": "Rio Dourado",
+            "codigo_ibge": "330130620"
+          }
+        ]
+      },
+      {
+        "nome": "Conceição de Macabu",
+        "codigo_ibge": "3301405",
+        "bairros": [
+          {
+            "nome": "Conceição de Macabu",
+            "codigo_ibge": "330140505"
+          },
+          {
+            "nome": "Macabuzinho",
+            "codigo_ibge": "330140510"
+          }
+        ]
+      },
+      {
+        "nome": "Cordeiro",
+        "codigo_ibge": "3301504",
+        "bairros": [
+          {
+            "nome": "Cordeiro",
+            "codigo_ibge": "330150405"
+          }
+        ]
+      },
+      {
+        "nome": "Duas Barras",
+        "codigo_ibge": "3301603",
+        "bairros": [
+          {
+            "nome": "Duas Barras",
+            "codigo_ibge": "330160305"
+          },
+          {
+            "nome": "Monnerat",
+            "codigo_ibge": "330160310"
+          }
+        ]
+      },
+      {
+        "nome": "Duque de Caxias",
+        "codigo_ibge": "3301702",
+        "bairros": [
+          {
+            "nome": "Duque de Caxias",
+            "codigo_ibge": "330170205"
+          },
+          {
+            "nome": "Campos Elyseos",
+            "codigo_ibge": "330170210"
+          },
+          {
+            "nome": "Imbariê",
+            "codigo_ibge": "330170215"
+          },
+          {
+            "nome": "Xerém",
+            "codigo_ibge": "330170220"
+          }
+        ]
+      },
+      {
+        "nome": "Engenheiro Paulo de Frontin",
+        "codigo_ibge": "3301801",
+        "bairros": [
+          {
+            "nome": "Engenheiro Paulo de Frontin",
+            "codigo_ibge": "330180105"
+          },
+          {
+            "nome": "Sacra Família do Tinguá",
+            "codigo_ibge": "330180110"
+          },
+          {
+            "nome": "Morro Azul do Tinguá",
+            "codigo_ibge": "330180115"
+          }
+        ]
+      },
+      {
+        "nome": "Guapimirim",
+        "codigo_ibge": "3301850",
+        "bairros": [
+          {
+            "nome": "Guapimirim",
+            "codigo_ibge": "330185005"
+          }
+        ]
+      },
+      {
+        "nome": "Iguaba Grande",
+        "codigo_ibge": "3301876",
+        "bairros": [
+          {
+            "nome": "Iguaba Grande",
+            "codigo_ibge": "330187605"
+          }
+        ]
+      },
+      {
+        "nome": "Itaboraí",
+        "codigo_ibge": "3301900",
+        "bairros": [
+          {
+            "nome": "Itaboraí",
+            "codigo_ibge": "330190005"
+          },
+          {
+            "nome": "Cabuçu",
+            "codigo_ibge": "330190010"
+          },
+          {
+            "nome": "Itambi",
+            "codigo_ibge": "330190015"
+          },
+          {
+            "nome": "Manilha",
+            "codigo_ibge": "330190018"
+          },
+          {
+            "nome": "Pachecos",
+            "codigo_ibge": "330190019"
+          },
+          {
+            "nome": "Porto das Caixas",
+            "codigo_ibge": "330190020"
+          },
+          {
+            "nome": "Sambaetiba",
+            "codigo_ibge": "330190025"
+          },
+          {
+            "nome": "Visconde de Itaboraí",
+            "codigo_ibge": "330190040"
+          }
+        ]
+      },
+      {
+        "nome": "Itaguaí",
+        "codigo_ibge": "3302007",
+        "bairros": [
+          {
+            "nome": "Itaguaí",
+            "codigo_ibge": "330200705"
+          },
+          {
+            "nome": "Ibituporanga",
+            "codigo_ibge": "330200715"
+          }
+        ]
+      },
+      {
+        "nome": "Italva",
+        "codigo_ibge": "3302056",
+        "bairros": [
+          {
+            "nome": "Italva",
+            "codigo_ibge": "330205605"
+          }
+        ]
+      },
+      {
+        "nome": "Itaocara",
+        "codigo_ibge": "3302106",
+        "bairros": [
+          {
+            "nome": "Itaocara",
+            "codigo_ibge": "330210605"
+          },
+          {
+            "nome": "Batatal",
+            "codigo_ibge": "330210607"
+          },
+          {
+            "nome": "Estrada Nova",
+            "codigo_ibge": "330210610"
+          },
+          {
+            "nome": "Jaguarembé",
+            "codigo_ibge": "330210615"
+          },
+          {
+            "nome": "Laranjais",
+            "codigo_ibge": "330210620"
+          },
+          {
+            "nome": "Portela",
+            "codigo_ibge": "330210625"
+          }
+        ]
+      },
+      {
+        "nome": "Itaperuna",
+        "codigo_ibge": "3302205",
+        "bairros": [
+          {
+            "nome": "Itaperuna",
+            "codigo_ibge": "330220505"
+          },
+          {
+            "nome": "Boaventura",
+            "codigo_ibge": "330220510"
+          },
+          {
+            "nome": "Comendador Venâncio",
+            "codigo_ibge": "330220515"
+          },
+          {
+            "nome": "Itajara",
+            "codigo_ibge": "330220520"
+          },
+          {
+            "nome": "Nossa Senhora da Penha",
+            "codigo_ibge": "330220525"
+          },
+          {
+            "nome": "Retiro do Muriaé",
+            "codigo_ibge": "330220530"
+          },
+          {
+            "nome": "Raposo",
+            "codigo_ibge": "330220535"
+          }
+        ]
+      },
+      {
+        "nome": "Itatiaia",
+        "codigo_ibge": "3302254",
+        "bairros": [
+          {
+            "nome": "Itatiaia",
+            "codigo_ibge": "330225405"
+          }
+        ]
+      },
+      {
+        "nome": "Japeri",
+        "codigo_ibge": "3302270",
+        "bairros": [
+          {
+            "nome": "Japeri",
+            "codigo_ibge": "330227005"
+          }
+        ]
+      },
+      {
+        "nome": "Laje do Muriaé",
+        "codigo_ibge": "3302304",
+        "bairros": [
+          {
+            "nome": "Laje do Muriaé",
+            "codigo_ibge": "330230405"
+          }
+        ]
+      },
+      {
+        "nome": "Macaé",
+        "codigo_ibge": "3302403",
+        "bairros": [
+          {
+            "nome": "Macaé",
+            "codigo_ibge": "330240305"
+          },
+          {
+            "nome": "Cachoeiros de Macaé",
+            "codigo_ibge": "330240315"
+          },
+          {
+            "nome": "Córrego do Ouro",
+            "codigo_ibge": "330240325"
+          },
+          {
+            "nome": "Frade",
+            "codigo_ibge": "330240327"
+          },
+          {
+            "nome": "Glicério",
+            "codigo_ibge": "330240330"
+          },
+          {
+            "nome": "Sana",
+            "codigo_ibge": "330240340"
+          }
+        ]
+      },
+      {
+        "nome": "Macuco",
+        "codigo_ibge": "3302452",
+        "bairros": [
+          {
+            "nome": "Macuco",
+            "codigo_ibge": "330245205"
+          }
+        ]
+      },
+      {
+        "nome": "Magé",
+        "codigo_ibge": "3302502",
+        "bairros": [
+          {
+            "nome": "Magé",
+            "codigo_ibge": "330250205"
+          },
+          {
+            "nome": "Guia de Pacobaíba",
+            "codigo_ibge": "330250215"
+          },
+          {
+            "nome": "Inhomirim",
+            "codigo_ibge": "330250220"
+          },
+          {
+            "nome": "Santo Aleixo",
+            "codigo_ibge": "330250225"
+          },
+          {
+            "nome": "Suruí",
+            "codigo_ibge": "330250230"
+          },
+          {
+            "nome": "Rio D'Ouro",
+            "codigo_ibge": "330250235"
+          }
+        ]
+      },
+      {
+        "nome": "Mangaratiba",
+        "codigo_ibge": "3302601",
+        "bairros": [
+          {
+            "nome": "Mangaratiba",
+            "codigo_ibge": "330260105"
+          },
+          {
+            "nome": "Conceição de Jacareí",
+            "codigo_ibge": "330260110"
+          },
+          {
+            "nome": "Itacurussá",
+            "codigo_ibge": "330260115"
+          },
+          {
+            "nome": "Muriqui",
+            "codigo_ibge": "330260120"
+          }
+        ]
+      },
+      {
+        "nome": "Maricá",
+        "codigo_ibge": "3302700",
+        "bairros": [
+          {
+            "nome": "Maricá",
+            "codigo_ibge": "330270005"
+          },
+          {
+            "nome": "Inoã",
+            "codigo_ibge": "330270010"
+          },
+          {
+            "nome": "Ponta Negra",
+            "codigo_ibge": "330270015"
+          },
+          {
+            "nome": "Itaipuaçu",
+            "codigo_ibge": "330270020"
+          }
+        ]
+      },
+      {
+        "nome": "Mendes",
+        "codigo_ibge": "3302809",
+        "bairros": [
+          {
+            "nome": "Mendes",
+            "codigo_ibge": "330280905"
+          }
+        ]
+      },
+      {
+        "nome": "Mesquita",
+        "codigo_ibge": "3302858",
+        "bairros": [
+          {
+            "nome": "Mesquita",
+            "codigo_ibge": "330285805"
+          },
+          {
+            "nome": "Vila Emil",
+            "codigo_ibge": "330285810"
+          },
+          {
+            "nome": "Banco de Areia",
+            "codigo_ibge": "330285815"
+          }
+        ]
+      },
+      {
+        "nome": "Miguel Pereira",
+        "codigo_ibge": "3302908",
+        "bairros": [
+          {
+            "nome": "Miguel Pereira",
+            "codigo_ibge": "330290805"
+          },
+          {
+            "nome": "Conrado",
+            "codigo_ibge": "330290807"
+          },
+          {
+            "nome": "Governador Portela",
+            "codigo_ibge": "330290810"
+          }
+        ]
+      },
+      {
+        "nome": "Miracema",
+        "codigo_ibge": "3303005",
+        "bairros": [
+          {
+            "nome": "Miracema",
+            "codigo_ibge": "330300505"
+          },
+          {
+            "nome": "Paraíso do Tobias",
+            "codigo_ibge": "330300510"
+          },
+          {
+            "nome": "Venda das Flores",
+            "codigo_ibge": "330300515"
+          }
+        ]
+      },
+      {
+        "nome": "Natividade",
+        "codigo_ibge": "3303104",
+        "bairros": [
+          {
+            "nome": "Natividade",
+            "codigo_ibge": "330310405"
+          },
+          {
+            "nome": "Bom Jesus do Querendo",
+            "codigo_ibge": "330310407"
+          },
+          {
+            "nome": "Ourânia",
+            "codigo_ibge": "330310410"
+          }
+        ]
+      },
+      {
+        "nome": "Nilópolis",
+        "codigo_ibge": "3303203",
+        "bairros": [
+          {
+            "nome": "Nilópolis",
+            "codigo_ibge": "330320305"
+          },
+          {
+            "nome": "Olinda",
+            "codigo_ibge": "330320310"
+          }
+        ]
+      },
+      {
+        "nome": "Niterói",
+        "codigo_ibge": "3303302",
+        "bairros": [
+          {
+            "nome": "Niterói",
+            "codigo_ibge": "330330205"
+          }
+        ]
+      },
+      {
+        "nome": "Nova Friburgo",
+        "codigo_ibge": "3303401",
+        "bairros": [
+          {
+            "nome": "Nova Friburgo",
+            "codigo_ibge": "330340105"
+          },
+          {
+            "nome": "Amparo",
+            "codigo_ibge": "330340110"
+          },
+          {
+            "nome": "Campo do Coelho",
+            "codigo_ibge": "330340115"
+          },
+          {
+            "nome": "Conselheiro Paulino",
+            "codigo_ibge": "330340120"
+          },
+          {
+            "nome": "Lumiar",
+            "codigo_ibge": "330340125"
+          },
+          {
+            "nome": "Muri",
+            "codigo_ibge": "330340127"
+          },
+          {
+            "nome": "Riograndina",
+            "codigo_ibge": "330340130"
+          },
+          {
+            "nome": "São Pedro da Serra",
+            "codigo_ibge": "330340135"
+          }
+        ]
+      },
+      {
+        "nome": "Nova Iguaçu",
+        "codigo_ibge": "3303500",
+        "bairros": [
+          {
+            "nome": "Nova Iguaçu",
+            "codigo_ibge": "330350005"
+          }
+        ]
+      },
+      {
+        "nome": "Paracambi",
+        "codigo_ibge": "3303609",
+        "bairros": [
+          {
+            "nome": "Paracambi",
+            "codigo_ibge": "330360905"
+          }
+        ]
+      },
+      {
+        "nome": "Paraíba do Sul",
+        "codigo_ibge": "3303708",
+        "bairros": [
+          {
+            "nome": "Paraíba do Sul",
+            "codigo_ibge": "330370805"
+          },
+          {
+            "nome": "Inconfidência",
+            "codigo_ibge": "330370810"
+          },
+          {
+            "nome": "Salutaris",
+            "codigo_ibge": "330370815"
+          },
+          {
+            "nome": "Werneck",
+            "codigo_ibge": "330370820"
+          }
+        ]
+      },
+      {
+        "nome": "Paraty",
+        "codigo_ibge": "3303807",
+        "bairros": [
+          {
+            "nome": "Paraty",
+            "codigo_ibge": "330380705"
+          },
+          {
+            "nome": "Paraty-Mirim",
+            "codigo_ibge": "330380710"
+          },
+          {
+            "nome": "Tarituba",
+            "codigo_ibge": "330380715"
+          }
+        ]
+      },
+      {
+        "nome": "Paty do Alferes",
+        "codigo_ibge": "3303856",
+        "bairros": [
+          {
+            "nome": "Paty do Alferes",
+            "codigo_ibge": "330385605"
+          },
+          {
+            "nome": "Avelar",
+            "codigo_ibge": "330385610"
+          }
+        ]
+      },
+      {
+        "nome": "Petrópolis",
+        "codigo_ibge": "3303906",
+        "bairros": [
+          {
+            "nome": "Petrópolis",
+            "codigo_ibge": "330390605"
+          },
+          {
+            "nome": "Cascatinha",
+            "codigo_ibge": "330390610"
+          },
+          {
+            "nome": "Itaipava",
+            "codigo_ibge": "330390615"
+          },
+          {
+            "nome": "Pedro do Rio",
+            "codigo_ibge": "330390620"
+          },
+          {
+            "nome": "Posse",
+            "codigo_ibge": "330390623"
+          }
+        ]
+      },
+      {
+        "nome": "Pinheiral",
+        "codigo_ibge": "3303955",
+        "bairros": [
+          {
+            "nome": "Pinheiral",
+            "codigo_ibge": "330395505"
+          }
+        ]
+      },
+      {
+        "nome": "Piraí",
+        "codigo_ibge": "3304003",
+        "bairros": [
+          {
+            "nome": "Piraí",
+            "codigo_ibge": "330400305"
+          },
+          {
+            "nome": "Arrozal",
+            "codigo_ibge": "330400310"
+          },
+          {
+            "nome": "Monumento",
+            "codigo_ibge": "330400315"
+          },
+          {
+            "nome": "Santanésia",
+            "codigo_ibge": "330400325"
+          }
+        ]
+      },
+      {
+        "nome": "Porciúncula",
+        "codigo_ibge": "3304102",
+        "bairros": [
+          {
+            "nome": "Porciúncula",
+            "codigo_ibge": "330410205"
+          },
+          {
+            "nome": "Purilândia",
+            "codigo_ibge": "330410210"
+          },
+          {
+            "nome": "Santa Clara",
+            "codigo_ibge": "330410215"
+          }
+        ]
+      },
+      {
+        "nome": "Porto Real",
+        "codigo_ibge": "3304110",
+        "bairros": [
+          {
+            "nome": "Porto Real",
+            "codigo_ibge": "330411005"
+          }
+        ]
+      },
+      {
+        "nome": "Quatis",
+        "codigo_ibge": "3304128",
+        "bairros": [
+          {
+            "nome": "Quatis",
+            "codigo_ibge": "330412805"
+          },
+          {
+            "nome": "Falcão",
+            "codigo_ibge": "330412810"
+          },
+          {
+            "nome": "Ribeirão de São Joaquim",
+            "codigo_ibge": "330412820"
+          }
+        ]
+      },
+      {
+        "nome": "Queimados",
+        "codigo_ibge": "3304144",
+        "bairros": [
+          {
+            "nome": "Queimados",
+            "codigo_ibge": "330414405"
+          }
+        ]
+      },
+      {
+        "nome": "Quissamã",
+        "codigo_ibge": "3304151",
+        "bairros": [
+          {
+            "nome": "Quissamã",
+            "codigo_ibge": "330415105"
+          }
+        ]
+      },
+      {
+        "nome": "Resende",
+        "codigo_ibge": "3304201",
+        "bairros": [
+          {
+            "nome": "Resende",
+            "codigo_ibge": "330420105"
+          },
+          {
+            "nome": "Agulhas Negras",
+            "codigo_ibge": "330420110"
+          },
+          {
+            "nome": "Engenheiro Passos",
+            "codigo_ibge": "330420115"
+          },
+          {
+            "nome": "Fumaça",
+            "codigo_ibge": "330420120"
+          },
+          {
+            "nome": "Pedra Selada",
+            "codigo_ibge": "330420130"
+          },
+          {
+            "nome": "Bulhões",
+            "codigo_ibge": "330420145"
+          },
+          {
+            "nome": "Visconde de Mauá",
+            "codigo_ibge": "330420150"
+          }
+        ]
+      },
+      {
+        "nome": "Rio Bonito",
+        "codigo_ibge": "3304300",
+        "bairros": [
+          {
+            "nome": "Rio Bonito",
+            "codigo_ibge": "330430005"
+          },
+          {
+            "nome": "Bazílio",
+            "codigo_ibge": "330430007"
+          },
+          {
+            "nome": "Boa Esperança",
+            "codigo_ibge": "330430010"
+          }
+        ]
+      },
+      {
+        "nome": "Rio Claro",
+        "codigo_ibge": "3304409",
+        "bairros": [
+          {
+            "nome": "Rio Claro",
+            "codigo_ibge": "330440905"
+          },
+          {
+            "nome": "Getulândia",
+            "codigo_ibge": "330440910"
+          },
+          {
+            "nome": "Lídice",
+            "codigo_ibge": "330440915"
+          },
+          {
+            "nome": "Passa Três",
+            "codigo_ibge": "330440920"
+          },
+          {
+            "nome": "São João Marcos",
+            "codigo_ibge": "330440925"
+          }
+        ]
+      },
+      {
+        "nome": "Rio das Flores",
+        "codigo_ibge": "3304508",
+        "bairros": [
+          {
+            "nome": "Rio das Flores",
+            "codigo_ibge": "330450805"
+          },
+          {
+            "nome": "Abarracamento",
+            "codigo_ibge": "330450810"
+          },
+          {
+            "nome": "Manuel Duarte",
+            "codigo_ibge": "330450815"
+          },
+          {
+            "nome": "Taboas",
+            "codigo_ibge": "330450820"
+          }
+        ]
+      },
+      {
+        "nome": "Rio das Ostras",
+        "codigo_ibge": "3304524",
+        "bairros": [
+          {
+            "nome": "Rio das Ostras",
+            "codigo_ibge": "330452405"
+          }
+        ]
+      },
+      {
+        "nome": "Rio de Janeiro",
+        "codigo_ibge": "3304557",
+        "bairros": [
+          {
+            "nome": "Rio de Janeiro",
+            "codigo_ibge": "330455705"
+          }
+        ]
+      },
+      {
+        "nome": "Santa Maria Madalena",
+        "codigo_ibge": "3304607",
+        "bairros": [
+          {
+            "nome": "Santa Maria Madalena",
+            "codigo_ibge": "330460705"
+          },
+          {
+            "nome": "Doutor Loréti",
+            "codigo_ibge": "330460710"
+          },
+          {
+            "nome": "Renascença",
+            "codigo_ibge": "330460715"
+          },
+          {
+            "nome": "Santo Antônio do Imbé",
+            "codigo_ibge": "330460720"
+          },
+          {
+            "nome": "Sossego",
+            "codigo_ibge": "330460725"
+          },
+          {
+            "nome": "Triunfo",
+            "codigo_ibge": "330460730"
+          },
+          {
+            "nome": "Osório Bersot",
+            "codigo_ibge": "330460735"
+          }
+        ]
+      },
+      {
+        "nome": "Santo Antônio de Pádua",
+        "codigo_ibge": "3304706",
+        "bairros": [
+          {
+            "nome": "Santo Antônio de Pádua",
+            "codigo_ibge": "330470605"
+          },
+          {
+            "nome": "Baltazar",
+            "codigo_ibge": "330470615"
+          },
+          {
+            "nome": "Campelo",
+            "codigo_ibge": "330470617"
+          },
+          {
+            "nome": "Ibitiguaçu",
+            "codigo_ibge": "330470620"
+          },
+          {
+            "nome": "Marangatu",
+            "codigo_ibge": "330470625"
+          },
+          {
+            "nome": "Monte Alegre",
+            "codigo_ibge": "330470630"
+          },
+          {
+            "nome": "Paraoquena",
+            "codigo_ibge": "330470635"
+          },
+          {
+            "nome": "Santa Cruz",
+            "codigo_ibge": "330470640"
+          },
+          {
+            "nome": "São Pedro de Alcântara",
+            "codigo_ibge": "330470650"
+          }
+        ]
+      },
+      {
+        "nome": "São Francisco de Itabapoana",
+        "codigo_ibge": "3304755",
+        "bairros": [
+          {
+            "nome": "São Francisco de Itabapoana",
+            "codigo_ibge": "330475505"
+          },
+          {
+            "nome": "Barra Seca",
+            "codigo_ibge": "330475510"
+          },
+          {
+            "nome": "Maniva",
+            "codigo_ibge": "330475515"
+          }
+        ]
+      },
+      {
+        "nome": "São Fidélis",
+        "codigo_ibge": "3304805",
+        "bairros": [
+          {
+            "nome": "São Fidélis",
+            "codigo_ibge": "330480505"
+          },
+          {
+            "nome": "Cambiasca",
+            "codigo_ibge": "330480510"
+          },
+          {
+            "nome": "Colônia",
+            "codigo_ibge": "330480515"
+          },
+          {
+            "nome": "Ipuca",
+            "codigo_ibge": "330480520"
+          },
+          {
+            "nome": "Pureza",
+            "codigo_ibge": "330480525"
+          }
+        ]
+      },
+      {
+        "nome": "São Gonçalo",
+        "codigo_ibge": "3304904",
+        "bairros": [
+          {
+            "nome": "São Gonçalo",
+            "codigo_ibge": "330490405"
+          },
+          {
+            "nome": "Ipiiba",
+            "codigo_ibge": "330490410"
+          },
+          {
+            "nome": "Monjolo",
+            "codigo_ibge": "330490415"
+          },
+          {
+            "nome": "Neves",
+            "codigo_ibge": "330490420"
+          },
+          {
+            "nome": "Sete Pontes",
+            "codigo_ibge": "330490425"
+          }
+        ]
+      },
+      {
+        "nome": "São João da Barra",
+        "codigo_ibge": "3305000",
+        "bairros": [
+          {
+            "nome": "São João da Barra",
+            "codigo_ibge": "330500005"
+          },
+          {
+            "nome": "Atafona",
+            "codigo_ibge": "330500007"
+          },
+          {
+            "nome": "Barcelos",
+            "codigo_ibge": "330500010"
+          },
+          {
+            "nome": "Cajueiro",
+            "codigo_ibge": "330500016"
+          },
+          {
+            "nome": "Grussaí",
+            "codigo_ibge": "330500018"
+          },
+          {
+            "nome": "Pipeiras",
+            "codigo_ibge": "330500030"
+          }
+        ]
+      },
+      {
+        "nome": "São João de Meriti",
+        "codigo_ibge": "3305109",
+        "bairros": [
+          {
+            "nome": "São João de Meriti",
+            "codigo_ibge": "330510905"
+          },
+          {
+            "nome": "Coelho da Rocha",
+            "codigo_ibge": "330510910"
+          },
+          {
+            "nome": "São Mateus",
+            "codigo_ibge": "330510915"
+          }
+        ]
+      },
+      {
+        "nome": "São José de Ubá",
+        "codigo_ibge": "3305133",
+        "bairros": [
+          {
+            "nome": "São José de Ubá",
+            "codigo_ibge": "330513305"
+          }
+        ]
+      },
+      {
+        "nome": "São José do Vale do Rio Preto",
+        "codigo_ibge": "3305158",
+        "bairros": [
+          {
+            "nome": "São José do Vale do Rio Preto",
+            "codigo_ibge": "330515805"
+          }
+        ]
+      },
+      {
+        "nome": "São Pedro da Aldeia",
+        "codigo_ibge": "3305208",
+        "bairros": [
+          {
+            "nome": "São Pedro da Aldeia",
+            "codigo_ibge": "330520805"
+          }
+        ]
+      },
+      {
+        "nome": "São Sebastião do Alto",
+        "codigo_ibge": "3305307",
+        "bairros": [
+          {
+            "nome": "São Sebastião do Alto",
+            "codigo_ibge": "330530705"
+          },
+          {
+            "nome": "Ipituna",
+            "codigo_ibge": "330530707"
+          },
+          {
+            "nome": "Valão do Barro",
+            "codigo_ibge": "330530710"
+          },
+          {
+            "nome": "Ibipeba",
+            "codigo_ibge": "330530715"
+          }
+        ]
+      },
+      {
+        "nome": "Sapucaia",
+        "codigo_ibge": "3305406",
+        "bairros": [
+          {
+            "nome": "Sapucaia",
+            "codigo_ibge": "330540605"
+          },
+          {
+            "nome": "Anta",
+            "codigo_ibge": "330540610"
+          },
+          {
+            "nome": "Jamapará",
+            "codigo_ibge": "330540615"
+          },
+          {
+            "nome": "Nossa Senhora da Aparecida",
+            "codigo_ibge": "330540620"
+          },
+          {
+            "nome": "Pião",
+            "codigo_ibge": "330540625"
+          }
+        ]
+      },
+      {
+        "nome": "Saquarema",
+        "codigo_ibge": "3305505",
+        "bairros": [
+          {
+            "nome": "Saquarema",
+            "codigo_ibge": "330550505"
+          },
+          {
+            "nome": "Bacaxá",
+            "codigo_ibge": "330550510"
+          },
+          {
+            "nome": "Sampaio Correia",
+            "codigo_ibge": "330550515"
+          }
+        ]
+      },
+      {
+        "nome": "Seropédica",
+        "codigo_ibge": "3305554",
+        "bairros": [
+          {
+            "nome": "Seropédica",
+            "codigo_ibge": "330555405"
+          }
+        ]
+      },
+      {
+        "nome": "Silva Jardim",
+        "codigo_ibge": "3305604",
+        "bairros": [
+          {
+            "nome": "Silva Jardim",
+            "codigo_ibge": "330560405"
+          },
+          {
+            "nome": "Correntezas",
+            "codigo_ibge": "330560410"
+          },
+          {
+            "nome": "Gaviões",
+            "codigo_ibge": "330560415"
+          },
+          {
+            "nome": "Aldeia Velha",
+            "codigo_ibge": "330560420"
+          }
+        ]
+      },
+      {
+        "nome": "Sumidouro",
+        "codigo_ibge": "3305703",
+        "bairros": [
+          {
+            "nome": "Sumidouro",
+            "codigo_ibge": "330570305"
+          },
+          {
+            "nome": "Campinas",
+            "codigo_ibge": "330570310"
+          },
+          {
+            "nome": "Dona Mariana",
+            "codigo_ibge": "330570315"
+          },
+          {
+            "nome": "Soledade",
+            "codigo_ibge": "330570325"
+          }
+        ]
+      },
+      {
+        "nome": "Tanguá",
+        "codigo_ibge": "3305752",
+        "bairros": [
+          {
+            "nome": "Tanguá",
+            "codigo_ibge": "330575205"
+          }
+        ]
+      },
+      {
+        "nome": "Teresópolis",
+        "codigo_ibge": "3305802",
+        "bairros": [
+          {
+            "nome": "Teresópolis",
+            "codigo_ibge": "330580205"
+          },
+          {
+            "nome": "Vale de Bonsucesso",
+            "codigo_ibge": "330580210"
+          },
+          {
+            "nome": "Vale do Paquequer",
+            "codigo_ibge": "330580215"
+          }
+        ]
+      },
+      {
+        "nome": "Trajano de Moraes",
+        "codigo_ibge": "3305901",
+        "bairros": [
+          {
+            "nome": "Trajano de Moraes",
+            "codigo_ibge": "330590105"
+          },
+          {
+            "nome": "Doutor Elias",
+            "codigo_ibge": "330590110"
+          },
+          {
+            "nome": "Sodrelândia",
+            "codigo_ibge": "330590115"
+          },
+          {
+            "nome": "Vila da Grama",
+            "codigo_ibge": "330590120"
+          },
+          {
+            "nome": "Visconde de Imbé",
+            "codigo_ibge": "330590125"
+          }
+        ]
+      },
+      {
+        "nome": "Três Rios",
+        "codigo_ibge": "3306008",
+        "bairros": [
+          {
+            "nome": "Três Rios",
+            "codigo_ibge": "330600805"
+          },
+          {
+            "nome": "Bemposta",
+            "codigo_ibge": "330600820"
+          }
+        ]
+      },
+      {
+        "nome": "Valença",
+        "codigo_ibge": "3306107",
+        "bairros": [
+          {
+            "nome": "Valença",
+            "codigo_ibge": "330610705"
+          },
+          {
+            "nome": "Barão de Juparanã",
+            "codigo_ibge": "330610710"
+          },
+          {
+            "nome": "Conservatória",
+            "codigo_ibge": "330610715"
+          },
+          {
+            "nome": "Parapeúna",
+            "codigo_ibge": "330610720"
+          },
+          {
+            "nome": "Pentagna",
+            "codigo_ibge": "330610725"
+          },
+          {
+            "nome": "Santa Isabel do Rio Preto",
+            "codigo_ibge": "330610730"
+          }
+        ]
+      },
+      {
+        "nome": "Varre-Sai",
+        "codigo_ibge": "3306156",
+        "bairros": [
+          {
+            "nome": "Varre-Sai",
+            "codigo_ibge": "330615605"
+          }
+        ]
+      },
+      {
+        "nome": "Vassouras",
+        "codigo_ibge": "3306206",
+        "bairros": [
+          {
+            "nome": "Vassouras",
+            "codigo_ibge": "330620605"
+          },
+          {
+            "nome": "Andrade Pinto",
+            "codigo_ibge": "330620610"
+          },
+          {
+            "nome": "São Sebastião dos Ferreiros",
+            "codigo_ibge": "330620630"
+          },
+          {
+            "nome": "Sebastião de Lacerda",
+            "codigo_ibge": "330620635"
+          }
+        ]
+      },
+      {
+        "nome": "Volta Redonda",
+        "codigo_ibge": "3306305",
+        "bairros": [
+          {
+            "nome": "Volta Redonda",
+            "codigo_ibge": "330630505"
+          }
+        ]
+      }
+    ]
+  }
+}

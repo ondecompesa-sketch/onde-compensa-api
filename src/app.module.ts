@@ -1,19 +1,28 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
-import { GeminiService } from './gemini.service';
+import { AppService } from './app.service';
+import { PrismaService } from './prisma.service';
 import { SupabaseService } from './supabase.service';
-import { PrismaService } from './prisma.service'; // <--- NOVO
-import { ReceiptService } from './receipt.service'; // <--- NOVO
+import { GeminiService } from './gemini.service';
+import { ReceiptService } from './receipt.service';
+// Novos imports de localização
+import { LocationController } from './location.controller';
+import { LocationService } from './location.service';
 
 @Module({
   imports: [ConfigModule.forRoot()],
-  controllers: [AppController],
+  controllers: [
+    AppController, 
+    LocationController // <--- Adicionado
+  ],
   providers: [
-    GeminiService, 
+    AppService, 
+    PrismaService, 
     SupabaseService, 
-    PrismaService, // <--- NOVO
-    ReceiptService // <--- NOVO
+    GeminiService, 
+    ReceiptService,
+    LocationService // <--- Adicionado
   ],
 })
 export class AppModule {}
