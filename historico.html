@@ -118,7 +118,7 @@
 <script>
     // --- ⚠️ SUAS CHAVES DO SUPABASE (PREENCHA AQUI) ---
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     // -----------------------------------------------
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -191,10 +191,14 @@
         dados.forEach(nota => {
             const data = new Date(nota.issue_date).toLocaleDateString('pt-BR');
             const total = parseFloat(nota.total_amount).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            
+            // CORREÇÃO: nota.store?.name (Singular)
+            const nomeLoja = nota.store?.name || nota.stores?.name || 'Loja Desconhecida';
+
             tbody.innerHTML += `
                 <tr>
                     <td>${data}</td>
-                    <td><b>${nota.stores?.name || '...'}</b></td>
+                    <td><b>${nomeLoja}</b></td>
                     <td>${nota.receipt_items.length}</td>
                     <td style="color:#2e7d32; font-weight:bold">${total}</td>
                     <td>
@@ -211,7 +215,9 @@
         dados.forEach(nota => {
             totalGeral += parseFloat(nota.total_amount);
             nota.receipt_items.forEach(item => {
-                let cat = item.products?.category || 'Outros';
+                // CORREÇÃO: item.product?.category (Singular)
+                // Mantivemos o plural (.products) como fallback só por segurança
+                let cat = item.product?.category || item.products?.category || 'Outros';
                 if (!gastosPorCategoria[cat]) gastosPorCategoria[cat] = 0;
                 gastosPorCategoria[cat] += parseFloat(item.total_price);
             });
@@ -244,17 +250,25 @@
         if(prods.length===0) area.innerHTML='<p style="padding:10px; color:#666">Nada encontrado.</p>';
         prods.forEach(p => {
             const pr = parseFloat(p.unit_price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-            area.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee; cursor:pointer" onclick="abrirNotaPorId('${p.receipt_id}')"><b>${p.raw_name}</b> - <span style="color:green">${pr}</span> <small>(${p.receipts?.stores?.name})</small></div>`;
+            // CORREÇÃO: p.receipt?.store?.name (Singular)
+            const nomeLoja = p.receipt?.store?.name || p.receipt?.stores?.name || 'Loja';
+            area.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee; cursor:pointer" onclick="abrirNotaPorId('${p.receipt_id}')"><b>${p.raw_name}</b> - <span style="color:green">${pr}</span> <small>(${nomeLoja})</small></div>`;
         });
     }
 
     function abrirNotaPorId(id) {
         const nota = todasAsCompras.find(n => n.id === id);
         if(!nota) return;
-        document.getElementById('modal-titulo').innerText = nota.stores?.name;
+        
+        // CORREÇÃO: nota.store?.name (Singular)
+        const nomeLoja = nota.store?.name || nota.stores?.name || 'Loja';
+        document.getElementById('modal-titulo').innerText = nomeLoja;
+        
         let html = '<table style="width:100%"><thead><tr><th align="left">Item</th><th align="right">Total</th></tr></thead><tbody>';
         nota.receipt_items.forEach(i => {
-            html += `<tr><td>${i.raw_name} <br><small style="color:#888">${i.products?.category || 'Outros'}</small></td><td align="right" style="font-weight:bold">${parseFloat(i.total_price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td></tr>`;
+            // CORREÇÃO: i.product?.category (Singular)
+            const cat = i.product?.category || i.products?.category || 'Outros';
+            html += `<tr><td>${i.raw_name} <br><small style="color:#888">${cat}</small></td><td align="right" style="font-weight:bold">${parseFloat(i.total_price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td></tr>`;
         });
         document.getElementById('lista-itens-modal').innerHTML = html + '</tbody></table><br><div style="text-align:right; font-size:1.4em; font-weight:bold; color:#2e7d32">Total: ' + parseFloat(nota.total_amount).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) + '</div>';
         document.getElementById('modalDetalhes').style.display = 'flex';
