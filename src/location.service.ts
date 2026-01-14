@@ -7,8 +7,8 @@ export class LocationService {
 
   // Busca todas as cidades de um Estado
   async getCities(stateId: string) {
-    // CORREÇÃO: city -> cities (Plural)
-    return this.prisma.cities.findMany({
+    // VOLTAMOS PARA O SINGULAR (Padrão do Prisma quando o Schema estiver certo)
+    return this.prisma.city.findMany({
       where: { stateId },
       orderBy: { name: 'asc' }, 
     });
@@ -16,8 +16,8 @@ export class LocationService {
 
   // Busca todos os bairros (distritos) de uma Cidade
   async getDistricts(cityId: string) {
-    // CORREÇÃO: district -> districts (Plural)
-    return this.prisma.districts.findMany({
+    // VOLTAMOS PARA O SINGULAR
+    return this.prisma.district.findMany({
       where: { cityId },
       orderBy: { name: 'asc' },
     });
