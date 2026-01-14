@@ -13,12 +13,14 @@ export class AppService {
 
   async processReceipt(file: Express.Multer.File, userId: string) {
     // 1. Upload
-    const publicUrl = await this.supabaseService.uploadFile(file);
+    // CORREÇÃO AQUI: Usamos { publicUrl } para extrair apenas o texto da URL
+    const { publicUrl } = await this.supabaseService.uploadFile(file);
 
     // 2. Gemini
+    // Agora passamos a string limpa para o Gemini
     const receiptData = await this.geminiService.extractReceiptData(publicUrl);
 
-    // 3. Salvar Store (SINGULAR)
+    // 3. Salvar Store (SINGULAR - Já corrigido antes)
     const store = await this.prisma.store.upsert({
       where: { cnpj: receiptData.market.cnpj || 'UNKNOWN' },
       update: {},
@@ -29,10 +31,10 @@ export class AppService {
       },
     });
 
-    // 4. Salvar Recibo (SINGULAR)
+    // 4. Salvar Recibo (SINGULAR - Já corrigido antes)
     const receipt = await this.prisma.receipt.create({
       data: {
-        image_url: publicUrl,
+        image_url: publicUrl, // Agora isso é uma string, o erro vai sumir!
         status: 'PROCESSED',
         total_amount: receiptData.total,
         issue_date: new Date(receiptData.date),
@@ -43,7 +45,7 @@ export class AppService {
 
     // 5. Salvar Itens
     for (const item of receiptData.items) {
-      // Product (SINGULAR)
+      // Product (SINGULAR - Já corrigido antes)
       const product = await this.prisma.product.upsert({ 
         where: { code: item.code || 'UNKNOWN' },
         update: {},
@@ -54,7 +56,7 @@ export class AppService {
         },
       });
 
-      // ReceiptItem (SINGULAR - camelCase padrão do Prisma)
+      // ReceiptItem (SINGULAR - Já corrigido antes)
       await this.prisma.receiptItem.create({
         data: {
           receipt_id: receipt.id,
