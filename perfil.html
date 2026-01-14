@@ -3,31 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Completar Perfil - OndeCompensa</title>
+    <title>Meu Perfil - OndeCompensa</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#007bff">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; position: relative; }
         h1 { color: #333; margin-bottom: 10px; }
         p { color: #666; margin-bottom: 30px; }
         input, select { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1em; }
         .btn { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1em; margin-top: 20px; transition: 0.2s; }
         .btn:hover { background: #0056b3; }
+        .btn-voltar { background: transparent; color: #666; border: 1px solid #ddd; margin-top: 10px; }
+        .btn-voltar:hover { background: #eee; }
         .loading { opacity: 0.7; pointer-events: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>👋 Bem-vindo(a)!</h1>
-    <p>Para te mostrarmos as melhores ofertas perto de você, precisamos de alguns dados.</p>
+    <h1>👤 Meu Perfil</h1>
+    <p>Mantenha seus dados atualizados para receber ofertas próximas.</p>
 
-    <input type="text" id="nome" placeholder="Seu Nome (ex: Eduardo)">
+    <input type="text" id="nome" placeholder="Seu Nome Completo">
     
     <select id="bairro">
-        <option value="" disabled selected>Selecione seu Bairro</option>
+        <option value="" disabled selected>Carregando...</option>
         <option value="Bangu">Bangu</option>
         <option value="Barra da Tijuca">Barra da Tijuca</option>
         <option value="Botafogo">Botafogo</option>
@@ -40,53 +42,77 @@
         <option value="Outros">Outros...</option>
     </select>
 
-    <button onclick="salvarPerfil()" id="btn-salvar" class="btn">Salvar e Continuar</button>
+    <button onclick="salvarPerfil()" id="btn-salvar" class="btn">Salvar Alterações</button>
+    <button onclick="voltar()" class="btn btn-voltar">Voltar</button>
 </div>
 
 <script>
-    // --- SUAS CHAVES AQUI ---
-   const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
+    // --- ⚠️ SUAS CHAVES DO SUPABASE (PREENCHA AQUI) ---
+    const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
-   
-    // -----------------------
+    // -----------------------------------------------
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Carregar dados ao abrir
+    async function carregarDados() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return window.location.href = 'login.html';
+
+        // Busca o perfil atual
+        const { data: perfil } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+        // Se achou, preenche os campos
+        if (perfil) {
+            if(perfil.full_name) document.getElementById('nome').value = perfil.full_name;
+            if(perfil.bairro) document.getElementById('bairro').value = perfil.bairro;
+        } else {
+            // Se não tem perfil, reseta o select
+            document.getElementById('bairro').value = "";
+        }
+    }
 
     async function salvarPerfil() {
         const btn = document.getElementById('btn-salvar');
         const nome = document.getElementById('nome').value;
         const bairro = document.getElementById('bairro').value;
 
-        if (!nome || !bairro) return alert("Por favor, preencha tudo!");
+        if (!nome || !bairro) return alert("Por favor, preencha nome e bairro!");
 
         btn.innerText = "Salvando...";
         btn.classList.add("loading");
 
         const { data: { user } } = await supabase.auth.getUser();
 
-        if (user) {
-            // Tenta inserir (se não existir) ou atualizar (se já existir)
-            const { error } = await supabase.from('profiles').upsert({
-                id: user.id,
-                email: user.email,
-                full_name: nome,
-                bairro: bairro,
-                cidade: 'Rio de Janeiro'
-            });
+        // Salva ou Atualiza (Upsert)
+        const { error } = await supabase.from('profiles').upsert({
+            id: user.id,
+            email: user.email,
+            full_name: nome,
+            bairro: bairro,
+            cidade: 'Rio de Janeiro',
+            updated_at: new Date()
+        });
 
-            if (error) {
-                alert("Erro ao salvar: " + error.message);
-                btn.innerText = "Tentar Novamente";
-                btn.classList.remove("loading");
-            } else {
-                // Sucesso! Vai para o painel
-                window.location.href = 'historico.html';
-            }
+        if (error) {
+            alert("Erro: " + error.message);
+            btn.innerText = "Salvar Alterações";
+            btn.classList.remove("loading");
         } else {
-            alert("Erro: Usuário não logado.");
-            window.location.href = 'login.html';
+            alert("Perfil atualizado com sucesso! ✅");
+            window.location.href = 'historico.html';
         }
     }
+
+    function voltar() {
+        window.location.href = 'historico.html';
+    }
+
+    carregarDados();
 </script>
 
 </body>
