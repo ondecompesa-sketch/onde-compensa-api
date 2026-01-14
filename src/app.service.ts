@@ -29,7 +29,7 @@ export class AppService {
       },
     });
 
-    const receipt = await this.prisma.receipt.create({
+    const receipt = await this.prisma.receipts.create({
       data: {
         image_url: publicUrl,
         status: 'PROCESSED',
@@ -51,7 +51,7 @@ export class AppService {
         },
       });
 
-      await this.prisma.receipt_item.create({
+      await this.prisma.receiptItems.create({
         data: {
           receipt_id: receipt.id,
           product_id: product.id,

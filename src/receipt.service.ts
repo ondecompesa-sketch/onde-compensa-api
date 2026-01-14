@@ -5,31 +5,36 @@ import { PrismaService } from './prisma.service';
 export class ReceiptService {
   constructor(private prisma: PrismaService) {}
 
+  // Busca todas as notas de um usuário
   async findAll(userId: string) {
     if (!userId) return [];
     
-    return this.prisma.receipt.findMany({
+    // CORREÇÃO: receipts (plural)
+    return this.prisma.receipts.findMany({
       where: { user_id: userId },
       orderBy: { issue_date: 'desc' },
       include: {
         stores: true,
-        receipt_items: {
+        // CORREÇÃO: receiptItems (CamelCase)
+        receiptItems: {
           include: { products: true },
         },
       },
     });
   }
 
+  // Busca produtos dentro das notas
   async search(query: string, userId: string) {
     if (!userId) return [];
     
-    return this.prisma.receipt_item.findMany({
+    // CORREÇÃO: receiptItems (CamelCase)
+    return this.prisma.receiptItems.findMany({
       where: {
         raw_name: { contains: query, mode: 'insensitive' },
-        receipts: { user_id: userId }
+        receipt: { user_id: userId } // receipt no singular aqui pois é o nome da relação dentro do item
       },
       include: {
-        receipts: { include: { stores: true } },
+        receipt: { include: { stores: true } },
         products: true
       },
       take: 20,
@@ -37,11 +42,13 @@ export class ReceiptService {
   }
 
   async delete(id: string) {
-    return this.prisma.receipt.delete({ where: { id } });
+    // CORREÇÃO: receipts (plural)
+    return this.prisma.receipts.delete({ where: { id } });
   }
 
   async cleanup() {
-    return this.prisma.receipt.deleteMany({
+    // CORREÇÃO: receipts (plural)
+    return this.prisma.receipts.deleteMany({
       where: { status: 'ERROR' },
     });
   }
