@@ -7,7 +7,9 @@ export class GeminiService {
   private genAI: GoogleGenerativeAI;
 
   constructor(private configService: ConfigService) {
-    this.genAI = new GoogleGenerativeAI(this.configService.get<string>('GEMINI_API_KEY'));
+    // CORREÇÃO: Adicionado "|| ''" para garantir que sempre seja uma string e o TypeScript não reclame
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY') || '';
+    this.genAI = new GoogleGenerativeAI(apiKey);
   }
 
   async extractReceiptData(imageBuffer: Buffer, mimeType: string) {
