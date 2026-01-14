@@ -12,13 +12,13 @@ export class AppService {
   ) {}
 
   async processReceipt(file: Express.Multer.File, userId: string) {
-    // 1. Upload da Imagem
+    // 1. Upload
     const publicUrl = await this.supabaseService.uploadFile(file);
 
-    // 2. Processar com Gemini
+    // 2. Gemini
     const receiptData = await this.geminiService.extractReceiptData(publicUrl);
 
-    // 3. Salvar no Banco (Com User ID)
+    // 3. Salvar Store
     const store = await this.prisma.store.upsert({
       where: { cnpj: receiptData.market.cnpj || 'UNKNOWN' },
       update: {},
@@ -29,6 +29,7 @@ export class AppService {
       },
     });
 
+    // 4. Salvar Recibo (Usando receipts plural conforme o erro anterior indicou)
     const receipt = await this.prisma.receipts.create({
       data: {
         image_url: publicUrl,
@@ -36,10 +37,11 @@ export class AppService {
         total_amount: receiptData.total,
         issue_date: new Date(receiptData.date),
         store_id: store.id,
-        user_id: userId, // <--- Importante!
+        user_id: userId,
       },
     });
 
+    // 5. Salvar Itens
     for (const item of receiptData.items) {
       const product = await this.prisma.product.upsert({
         where: { code: item.code || 'UNKNOWN' },
@@ -51,7 +53,8 @@ export class AppService {
         },
       });
 
-      await this.prisma.receiptItems.create({
+      // CORREÇÃO: receiptItem (Singular, padrão do Prisma para model ReceiptItem)
+      await this.prisma.receiptItem.create({
         data: {
           receipt_id: receipt.id,
           product_id: product.id,
