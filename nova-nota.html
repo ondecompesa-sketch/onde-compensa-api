@@ -86,11 +86,22 @@
         }
     }
 
-    async function enviarFoto() {
-        if (input.files.length === 0) {
-            alert("📸 Por favor, tire ou escolha uma foto primeiro!");
+   async function enviarFoto() {
+        // ... (código anterior de validação) ...
+
+        // Pegar o usuário logado
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        
+        if (!user) {
+            alert('Erro: Usuário não logado!');
             return;
         }
+
+        const formData = new FormData();
+        formData.append('file', input.files[0]);
+        formData.append('userId', user.id); // <--- AQUI ESTÁ A MÁGICA
+
+        // ... (resto do fetch igual antes) ...
 
         // Estado de Carregamento
         btnEnviar.disabled = true;

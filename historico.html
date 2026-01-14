@@ -7,29 +7,102 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
+   <script>
+    // --- MANTENHA AS SUAS CHAVES DO SUPABASE AQUI ---
+    const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
+   
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let todasAsCompras = [];
+    let chartInstance = null;
+    let userId = null;
+
+    // 1. Verifica Login e Carrega Dados
+    async function iniciar() {
+        const { data } = await supabaseClient.auth.getSession();
+        if (!data.session) return window.location.href = 'login.html';
         
-        // MUDANÇA AQUI: 'supabaseClient'
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        userId = data.session.user.id;
+        carregar();
+    }
 
-        // O GRANDE GUARDA-COSTAS 🛡️
-        async function checarLogin() {
-            // MUDANÇA AQUI
-            const { data } = await supabaseClient.auth.getSession();
-            if (!data.session) {
-                window.location.href = 'login.html';
-            }
-        }
-        checarLogin();
+    async function carregar() {
+        try {
+            // Agora enviamos o userId na URL
+            const res = await fetch(`https://onde-compensa-api.onrender.com/receipts?userId=${userId}`);
+            todasAsCompras = await res.json();
+            
+            preencherFiltroMeses(); // Cria o dropdown de meses
+            filtrarEAtualizar();    // Renderiza a tela
+        } catch(e) { console.error("Erro:", e); }
+    }
 
-        async function sair() {
-            // MUDANÇA AQUI
-            await supabaseClient.auth.signOut();
-            window.location.href = 'login.html';
+    // 2. Lógica de Filtrar por Mês
+    function preencherFiltroMeses() {
+        const select = document.getElementById('filtro-mes');
+        if(!select) return; // Se você ainda não criou o HTML do select (ver abaixo)
+
+        const meses = new Set();
+        todasAsCompras.forEach(n => {
+            const data = new Date(n.issue_date);
+            const mesAno = `${data.getMonth() + 1}/${data.getFullYear()}`; // ex: 1/2026
+            meses.add(mesAno);
+        });
+
+        select.innerHTML = '<option value="todos">📅 Todo o Período</option>';
+        meses.forEach(m => {
+            select.innerHTML += `<option value="${m}">${m}</option>`;
+        });
+    }
+
+    function filtrarEAtualizar() {
+        const select = document.getElementById('filtro-mes');
+        const mesEscolhido = select ? select.value : 'todos';
+
+        // Filtra as compras
+        const comprasFiltradas = todasAsCompras.filter(n => {
+            if (mesEscolhido === 'todos') return true;
+            const data = new Date(n.issue_date);
+            const mesAno = `${data.getMonth() + 1}/${data.getFullYear()}`;
+            return mesAno === mesEscolhido;
+        });
+
+        renderizarTabela(comprasFiltradas);
+        calcularEstatisticas(comprasFiltradas);
+    }
+
+    // 3. Funções de Exibição (Recebem dados filtrados agora)
+    function calcularEstatisticas(dados) {
+        let gastosPorCategoria = {};
+        let totalGeral = 0;
+
+        dados.forEach(nota => {
+            totalGeral += parseFloat(nota.total_amount);
+            nota.receipt_items.forEach(item => {
+                let cat = item.products?.category || 'Outros';
+                if (!gastosPorCategoria[cat]) gastosPorCategoria[cat] = 0;
+                gastosPorCategoria[cat] += parseFloat(item.total_price);
+            });
+        });
+
+        document.getElementById('total-geral').innerText = totalGeral.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+        
+        // Categoria Top
+        let topCat = '-'; let maxVal = 0;
+        for (const [cat, val] of Object.entries(gastosPorCategoria)) {
+            if (val > maxVal) { maxVal = val; topCat = cat; }
         }
-    </script>
+        document.getElementById('top-categoria').innerText = topCat;
+
+        renderizarGrafico(gastosPorCategoria);
+    }
+
+    // ... (Mantenha as funções renderizarGrafico, renderizarTabela, buscar, sair, etc. iguais) ...
+    // Apenas lembre que renderizarTabela agora recebe um argumento 'dados'
+
+    iniciar(); // Começa tudo
+</script>
     <style>
         /* --- ESTILOS GERAIS --- */
         body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; padding: 20px; color: #333; }
@@ -86,7 +159,12 @@
             <button onclick="fazerFaxina()" class="btn btn-faxina">🧹 Faxina</button>
         </div>
     </div>
-
+<div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; display:flex; align-items:center; gap:10px;">
+    <span>Filtrar por data:</span>
+    <select id="filtro-mes" onchange="filtrarEAtualizar()" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; flex-grow:1;">
+        <option value="todos">Carregando...</option>
+    </select>
+</div>
     <div class="dashboard-grid">
         <div class="chart-card">
             <h3 style="margin-bottom: 20px; color: #555;">Gastos por Categoria</h3>
