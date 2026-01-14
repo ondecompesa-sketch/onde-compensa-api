@@ -8,12 +8,12 @@ export class ReceiptService {
   async findAll(userId: string) {
     if (!userId) return [];
     
-    // CORREÇÃO: receipts (plural)
+    // Plural: receipts
     return this.prisma.receipts.findMany({
       where: { user_id: userId },
       orderBy: { issue_date: 'desc' },
       include: {
-        store: true, // Aqui é o nome da RELAÇÃO (dentro do model Receipt), então fica 'store' (singular)
+        stores: true, // MUDANÇA: store -> stores (Plural, seguindo o padrão que o erro indicou)
         receipt_items: { 
           include: { products: true },
         },
@@ -24,14 +24,14 @@ export class ReceiptService {
   async search(query: string, userId: string) {
     if (!userId) return [];
     
-    // CORREÇÃO: receipt_items (Snake case, conforme o erro pediu)
+    // Plural: receipt_items
     return this.prisma.receipt_items.findMany({
       where: {
         raw_name: { contains: query, mode: 'insensitive' },
-        receipt: { user_id: userId } 
+        receipts: { user_id: userId } // MUDANÇA: receipt -> receipts (Plural)
       },
       include: {
-        receipt: { include: { store: true } },
+        receipts: { include: { stores: true } }, // MUDANÇA: receipt -> receipts E store -> stores
         products: true
       },
       take: 20,
