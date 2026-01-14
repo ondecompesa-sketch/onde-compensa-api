@@ -1,74 +1,89 @@
 import { Injectable } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GeminiService {
   private genAI: GoogleGenerativeAI;
 
-  constructor() {
-    const key = process.env.GEMINI_API_KEY;
-    console.log('🔑 Gemini Service Iniciado. Chave final:', key?.slice(-4));
-    this.genAI = new GoogleGenerativeAI(key!);
+  constructor(private configService: ConfigService) {
+    this.genAI = new GoogleGenerativeAI(this.configService.get<string>('GEMINI_API_KEY'));
   }
 
-  async extractReceiptData(fileBuffer: Buffer, mimeType: string) {
-    // Usando a versão 3.0 Preview que sua conta tem acesso
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+  async extractReceiptData(imageBuffer: Buffer, mimeType: string) {
+    const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    console.log('🤖 Enviando imagem para o Gemini...');
-
-    // AQUI ESTÁ A MUDANÇA: Pedimos a categoria explicitamente
     const prompt = `
-      Analise esta nota fiscal brasileira.
-      Retorne APENAS um JSON válido (sem markdown, sem \`\`\`json) com a seguinte estrutura:
+      Analise esta imagem de Nota Fiscal (NFC-e ou CF-e) brasileira.
+      Extraia os dados e retorne APENAS um objeto JSON válido, sem markdown (sem \`\`\`json).
+      
+      Estrutura obrigatória:
       {
-        "market_name": "String",
-        "market_cnpj": "String",
-        "date": "YYYY-MM-DD",
-        "total_amount": Number,
+        "market": {
+          "name": "Nome da Loja (limpo)",
+          "cnpj": "XX.XXX.XXX/XXXX-XX (apenas números e pontuação)",
+          "address": "Endereço completo"
+        },
+        "date": "YYYY-MM-DDTHH:mm:ss (Data de emissão ISO)",
+        "total": 0.00 (Número float, troque vírgula por ponto),
         "items": [
           {
-            "product_name": "String",
-            "quantity": Number,
-            "unit_price": Number,
-            "total_price": Number,
-            "unit_measure": "String (UN, KG, L, etc)",
-            "category": "String"
+            "description": "Nome do produto exato como na nota",
+            "quantity": 1.000 (Número float),
+            "unit": "UN/KG/L (Unidade de medida)",
+            "unitPrice": 0.00 (Preço unitário float),
+            "totalPrice": 0.00 (Preço total float),
+            "code": "Código do produto ou EAN",
+            "category": "Categoria sugerida (ex: Bebidas, Açougue, Limpeza, etc)"
           }
         ]
       }
 
-      Regra para "category": Classifique cada item em UMA destas opções:
-      - Açougue (Carnes, frangos, peixes)
-      - Hortifruti (Frutas, legumes, verduras)
-      - Bebidas (Sucos, refrigerantes, cervejas, água)
-      - Limpeza (Sabão, detergente, água sanitária)
-      - Higiene (Shampoo, sabonete, papel higiênico)
-      - Mercearia (Arroz, feijão, macarrão, óleo, biscoitos)
-      - Padaria (Pães, bolos, salgados)
-      - Laticínios (Leite, queijo, iogurte, manteiga)
-      - Outros (Se não se encaixar em nenhuma acima)
+      Regras Importantes:
+      1. Se não encontrar o CNPJ, tente ler do QR Code ou cabeçalho.
+      2. Converta todas as vírgulas de valores monetários para pontos (Ex: 10,50 vira 10.50).
+      3. Categorize os produtos automaticamente baseado no nome.
+      4. NÃO invente dados. Se não estiver legível, deixe null.
     `;
 
-    const imagePart = {
-      inlineData: {
-        data: fileBuffer.toString('base64'),
-        mimeType: mimeType,
-      },
-    };
-
     try {
-      const result = await model.generateContent([prompt, imagePart]);
-      const response = await result.response;
-      // Limpeza extra para garantir que venha só o JSON puro
-      const text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
-      
-      console.log('✅ SUCESSO! JSON Recebido!');
-      return JSON.parse(text);
+      const result = await model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: imageBuffer.toString('base64'),
+            mimeType: mimeType,
+          },
+        },
+      ]);
 
-    } catch (error: any) {
-      console.error('❌ Erro Fatal no Gemini:', error.message);
-      return null;
+      const response = await result.response;
+      let text = response.text();
+
+      // --- LIMPEZA CIRÚRGICA DO JSON ---
+      // Remove blocos de código markdown (```json ... ```)
+      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      // Tenta encontrar o início e fim do JSON caso haja texto extra
+      const firstBracket = text.indexOf('{');
+      const lastBracket = text.lastIndexOf('}');
+      if (firstBracket !== -1 && lastBracket !== -1) {
+        text = text.substring(firstBracket, lastBracket + 1);
+      }
+      // ----------------------------------
+
+      const data = JSON.parse(text);
+      return data;
+
+    } catch (error) {
+      console.error("Erro ao processar imagem no Gemini:", error);
+      // Retorna estrutura vazia para não derrubar o servidor
+      return {
+        market: { name: "Erro de Leitura", cnpj: null, address: null },
+        date: new Date().toISOString(),
+        total: 0,
+        items: []
+      };
     }
   }
 }
