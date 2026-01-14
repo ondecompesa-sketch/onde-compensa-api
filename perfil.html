@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completar Perfil - OndeCompensa</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h1 { color: #333; margin-bottom: 10px; }
+        p { color: #666; margin-bottom: 30px; }
+        input, select { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1em; }
+        .btn { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1em; margin-top: 20px; transition: 0.2s; }
+        .btn:hover { background: #0056b3; }
+        .loading { opacity: 0.7; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>👋 Bem-vindo(a)!</h1>
+    <p>Para te mostrarmos as melhores ofertas perto de você, precisamos de alguns dados.</p>
+
+    <input type="text" id="nome" placeholder="Seu Nome (ex: Eduardo)">
+    
+    <select id="bairro">
+        <option value="" disabled selected>Selecione seu Bairro</option>
+        <option value="Bangu">Bangu</option>
+        <option value="Barra da Tijuca">Barra da Tijuca</option>
+        <option value="Botafogo">Botafogo</option>
+        <option value="Campo Grande">Campo Grande</option>
+        <option value="Centro">Centro</option>
+        <option value="Copacabana">Copacabana</option>
+        <option value="Madureira">Madureira</option>
+        <option value="Méier">Méier</option>
+        <option value="Tijuca">Tijuca</option>
+        <option value="Outros">Outros...</option>
+    </select>
+
+    <button onclick="salvarPerfil()" id="btn-salvar" class="btn">Salvar e Continuar</button>
+</div>
+
+<script>
+    // --- SUAS CHAVES AQUI ---
+   const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
+   
+    // -----------------------
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function salvarPerfil() {
+        const btn = document.getElementById('btn-salvar');
+        const nome = document.getElementById('nome').value;
+        const bairro = document.getElementById('bairro').value;
+
+        if (!nome || !bairro) return alert("Por favor, preencha tudo!");
+
+        btn.innerText = "Salvando...";
+        btn.classList.add("loading");
+
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+            // Tenta inserir (se não existir) ou atualizar (se já existir)
+            const { error } = await supabase.from('profiles').upsert({
+                id: user.id,
+                email: user.email,
+                full_name: nome,
+                bairro: bairro,
+                cidade: 'Rio de Janeiro'
+            });
+
+            if (error) {
+                alert("Erro ao salvar: " + error.message);
+                btn.innerText = "Tentar Novamente";
+                btn.classList.remove("loading");
+            } else {
+                // Sucesso! Vai para o painel
+                window.location.href = 'historico.html';
+            }
+        } else {
+            alert("Erro: Usuário não logado.");
+            window.location.href = 'login.html';
+        }
+    }
+</script>
+
+</body>
+</html>

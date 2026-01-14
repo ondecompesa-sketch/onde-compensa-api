@@ -103,7 +103,7 @@
 <script>
     // --- SUAS CHAVES DO SUPABASE (PREENCHA AQUI) ---
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
-    const SUPABASE_KEY = 'SUA_CHAVE_ANON_PUBLIC_AQUI_NOVAMENTE';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     // -----------------------------------------------
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -233,7 +233,33 @@
     async function fazerFaxina() { if(confirm('Limpar erros?')) { await fetch('https://onde-compensa-api.onrender.com/cleanup', {method:'DELETE'}); carregar(); } }
     async function sair() { await supabaseClient.auth.signOut(); window.location.href = 'login.html'; }
 
-    iniciar();
+    async function iniciar() {
+        const { data } = await supabaseClient.auth.getSession();
+        
+        // 1. Se não tá logado, tchau!
+        if (!data.session) return window.location.href = 'login.html';
+        
+        userId = data.session.user.id;
+
+        // 2. NOVO: Verifica se tem perfil completo
+        const { data: perfil } = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        // Se não achou perfil ou o perfil tá sem bairro -> Manda cadastrar
+        if (!perfil || !perfil.bairro) {
+            window.location.href = 'perfil.html';
+            return; 
+        }
+
+        // 3. Se tá tudo certo, carrega o painel normal
+        // Aqui você pode até colocar o nome dele na tela se quiser:
+        // document.querySelector('h1').innerText = `Olá, ${perfil.full_name}!`;
+        
+        carregar();
+    }
 </script>
 </body>
 </html>
