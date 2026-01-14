@@ -13,11 +13,13 @@
         h1 { color: #333; margin-bottom: 10px; }
         p { color: #666; margin-bottom: 30px; }
         input, select { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1em; background: white; }
+        select:disabled { background: #f9f9f9; color: #aaa; cursor: not-allowed; }
         .btn { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1em; margin-top: 20px; transition: 0.2s; }
         .btn:hover { background: #0056b3; }
         .btn-voltar { background: transparent; color: #666; border: 1px solid #ddd; margin-top: 10px; }
         .btn-voltar:hover { background: #eee; }
         .loading { opacity: 0.7; pointer-events: none; }
+        .loading-text { font-size: 0.8em; color: #888; margin-top: -5px; margin-bottom: 10px; display: none; }
     </style>
 </head>
 <body>
@@ -28,13 +30,15 @@
 
     <input type="text" id="nome" placeholder="Seu Nome Completo">
     
-    <select id="cidade" onchange="atualizarBairros()">
-        <option value="" disabled selected>Selecione sua Cidade</option>
+    <select id="cidade" onchange="aoMudarCidade()">
+        <option value="" disabled selected>Carregando cidades...</option>
     </select>
+    <div id="loading-cidade" class="loading-text">Buscando cidades...</div>
     
     <select id="bairro" disabled>
         <option value="" disabled selected>Selecione a Cidade primeiro</option>
     </select>
+    <div id="loading-bairro" class="loading-text">Buscando bairros...</div>
 
     <button onclick="salvarPerfil()" id="btn-salvar" class="btn">Salvar Alterações</button>
     <button onclick="voltar()" class="btn btn-voltar">Voltar</button>
@@ -46,73 +50,80 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     // -----------------------------------------------
 
-    // MUDANÇA AQUI: supabaseClient
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const API_URL = 'https://onde-compensa-api.onrender.com'; // URL do seu Backend
 
-    // 🗺️ BASE DE DADOS DE LOCAIS (RIO E GRANDE RIO)
-    const locais = {
-        "Rio de Janeiro": [
-            "Abolição", "Acari", "Água Santa", "Alto da Boa Vista", "Anchieta", "Andaraí", "Anil", "Bangu", "Barra da Tijuca", "Barra de Guaratiba", "Barros Filho", "Benfica", "Bento Ribeiro", "Bonsucesso", "Botafogo", "Brás de Pina", "Cachambi", "Caju", "Camorim", "Campinho", "Campo Grande", "Cascadura", "Catete", "Catumbi", "Cavalcanti", "Centro", "Cidade de Deus", "Cidade Nova", "Cidade Universitária", "Cocotá", "Coelho Neto", "Colégio", "Complexo do Alemão", "Copacabana", "Cordovil", "Cosme Velho", "Cosmos", "Costa Barros", "Curicica", "Del Castilho", "Deodoro", "Encantado", "Engenheiro Leal", "Engenho da Rainha", "Engenho de Dentro", "Engenho Novo", "Estácio", "Flamengo", "Gamboa", "Gardênia Azul", "Gávea", "Gericinó", "Glória", "Grajaú", "Guadalupe", "Guaratiba", "Higienópolis", "Honório Gurgel", "Humaitá", "Inhaúma", "Inhoaíba", "Ipanema", "Irajá", "Itanhangá", "Jacarepaguá", "Jacaré", "Jardim América", "Jardim Botânico", "Jardim Carioca", "Jardim Guanabara", "Jardim Sulacap", "Joá", "Lagoa", "Laranjeiras", "Leblon", "Leme", "Madureira", "Manguinhos", "Maracanã", "Marechal Hermes", "Maria da Graça", "Méier", "Moneró", "Olaria", "Oswaldo Cruz", "Paciência", "Padre Miguel", "Paquetá", "Parada de Lucas", "Parque Anchieta", "Parque Colúmbia", "Pavuna", "Pechincha", "Pedra de Guaratiba", "Penha", "Penha Circular", "Piedade", "Pilares", "Pitangueiras", "Portuguesa", "Praça da Bandeira", "Praça Seca", "Quintino Bocaiúva", "Ramos", "Recreio dos Bandeirantes", "Riachuelo", "Ribeira", "Ricardo de Albuquerque", "Rio Comprido", "Rocha", "Rocha Miranda", "Rocinha", "Sampaio", "Santa Cruz", "Santa Teresa", "Santíssimo", "Santo Cristo", "São Conrado", "São Cristóvão", "São Francisco Xavier", "Saúde", "Senador Camará", "Senador Vasconcelos", "Sepetiba", "Tanque", "Taquara", "Tauá", "Tijuca", "Todos os Santos", "Tomás Coelho", "Turiaçu", "Urca", "Vargem Grande", "Vargem Pequena", "Vasco da Gama", "Vaz Lobo", "Vicente de Carvalho", "Vidigal", "Vigário Geral", "Vila da Penha", "Vila Isabel", "Vila Kosmos", "Vila Militar", "Vila Valqueire", "Vista Alegre", "Zumbi"
-        ],
-        "Niterói": [
-            "Badu", "Barreto", "Boa Viagem", "Cachoeiras", "Cafubá", "Camboinhas", "Cantagalo", "Caramujo", "Centro", "Charitas", "Cubango", "Engenhoca", "Fonseca", "Icaraí", "Ilha da Conceição", "Ingá", "Itacoatiara", "Itaipu", "Jurujuba", "Largo da Batalha", "Maceió", "Maria Paula", "Matapaca", "Muriqui", "Piratininga", "Ponta d'Areia", "Rio do Ouro", "Santa Bárbara", "Santa Rosa", "Santana", "São Domingos", "São Francisco", "São Lourenço", "Tenente Jardim", "Várzea das Moças", "Viçoso Jardim", "Vital Brasil"
-        ],
-        "Nova Iguaçu": [
-            "Austin", "Cabuçu", "Caioaba", "Califórnia", "Carmary", "Centro", "Cerâmica", "Comendador Soares", "Danon", "Engenho Pequeno", "Geneciano", "Iguaçu Velho", "Jardim Iguaçu", "Kennedy", "K-11", "Km 32", "Lagoinha", "Marapicu", "Miguel Couto", "Montevidéu", "Nova América", "Ouro Verde", "Palhada", "Posse", "Prata", "Rancho Novo", "Riachão", "Santa Eugênia", "Santa Rita", "Tinguá", "Vila de Cava", "Vila Nova"
-        ],
-        "Duque de Caxias": [
-            "25 de Agosto", "Campos Elíseos", "Centenário", "Centro", "Chácara Rio-Petrópolis", "Cidade dos Meninos", "Doutor Laureano", "Figueira", "Imbariê", "Jardim Gramacho", "Jardim Leal", "Jardim Primavera", "Olavo Bilac", "Parada Angélica", "Parque Duque", "Parque Equitativa", "Parque Fluminense", "Periquitos", "Pilar", "Santa Cruz da Serra", "Santo Antônio", "Saracuruna", "Taquara", "Vila Maria Helena", "Vila Rosário", "Vila São Luís", "Xerém"
-        ],
-        "São Gonçalo": [
-            "Alcântara", "Amendoeira", "Antonina", "Arsenal", "Barracão", "Boa Vista", "Boaçu", "Brasilândia", "Centro", "Colubandê", "Engenho Pequeno", "Fazenda dos Mineiros", "Galo Branco", "Guaxindiba", "Itaóca", "Itaúna", "Jardim Catarina", "Lagoinha", "Laranjal", "Largo da Ideia", "Maria Paula", "Monjolos", "Mutondo", "Neves", "Nova Cidade", "Pacheco", "Parada 40", "Paraíso", "Patronato", "Porto da Pedra", "Porto do Rosa", "Porto Novo", "Porto Velho", "Raul Veiga", "Rio do Ouro", "Rocha", "Sacramento", "Santa Catarina", "Santa Isabel", "Santa Luzia", "Trindade", "Vila Lage", "Vila Três", "Zé Garoto"
-        ],
-        "São João de Meriti": [
-            "Agostinho Porto", "Centro", "Coelho da Rocha", "Éden", "Engenheiro Belford", "Grande Rio", "Jardim Meriti", "Jardim Metrópole", "Parque Alian", "Parque Analândia", "Parque Araruama", "São Mateus", "Tomazinho", "Venda Velha", "Vila Rosali", "Vilar dos Teles"
-        ],
-        "Belford Roxo": [
-            "Areia Branca", "Centro", "Heliópolis", "Itaipu", "Jardim Redentor", "Lote XV", "Nova Aurora", "Parque Amorim", "Parque dos Ferreiros", "Parque São Vicente", "Piam", "Santa Amélia", "Santa Maria", "São Bernardo", "Shangri-lá", "Vila Dagmar", "Wona"
-        ]
-    };
+    // 1. Carrega as Cidades do Estado 33 (RJ) via API
+    async function carregarCidades() {
+        const select = document.getElementById('cidade');
+        const loading = document.getElementById('loading-cidade');
+        
+        loading.style.display = 'block';
+        select.disabled = true;
 
-    // 1. Preenche o Select de Cidades ao iniciar
-    function popularCidades() {
-        const selectCidade = document.getElementById('cidade');
-        const cidadesOrdenadas = Object.keys(locais).sort();
-        
-        cidadesOrdenadas.forEach(cidade => {
-            const option = document.createElement('option');
-            option.value = cidade;
-            option.innerText = cidade;
-            selectCidade.appendChild(option);
-        });
-    }
+        try {
+            const res = await fetch(`${API_URL}/locations/states/33/cities`);
+            const cidades = await res.json();
 
-    // 2. Atualiza a lista de bairros quando troca a cidade
-    function atualizarBairros() {
-        const cidadeSelecionada = document.getElementById('cidade').value;
-        const selectBairro = document.getElementById('bairro');
-        
-        // Limpa bairros anteriores
-        selectBairro.innerHTML = '<option value="" disabled selected>Selecione seu Bairro</option>';
-        
-        if (cidadeSelecionada && locais[cidadeSelecionada]) {
-            selectBairro.disabled = false;
-            locais[cidadeSelecionada].sort().forEach(bairro => {
-                const option = document.createElement('option');
-                option.value = bairro;
-                option.innerText = bairro;
-                selectBairro.appendChild(option);
+            select.innerHTML = '<option value="" disabled selected>Selecione sua Cidade</option>';
+            
+            cidades.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id; // ID do IBGE
+                opt.innerText = c.name;
+                select.appendChild(opt);
             });
-        } else {
-            selectBairro.disabled = true;
+
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao carregar cidades. O servidor pode estar dormindo (Render). Tente novamente em 1 min.');
+        } finally {
+            loading.style.display = 'none';
+            select.disabled = false;
         }
     }
 
-    // 3. Carregar dados do usuário (Se já tiver cadastro)
-    async function carregarDados() {
-        // MUDANÇA AQUI: supabaseClient
+    // 2. Carrega Bairros (Distritos) quando escolhe a cidade
+    async function aoMudarCidade() {
+        const cityId = document.getElementById('cidade').value;
+        const selectBairro = document.getElementById('bairro');
+        const loading = document.getElementById('loading-bairro');
+
+        if (!cityId) return;
+
+        selectBairro.innerHTML = '<option value="" disabled selected>Carregando...</option>';
+        selectBairro.disabled = true;
+        loading.style.display = 'block';
+
+        try {
+            const res = await fetch(`${API_URL}/locations/cities/${cityId}/districts`);
+            const bairros = await res.json();
+
+            selectBairro.innerHTML = '<option value="" disabled selected>Selecione seu Bairro</option>';
+            
+            bairros.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id; // ID do IBGE
+                opt.innerText = b.name;
+                selectBairro.appendChild(opt);
+            });
+            
+            selectBairro.disabled = false;
+
+        } catch (error) {
+            console.error(error);
+            selectBairro.innerHTML = '<option value="" disabled>Erro ao carregar</option>';
+        } finally {
+            loading.style.display = 'none';
+        }
+    }
+
+    // 3. Carrega o Perfil do Usuário e preenche os campos
+    async function carregarPerfil() {
         const { data: { user } } = await supabaseClient.auth.getUser();
         if (!user) return window.location.href = 'login.html';
+
+        await carregarCidades(); // Espera as cidades carregarem primeiro
 
         const { data: perfil } = await supabaseClient
             .from('profiles')
@@ -123,37 +134,77 @@
         if (perfil) {
             if(perfil.full_name) document.getElementById('nome').value = perfil.full_name;
             
-            if(perfil.cidade) {
-                document.getElementById('cidade').value = perfil.cidade;
-                atualizarBairros();
+            // Lógica inteligente para selecionar Cidade e Bairro salvos
+            if (perfil.city_name || perfil.cidade) {
+                const nomeCidadeSalva = perfil.city_name || perfil.cidade;
+                const selectCidade = document.getElementById('cidade');
                 
-                setTimeout(() => {
-                    if(perfil.bairro) document.getElementById('bairro').value = perfil.bairro;
-                }, 50);
+                // Tenta achar a cidade pelo nome na lista carregada
+                for (let i = 0; i < selectCidade.options.length; i++) {
+                    if (selectCidade.options[i].text === nomeCidadeSalva) {
+                        selectCidade.selectedIndex = i;
+                        // Dispara o carregamento dos bairros
+                        await aoMudarCidade();
+                        
+                        // Depois que carregar bairros, seleciona o bairro
+                        const nomeBairroSalvo = perfil.district_name || perfil.bairro;
+                        const selectBairro = document.getElementById('bairro');
+                        
+                        // Tenta pelo ID primeiro (mais seguro), senão pelo nome
+                        if (perfil.district_id) {
+                            selectBairro.value = perfil.district_id;
+                        } else {
+                            for (let j = 0; j < selectBairro.options.length; j++) {
+                                if (selectBairro.options[j].text === nomeBairroSalvo) {
+                                    selectBairro.selectedIndex = j;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
             }
         }
     }
 
-    // 4. Salvar no Banco
+    // 4. Salvar com IDs oficiais e Nomes
     async function salvarPerfil() {
         const btn = document.getElementById('btn-salvar');
         const nome = document.getElementById('nome').value;
-        const cidade = document.getElementById('cidade').value;
-        const bairro = document.getElementById('bairro').value;
+        
+        const selectCidade = document.getElementById('cidade');
+        const selectBairro = document.getElementById('bairro');
 
-        if (!nome || !cidade || !bairro) return alert("Por favor, preencha tudo!");
+        // Pega valores e textos
+        const cityId = selectCidade.value;
+        const cityName = selectCidade.options[selectCidade.selectedIndex]?.text;
+        
+        const districtId = selectBairro.value;
+        const districtName = selectBairro.options[selectBairro.selectedIndex]?.text;
+
+        if (!nome || !cityId || !districtId) return alert("Por favor, preencha tudo!");
 
         btn.innerText = "Salvando...";
         btn.classList.add("loading");
 
         const { data: { user } } = await supabaseClient.auth.getUser();
 
+        // Salva tudo: IDs oficiais para o sistema, Nomes para facilitar leitura
         const { error } = await supabaseClient.from('profiles').upsert({
             id: user.id,
             email: user.email,
             full_name: nome,
-            cidade: cidade, 
-            bairro: bairro,
+            
+            // Novos campos oficiais (Link com tabelas IBGE)
+            district_id: districtId, 
+            city_name: cityName,
+            district_name: districtName,
+
+            // Campos legado (para manter compatibilidade se precisar)
+            cidade: cityName,
+            bairro: districtName,
+            
             updated_at: new Date()
         });
 
@@ -169,9 +220,8 @@
 
     function voltar() { window.location.href = 'historico.html'; }
 
-    // Inicia tudo
-    popularCidades();
-    carregarDados();
+    // Inicia
+    carregarPerfil();
 </script>
 
 </body>
