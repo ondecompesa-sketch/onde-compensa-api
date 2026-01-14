@@ -5,17 +5,19 @@ import { PrismaService } from './prisma.service';
 export class LocationService {
   constructor(private prisma: PrismaService) {}
 
-  // Busca todas as cidades de um Estado (Ex: RJ = 33)
+  // Busca todas as cidades de um Estado
   async getCities(stateId: string) {
-    return this.prisma.city.findMany({
+    // CORREÇÃO: city -> cities (Plural)
+    return this.prisma.cities.findMany({
       where: { stateId },
-      orderBy: { name: 'asc' }, // Ordem alfabética
+      orderBy: { name: 'asc' }, 
     });
   }
 
   // Busca todos os bairros (distritos) de uma Cidade
   async getDistricts(cityId: string) {
-    return this.prisma.district.findMany({
+    // CORREÇÃO: district -> districts (Plural)
+    return this.prisma.districts.findMany({
       where: { cityId },
       orderBy: { name: 'asc' },
     });
