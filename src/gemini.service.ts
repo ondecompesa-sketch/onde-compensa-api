@@ -7,13 +7,15 @@ export class GeminiService {
   private genAI: GoogleGenerativeAI;
 
   constructor(private configService: ConfigService) {
-    // CORREÇÃO: Adicionado "|| ''" para garantir que sempre seja uma string e o TypeScript não reclame
+    // Garante que a chave não seja undefined
     const apiKey = this.configService.get<string>('GEMINI_API_KEY') || '';
     this.genAI = new GoogleGenerativeAI(apiKey);
   }
 
   async extractReceiptData(imageBuffer: Buffer, mimeType: string) {
-    const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // CORREÇÃO: Mudamos de 'gemini-1.5-flash' para 'gemini-1.5-pro'
+    // O modelo Pro é mais robusto e evita o erro 404 de modelo não encontrado
+    const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
     const prompt = `
       Analise esta imagem de Nota Fiscal (NFC-e ou CF-e) brasileira.
@@ -63,10 +65,8 @@ export class GeminiService {
       let text = response.text();
 
       // --- LIMPEZA CIRÚRGICA DO JSON ---
-      // Remove blocos de código markdown (```json ... ```)
       text = text.replace(/```json/g, '').replace(/```/g, '').trim();
       
-      // Tenta encontrar o início e fim do JSON caso haja texto extra
       const firstBracket = text.indexOf('{');
       const lastBracket = text.lastIndexOf('}');
       if (firstBracket !== -1 && lastBracket !== -1) {
