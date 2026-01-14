@@ -5,6 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard OndeCompensa 📊</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // --- ⚠️ AS MESMAS CHAVES DO LOGIN ---
+        const SUPABASE_URL = 'SUA_URL_DO_SUPABASE_AQUI';
+        const SUPABASE_KEY = 'SUA_CHAVE_ANON_KEY_AQUI';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // O GRANDE GUARDA-COSTAS 🛡️
+        async function checarLogin() {
+            const { data } = await supabase.auth.getSession();
+            if (!data.session) {
+                // Se não tem sessão, manda pro login
+                window.location.href = 'login.html';
+            }
+        }
+        checarLogin();
+
+        async function sair() {
+            await supabase.auth.signOut();
+            window.location.href = 'login.html';
+        }
+    </script>
+
+
+
     
     <style>
         /* --- ESTILOS GERAIS --- */
@@ -53,6 +79,9 @@
 <div class="container">
     
     <div class="header">
+
+<button onclick="sair()" class="btn" style="background:#666;">🚪 Sair</button>
+
         <h1>📊 OndeCompensa?</h1>
         <div style="display: flex; gap: 10px;">
             <a href="teste-upload.html" class="btn">＋ Nova Nota</a>
