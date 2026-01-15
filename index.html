@@ -4,108 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Minhas Compras</title>
+    
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
     <meta name="theme-color" content="#007bff">
+    <meta name="mobile-web-app-capable" content="yes">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        /* Reset e Base */
+        /* ... MANTENHA O RESTO DO SEU CSS IGUALZINHO ... */
+        /* Vou resumir aqui para não ficar gigante, mas não apague seu CSS! */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 0; padding-bottom: 80px; color: #333; }
-        
-        /* Container Principal */
         .container { max-width: 600px; margin: 0 auto; padding: 15px; }
-        
-        /* Header Fixo no Topo (Estilo App) */
-        .app-header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #fff; padding: 15px 20px;
-            position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;
-        }
+        /* ... etc ... */
+        .app-header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
         .app-title { font-size: 1.2rem; font-weight: 800; color: #007bff; margin: 0; }
         .btn-icon { background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 5px; }
-
-        /* Resumo (Cards Superiores) */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .stat-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); text-align: center; }
         .stat-val { font-size: 1.1rem; font-weight: bold; color: #2e7d32; display: block; }
         .stat-lbl { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        /* Gráfico Compacto */
         .chart-container { background: white; margin-top: 15px; padding: 15px; border-radius: 12px; height: 200px; position: relative; }
-
-        /* Filtro e Busca */
         .controls-area { margin-top: 15px; display: flex; gap: 10px; }
         .search-input { flex: 1; padding: 12px; border: none; border-radius: 10px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.03); font-size: 1rem; }
         .filter-select { padding: 10px; border: none; border-radius: 10px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.03); font-weight: bold; color: #555; }
-
-        /* LISTA DE COMPRAS (Estilo Instagram/Feed) */
         .receipt-list { margin-top: 20px; list-style: none; padding: 0; }
-        
-        .receipt-card {
-            background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            display: flex; flex-direction: column; gap: 10px;
-            position: relative; overflow: hidden;
-        }
-        
-        /* Detalhe colorido na esquerda */
-        .receipt-card::before {
-            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
-            background: #007bff;
-        }
-
+        .receipt-card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; }
+        .receipt-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: #007bff; }
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
         .store-name { font-weight: 700; font-size: 1.1rem; color: #333; }
         .card-date { font-size: 0.8rem; color: #999; }
-        
         .card-body { display: flex; justify-content: space-between; align-items: center; }
         .item-count { font-size: 0.9rem; color: #666; background: #f0f2f5; padding: 4px 8px; border-radius: 6px; }
         .total-price { font-size: 1.3rem; font-weight: 800; color: #2e7d32; }
-
-        .card-actions { 
-            border-top: 1px solid #f0f0f0; padding-top: 10px; margin-top: 5px;
-            display: flex; gap: 10px; 
-        }
-        .btn-action {
-            flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 5px;
-        }
+        .card-actions { border-top: 1px solid #f0f0f0; padding-top: 10px; margin-top: 5px; display: flex; gap: 10px; }
+        .btn-action { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .btn-view { background: #e3f2fd; color: #1565c0; }
         .btn-del { background: #ffebee; color: #c62828; max-width: 50px; }
-
-        /* Botão Flutuante (FAB) para Nova Nota */
-        .fab {
-            position: fixed; bottom: 20px; right: 20px;
-            background: #007bff; color: white;
-            width: 60px; height: 60px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 30px; box-shadow: 0 4px 15px rgba(0,123,255,0.4);
-            text-decoration: none; z-index: 200;
-        }
+        .fab { position: fixed; bottom: 20px; right: 20px; background: #007bff; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 15px rgba(0,123,255,0.4); text-decoration: none; z-index: 200; }
         .fab:active { transform: scale(0.95); }
-
-        /* Modal */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
-        .modal-content { 
-            background: white; width: 100%; max-height: 90vh; 
-            border-top-left-radius: 20px; border-top-right-radius: 20px; 
-            padding: 25px; overflow-y: auto; 
-            animation: slideUp 0.3s ease-out;
-        }
+        .modal-content { background: white; width: 100%; max-height: 90vh; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 25px; overflow-y: auto; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .modal-title { margin: 0; font-size: 1.3rem; }
-        
         .item-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
         .item-name { font-weight: 500; }
         .item-sub { font-size: 0.8rem; color: #888; margin-top: 2px; }
         .item-price { font-weight: bold; }
-        
         .empty-state { text-align: center; padding: 40px; color: #999; }
         .menu-dropdown { position: absolute; top: 60px; right: 20px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); display: none; flex-direction: column; gap: 5px; z-index: 101; }
     </style>
@@ -147,8 +96,7 @@
     </div>
     <div id="area-busca" style="margin-top:10px; background:white; border-radius:10px; display:none;"></div>
 
-    <div id="lista-compras" class="receipt-list">
-        </div>
+    <div id="lista-compras" class="receipt-list"></div>
 </div>
 
 <a href="nova-nota.html" class="fab">＋</a>
@@ -165,11 +113,11 @@
 </div>
 
 <script>
-    // --- ⚠️ SUAS CHAVES DO SUPABASE (PREENCHA AQUI) ---
+    // --- ⚠️ MANTENHA SUAS CHAVES DO SUPABASE IGUAIS ---
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
-    // -----------------------------------------------
-
+    
+    // ... O RESTANTE DO SCRIPT PODE DEIXAR COMO ESTAVA ...
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let todasAsCompras = [];
     let chartInstance = null;
@@ -178,10 +126,8 @@
     async function iniciar() {
         const { data } = await supabaseClient.auth.getSession();
         if (!data.session) return window.location.href = 'login.html';
-        
         userId = data.session.user.id;
         
-        // Verifica perfil
         const { data: perfil } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
         if (!perfil || !perfil.bairro) { window.location.href = 'perfil.html'; return; }
 
@@ -226,15 +172,12 @@
     function renderizarLista(dados) {
         const container = document.getElementById('lista-compras');
         container.innerHTML = '';
-        
         if (dados.length === 0) return container.innerHTML = '<div class="empty-state">📦 Nenhuma compra encontrada neste período.</div>';
-        
         dados.forEach(nota => {
             const data = new Date(nota.issue_date).toLocaleDateString('pt-BR');
             const total = parseFloat(nota.total_amount).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
             const nomeLoja = nota.store?.name || nota.stores?.name || 'Loja Desconhecida';
             
-            // Cria o Card
             const card = document.createElement('div');
             card.className = 'receipt-card';
             card.innerHTML = `
@@ -288,10 +231,8 @@
     function abrirNotaPorId(id) {
         const nota = todasAsCompras.find(n => n.id === id);
         if(!nota) return;
-        
         const nomeLoja = nota.store?.name || nota.stores?.name || 'Loja';
         document.getElementById('modal-titulo').innerText = nomeLoja;
-        
         let html = '';
         nota.receipt_items.forEach(i => {
             const cat = i.product?.category || i.products?.category || 'Outros';
@@ -304,23 +245,18 @@
                     <div class="item-price">${parseFloat(i.total_price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</div>
                 </div>`;
         });
-        
         document.getElementById('lista-itens-modal').innerHTML = html;
         document.getElementById('modal-total').innerText = parseFloat(nota.total_amount).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
         document.getElementById('modalDetalhes').style.display = 'flex';
     }
 
-    // Busca e Outras Funções
     async function buscar(texto) {
         const area = document.getElementById('area-busca');
         if(texto.length < 3) { area.style.display='none'; return; }
-        
         const res = await fetch(`https://onde-compensa-api.onrender.com/search?q=${texto}&userId=${userId}`);
         const prods = await res.json();
-        
         area.innerHTML = ''; area.style.display = 'block';
         if(prods.length===0) area.innerHTML='<div style="padding:15px; color:#666; text-align:center">Nenhum produto encontrado.</div>';
-        
         prods.forEach(p => {
             const pr = parseFloat(p.unit_price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
             const nomeLoja = p.receipt?.store?.name || p.receipt?.stores?.name || 'Loja';
