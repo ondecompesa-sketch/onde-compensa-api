@@ -3,69 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - OndeCompensa?</title>
+    <title>Entrar - OndeCompensa</title>
     <link rel="manifest" href="manifest.json">
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
-        h1 { margin-bottom: 20px; color: #333; font-size: 1.8em; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
-        .btn-login { background: #007bff; color: white; }
-        .btn-login:hover { background: #0056b3; }
-        .btn-signup { background: white; color: #007bff; border: 1px solid #007bff; }
-        .btn-signup:hover { background: #e3f2fd; }
-        .msg { margin-top: 15px; font-size: 0.9em; color: #d32f2f; min-height: 20px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; margin: 0; }
+        .login-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
+        h1 { color: #007bff; margin-bottom: 30px; }
+        
+        /* Botão Google (Destaque) */
+        .btn-google {
+            background: white; color: #555; border: 1px solid #ddd;
+            width: 100%; padding: 12px; border-radius: 8px;
+            font-weight: 600; font-size: 1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: 0.2s; margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .btn-google:hover { background: #f8f9fa; border-color: #ccc; }
+        .btn-google img { width: 20px; }
+
+        /* Divisor */
+        .divider { display: flex; align-items: center; margin: 20px 0; color: #999; font-size: 0.8rem; }
+        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #eee; }
+        .divider span { padding: 0 10px; }
+
+        /* Login Tradicional */
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-email { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-email:hover { background: #0056b3; }
+        
+        .error { color: red; font-size: 0.9em; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
 
 <div class="login-card">
-    <h1>🔐 Login</h1>
-    <input type="email" id="email" placeholder="Seu e-mail">
-    <input type="password" id="password" placeholder="Sua senha">
+    <h1>OndeCompensa</h1>
+
+    <button class="btn-google" onclick="loginGoogle()">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G">
+        Entrar com Google
+    </button>
+
+    <div class="divider"><span>OU USE EMAIL</span></div>
+
+    <input type="email" id="email" placeholder="seu@email.com">
+    <input type="password" id="senha" placeholder="Sua senha">
+    <button class="btn-email" onclick="loginEmail()">Entrar</button>
+    <p class="error" id="msg-erro"></p>
     
-    <button onclick="fazerLogin()" class="btn btn-login">Entrar</button>
-    <button onclick="criarConta()" class="btn btn-signup">Criar Conta</button>
-    
-    <div id="mensagem" class="msg"></div>
+    <p style="margin-top:20px; font-size:0.9rem">
+        Não tem conta? <a href="cadastro.html" style="color:#007bff">Cadastre-se</a>
+    </p>
 </div>
 
 <script>
-    // --- SUAS CHAVES (Já estão corretas!) ---
+    // --- SUAS CHAVES ---
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
-    
-    // MUDANÇA AQUI: De 'supabase' para 'supabaseClient'
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // -------------------
 
-    async function fazerLogin() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        
-        // MUDANÇA AQUI TAMBÉM
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        if (error) {
-            document.getElementById('mensagem').innerText = 'Erro: ' + error.message;
-        } else {
+    // Verifica se já está logado
+    async function verificarSessao() {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
             window.location.href = 'index.html';
         }
     }
+    verificarSessao();
 
-    async function criarConta() {
+    // 🔴 LOGIN GOOGLE
+    async function loginGoogle() {
+        try {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    // Pulo do Gato: Manda de volta para o index.html, independente se é localhost ou vercel
+                    redirectTo: window.location.origin + '/index.html'
+                }
+            });
+            if (error) throw error;
+        } catch (error) {
+            alert("Erro no Google: " + error.message);
+        }
+    }
+
+    // 🔵 LOGIN EMAIL (Mantido)
+    async function loginEmail() {
         const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+        const password = document.getElementById('senha').value;
+        const msg = document.getElementById('msg-erro');
 
-        // E AQUI TAMBÉM
-        const { data, error } = await supabaseClient.auth.signUp({ email, password });
-
-        if (error) {
-            document.getElementById('mensagem').innerText = 'Erro ao criar: ' + error.message;
-        } else {
-            alert('Conta criada! Verifique seu email ou tente fazer login.'); // Às vezes pede confirmação
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            window.location.href = 'index.html';
+        } catch (error) {
+            msg.style.display = 'block';
+            msg.innerText = "Erro: " + error.message;
         }
     }
 </script>
