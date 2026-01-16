@@ -44,20 +44,21 @@
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     
-    // Inicialização segura
-    let supabase;
+    // Usem 'client' para evitar conflito de nomes
+    let supabaseClient;
     try {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        console.log("Supabase iniciado com sucesso!");
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log("Sistema iniciado (v3)");
     } catch (e) {
-        alert("Erro ao iniciar sistema: " + e.message);
+        console.error("Erro fatal:", e);
+        alert("Erro ao iniciar sistema. Verifique o console.");
     }
 
-    // Verifica sessão automaticamente
+    // Verifica sessão
     async function verificarSessao() {
-        const { data } = await supabase.auth.getSession();
+        if(!supabaseClient) return;
+        const { data } = await supabaseClient.auth.getSession();
         if (data.session) {
-            console.log("Usuário já logado, redirecionando...");
             window.location.href = 'index.html';
         }
     }
@@ -65,16 +66,12 @@
 
     // LOGIN GOOGLE
     async function loginGoogle() {
-        console.log("Tentando login Google...");
+        console.log("Clicou no Google");
         try {
-            // Pega a URL base do site (funciona no localhost e no vercel)
             const siteUrl = window.location.origin; 
-            
-            const { data, error } = await supabase.auth.signInWithOAuth({
+            const { data, error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
-                options: {
-                    redirectTo: `${siteUrl}/index.html`
-                }
+                options: { redirectTo: `${siteUrl}/index.html` }
             });
             if (error) throw error;
         } catch (error) {
@@ -84,14 +81,15 @@
 
     // LOGIN EMAIL
     async function loginEmail() {
+        console.log("Clicou no Email");
         const email = document.getElementById('email').value;
         const password = document.getElementById('senha').value;
         const msg = document.getElementById('msg-erro');
         
-        if(!email || !password) return alert("Preencha email e senha");
+        if(!email || !password) return alert("Preencha tudo");
 
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) throw error;
             window.location.href = 'index.html';
         } catch (error) {
