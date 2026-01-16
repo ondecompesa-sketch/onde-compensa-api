@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - OndeCompensa</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 320px; text-align: center; }
+        h2 { color: #007bff; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn:hover { background: #218838; }
+        .link { display: block; margin-top: 15px; color: #666; text-decoration: none; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Crie sua Conta</h2>
+        <input type="email" id="new-email" placeholder="Seu melhor email">
+        <input type="password" id="new-pass" placeholder="Crie uma senha">
+        <button class="btn" onclick="cadastrar()">Cadastrar</button>
+        <a href="login.html" class="link">Já tenho conta</a>
+    </div>
+
+    <script>
+        // MANTENHA SUAS CHAVES AQUI
+        const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function cadastrar() {
+            const email = document.getElementById('new-email').value;
+            const password = document.getElementById('new-pass').value;
+
+            if (!email || !password) return alert("Preencha tudo!");
+
+            try {
+                const { data, error } = await supabase.auth.signUp({ email, password });
+                if (error) throw error;
+                alert("Sucesso! Verifique seu email para confirmar.");
+                window.location.href = 'login.html';
+            } catch (error) {
+                alert("Erro: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
