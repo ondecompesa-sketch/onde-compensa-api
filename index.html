@@ -20,13 +20,7 @@
         .container { max-width: 600px; margin: 0 auto; padding: 15px; }
 
         /* CABEÇALHO */
-        .app-header { 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: #fff; padding: 15px 20px; 
-            position: sticky; top: 0; z-index: 100; 
-            box-shadow: 0 2px 15px rgba(0,0,0,0.04); 
-            border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; 
-        }
+        .app-header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 15px rgba(0,0,0,0.04); border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
         .user-profile { display: flex; align-items: center; gap: 12px; cursor: pointer; }
         .avatar-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #e0e0e0; }
         .user-texts { display: flex; flex-direction: column; }
@@ -37,7 +31,6 @@
         .btn-menu { background: none; border: none; font-size: 1.5rem; color: #333; cursor: pointer; padding: 0 5px; }
         .menu-dropdown { position: absolute; top: 70px; right: 20px; background: white; padding: 10px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); display: none; flex-direction: column; gap: 5px; z-index: 200; min-width: 150px; }
         .menu-item { background: none; border: none; padding: 12px; text-align: left; font-size: 0.95rem; color: #333; border-radius: 8px; cursor: pointer; }
-        .menu-item:active { background: #f5f5f5; }
         .menu-danger { color: #d32f2f; }
 
         /* DASHBOARD */
@@ -52,22 +45,32 @@
         .search-input { flex: 1; padding: 14px; border: none; border-radius: 12px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.03); font-size: 1rem; outline: none; }
         .filter-select { padding: 10px; border: none; border-radius: 12px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.03); font-weight: bold; color: #555; outline: none; }
         
-        /* RESULTADOS DA BUSCA (RANKING) */
+        /* RANKING CARD (ATUALIZADO) */
         #area-busca { margin-top:10px; display:none; flex-direction:column; gap:10px; }
-        .rank-card { background: white; padding: 15px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid transparent; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .rank-card { background: white; padding: 15px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid transparent; animation: fadeIn 0.3s; position: relative; }
         
-        .rank-1 { border-left-color: #ffd700; background: linear-gradient(to right, #fffae6, #fff); } /* Ouro */
-        .rank-2 { border-left-color: #c0c0c0; } /* Prata */
-        .rank-3 { border-left-color: #cd7f32; } /* Bronze */
+        .rank-1 { border-left-color: #ffd700; background: linear-gradient(to right, #fffae6, #fff); }
+        .rank-2 { border-left-color: #c0c0c0; }
+        .rank-3 { border-left-color: #cd7f32; }
         
+        .rank-content { flex: 1; display: flex; align-items: center; cursor: pointer; } /* Área clicável p/ nota */
         .rank-badge { font-size: 1.5rem; margin-right: 10px; }
         .rank-info h3 { margin: 0; font-size: 1rem; color: #333; }
         .rank-info p { margin: 2px 0 0 0; font-size: 0.8rem; color: #666; }
-        .rank-price { text-align: right; }
-        .price-big { font-size: 1.2rem; font-weight: 800; color: #2e7d32; display: block; }
+        
+        .rank-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+        .price-big { font-size: 1.1rem; font-weight: 800; color: #2e7d32; }
         .price-date { font-size: 0.7rem; color: #999; }
-        .old-price { color: #d32f2f; font-weight: bold; } /* Alerta preço antigo */
+        .old-price { color: #d32f2f; font-weight: bold; }
+        
+        /* Novo Botão de Adicionar ao Carrinho */
+        .btn-to-calc {
+            background: #007bff; color: white; border: none;
+            padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;
+            display: flex; align-items: center; gap: 5px; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,123,255,0.3); transition: transform 0.1s;
+        }
+        .btn-to-calc:active { transform: scale(0.95); }
 
         /* LISTA */
         .receipt-list { margin-top: 25px; display: flex; flex-direction: column; gap: 15px; }
@@ -83,9 +86,7 @@
         .btn-view { background: #e3f2fd; color: #1565c0; }
         .btn-del { background: #ffebee; color: #c62828; flex: 0 0 50px; }
 
-        .fab { position: fixed; bottom: 25px; right: 25px; background: #007bff; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 20px rgba(0,123,255,0.4); text-decoration: none; z-index: 90; transition: transform 0.2s; }
-        .fab:active { transform: scale(0.95); }
-
+        .fab { position: fixed; bottom: 25px; right: 25px; background: #007bff; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 20px rgba(0,123,255,0.4); text-decoration: none; z-index: 90; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-end; }
         .modal-content { background: white; width: 100%; max-height: 85vh; border-top-left-radius: 25px; border-top-right-radius: 25px; padding: 25px; overflow-y: auto; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -130,7 +131,7 @@
     </div>
 
     <div class="controls-area">
-        <input type="text" class="search-input" placeholder="🔍 Comparar preços (ex: Leite)..." onkeyup="buscar(this.value)">
+        <input type="text" class="search-input" placeholder="🔍 Comparar (ex: Leite)..." onkeyup="buscar(this.value)">
         <select id="filtro-mes" class="filter-select" onchange="filtrarEAtualizar()">
             <option value="todos">📅</option>
         </select>
@@ -222,9 +223,7 @@
         const container = document.getElementById('lista-compras');
         container.innerHTML = '';
         if (dados.length === 0) return container.innerHTML = '<div class="empty-state">📦 Nenhuma compra neste período.</div>';
-        
         dados.sort((a, b) => new Date(b.issue_date) - new Date(a.issue_date));
-
         dados.forEach(nota => {
             const dataObj = new Date(nota.issue_date);
             const dataFmt = dataObj.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
@@ -262,13 +261,10 @@
                 gastosPorCategoria[cat] += parseFloat(item.total_price);
             });
         });
-
         document.getElementById('total-geral').innerText = totalGeral.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-        
         let topCat = '-'; let maxVal = 0;
         for (const [cat, val] of Object.entries(gastosPorCategoria)) { if (val > maxVal) { maxVal = val; topCat = cat; } }
         document.getElementById('top-categoria').innerText = topCat;
-
         atualizarGrafico(gastosPorCategoria);
     }
 
@@ -277,7 +273,6 @@
         const labels = Object.keys(dadosCat);
         const values = Object.values(dadosCat);
         const cores = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
-
         if (chartInstance) chartInstance.destroy();
         chartInstance = new Chart(ctx, {
             type: 'doughnut',
@@ -289,14 +284,10 @@
     function abrirNotaPorId(id) {
         const nota = todasAsCompras.find(n => n.id === id);
         if(!nota) return;
-        
         const nomeLoja = nota.store?.name || nota.stores?.name || 'Loja';
         const dataFmt = new Date(nota.issue_date).toLocaleDateString('pt-BR');
-        
         document.getElementById('modal-titulo').innerText = nomeLoja;
-        
         let html = `<div style="text-align:center; color:#888; margin-bottom:15px; font-size:0.9rem;">📅 ${dataFmt}</div>`;
-        
         nota.receipt_items.forEach(i => {
             const cat = i.product?.category || i.products?.category || 'Geral';
             html += `
@@ -313,21 +304,44 @@
         document.getElementById('modalDetalhes').style.display = 'flex';
     }
 
-    // --- NOVA FUNÇÃO DE BUSCA INTELIGENTE (RANKING) ---
+    // --- FUNÇÃO DE ENVIAR PARA A CALCULADORA (NOVA) ---
+    function enviarParaCalculadora(nome, preco) {
+        // Pega o que já tem no carrinho ou cria array novo
+        let itens = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]');
+        
+        // Cria o novo item no formato que a calculadora entende
+        const novoItem = {
+            id: Date.now(),
+            nome: nome,
+            preco: parseFloat(preco),
+            qtd: 1,
+            total: parseFloat(preco)
+        };
+        
+        // Salva
+        itens.unshift(novoItem);
+        localStorage.setItem('carrinhoTemp', JSON.stringify(itens));
+        
+        // Pergunta se quer ir lá ver
+        if(confirm(`"${nome}" adicionado por R$ ${preco.toFixed(2)}!\n\nDeseja abrir a calculadora agora?`)) {
+            window.location.href = 'calculadora.html';
+        }
+    }
+
+    // --- BUSCA COM RANKING + BOTÃO DE ADICIONAR ---
     async function buscar(texto) {
         const area = document.getElementById('area-busca');
         const lista = document.getElementById('lista-compras');
 
         if(texto.length < 3) { 
             area.style.display='none'; 
-            lista.style.display = 'flex'; // Volta a lista normal
+            lista.style.display = 'flex'; 
             return; 
         }
         
-        // Esconde a lista de notas para focar no ranking
         lista.style.display = 'none';
         area.style.display = 'flex';
-        area.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">🔎 Buscando melhores preços...</div>';
+        area.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">🔎 Pesquisando preços...</div>';
         
         const res = await fetch(`https://onde-compensa-api.onrender.com/search?q=${texto}&userId=${userId}`);
         let prods = await res.json();
@@ -338,7 +352,6 @@
             return;
         }
 
-        // ORDENAR POR PREÇO (Do menor para o maior)
         prods.sort((a, b) => parseFloat(a.unit_price) - parseFloat(b.unit_price));
 
         prods.forEach((p, index) => {
@@ -346,18 +359,16 @@
             const nomeLoja = p.receipt?.store?.name || p.receipt?.stores?.name || 'Loja Desconhecida';
             const dataCompra = new Date(p.receipt?.issue_date);
             
-            // Verifica se o preço é velho (mais de 30 dias)
             const diasAtras = Math.floor((new Date() - dataCompra) / (1000 * 60 * 60 * 24));
             let alertaVelho = "";
             let classePreco = "price-date";
             if(diasAtras > 30) {
-                alertaVelho = `<span style="color:#d32f2f; font-weight:bold;">⚠️ Preço antigo (${diasAtras} dias atrás)</span>`;
+                alertaVelho = `<span style="color:#d32f2f; font-weight:bold;">⚠️ Preço antigo (${diasAtras}d)</span>`;
                 classePreco = "old-price";
             } else {
                 alertaVelho = `${diasAtras === 0 ? 'Hoje' : diasAtras + ' dias atrás'}`;
             }
 
-            // Define Medalhas
             let classeRank = '';
             let medalha = '';
             if (index === 0) { classeRank = 'rank-1'; medalha = '🏆'; }
@@ -366,23 +377,26 @@
 
             const card = document.createElement('div');
             card.className = `rank-card ${classeRank}`;
+            // Atenção para as aspas no onclick
+            const nomeLimpo = p.raw_name.replace(/"/g, '&quot;').replace(/'/g, "\\'"); 
+            
             card.innerHTML = `
-                <div style="display:flex; align-items:center;">
+                <div class="rank-content" onclick="abrirNotaPorId('${p.receipt_id}')">
                     <div class="rank-badge">${medalha}</div>
                     <div class="rank-info">
                         <h3>${p.raw_name}</h3>
                         <p>${nomeLoja}</p>
                     </div>
                 </div>
-                <div class="rank-price">
+                <div class="rank-actions">
                     <span class="price-big">${preco.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</span>
                     <span class="${classePreco}">${alertaVelho}</span>
+                    
+                    <button class="btn-to-calc" onclick="enviarParaCalculadora('${nomeLimpo}', ${preco})">
+                        ＋ 🛒
+                    </button>
                 </div>
             `;
-            // Clicar no card leva pra nota
-            card.onclick = () => abrirNotaPorId(p.receipt_id);
-            card.style.cursor = 'pointer';
-            
             area.appendChild(card);
         });
     }
