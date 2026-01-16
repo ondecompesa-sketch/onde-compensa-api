@@ -3,77 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Calculadora de Carrinho</title>
+    <title>Calculadora</title>
     <meta name="theme-color" content="#007bff">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; margin: 0; padding: 0; padding-bottom: 80px; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; margin: 0; padding: 0; padding-bottom: 90px; }
         
-        /* Cabeçalho Fixo com o Total */
+        /* --- CABEÇALHO --- */
         .header-total {
-            background: #fff; padding: 20px; text-align: center;
+            background: #fff; padding: 25px 20px; text-align: center;
             position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border-bottom-left-radius: 24px; border-bottom-right-radius: 24px;
         }
-        .label-total { font-size: 0.9rem; color: #666; text-transform: uppercase; letter-spacing: 1px; }
-        .valor-total { font-size: 3rem; font-weight: 800; color: #2e7d32; margin: 5px 0; transition: color 0.3s; }
-        .valor-total.estourou { color: #d32f2f; } /* Vermelho se passar da meta */
-        
-        /* Barra de Progresso da Meta */
-        .meta-container { margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .progress-bg { width: 100%; max-width: 200px; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; position: relative; }
-        .progress-fill { height: 100%; background: #2e7d32; width: 0%; transition: width 0.5s, background 0.3s; }
-        
-        /* Formulário de Adição */
-        .add-area { background: white; margin: 15px; padding: 15px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
-        input { padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 1.1rem; outline: none; }
-        input:focus { border-color: #007bff; }
-        .btn-add { grid-column: span 2; background: #007bff; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .btn-add:active { transform: scale(0.98); }
+        .label-total { font-size: 0.85rem; color: #888; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .valor-total { font-size: 3.2rem; font-weight: 800; color: #2e7d32; margin: 5px 0 15px 0; letter-spacing: -1px; transition: color 0.3s; }
+        .valor-total.estourou { color: #d32f2f; }
 
-        /* Lista de Itens */
-        .item-list { list-style: none; padding: 0; margin: 15px; }
-        .item-row { background: white; padding: 15px; margin-bottom: 10px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.03); animation: slideIn 0.2s; }
-        @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        /* Meta e Barra */
+        .meta-wrapper { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .progress-bg { width: 100%; max-width: 220px; height: 10px; background: #f1f3f5; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #2e7d32; width: 0%; transition: width 0.5s, background 0.3s; border-radius: 10px; }
+        .btn-meta { background: #fff; border: 1px solid #e0e0e0; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; color: #666; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+
+        /* --- FORMULÁRIO (Mobile Layout) --- */
+        .add-area { 
+            background: white; margin: 20px 15px; padding: 20px; 
+            border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
+            display: flex; flex-direction: column; gap: 12px; /* Empilha os campos */
+        }
         
-        .item-info { display: flex; flex-direction: column; }
-        .item-name { font-weight: 600; font-size: 1rem; color: #333; }
-        .item-calc { font-size: 0.85rem; color: #888; }
-        .item-price { font-weight: bold; font-size: 1.1rem; color: #333; }
-        .btn-remove { background: #ffebee; color: #c62828; border: none; width: 35px; height: 35px; border-radius: 50%; margin-left: 10px; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+        input { 
+            width: 100%; padding: 14px; border: 1px solid #eee; border-radius: 12px; 
+            font-size: 1.1rem; outline: none; background: #f9f9f9; transition: 0.2s;
+        }
+        input:focus { border-color: #007bff; background: #fff; box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
+        
+        /* Linha com Preço e Qtd lado a lado */
+        .row-inputs { display: flex; gap: 10px; }
+        .input-group { flex: 1; } /* Cada um ocupa metade */
+        
+        .btn-add { 
+            width: 100%; padding: 16px; background: #007bff; color: white; border: none; 
+            border-radius: 12px; font-weight: 700; font-size: 1.1rem; cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(0,123,255,0.25); margin-top: 5px;
+        }
+        .btn-add:active { transform: scale(0.98); background: #0069d9; }
 
-        /* Botão Voltar Flutuante */
-        .fab-back { position: fixed; bottom: 20px; left: 20px; background: white; color: #333; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-decoration: none; font-size: 24px; border: 1px solid #eee; z-index: 200; }
+        /* --- LISTA DE ITENS --- */
+        .item-list { list-style: none; padding: 0; margin: 0 15px; }
+        .item-row { 
+            background: white; padding: 16px; margin-bottom: 12px; border-radius: 16px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03); 
+        }
+        .item-name { font-weight: 700; font-size: 1.05rem; color: #333; display: block; margin-bottom: 4px; }
+        .item-calc { font-size: 0.9rem; color: #888; }
+        .item-price-total { font-weight: 800; font-size: 1.1rem; color: #2e7d32; }
+        
+        .btn-remove { 
+            background: #fff5f5; color: #e53935; border: none; width: 40px; height: 40px; 
+            border-radius: 12px; margin-left: 12px; cursor: pointer; font-size: 1.4rem; 
+            display: flex; align-items: center; justify-content: center;
+        }
 
-        /* Botão Configurar Meta */
-        .btn-meta { background: none; border: 1px solid #ddd; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; color: #666; cursor: pointer; }
+        /* Botão Voltar */
+        .fab-back { 
+            position: fixed; bottom: 25px; left: 25px; 
+            background: white; color: #333; width: 55px; height: 55px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-decoration: none; font-size: 24px; z-index: 200; 
+        }
     </style>
 </head>
 <body>
 
 <div class="header-total">
-    <div class="label-total">Total do Carrinho</div>
+    <div class="label-total">Total Previsto</div>
     <div class="valor-total" id="display-total">R$ 0,00</div>
     
-    <div class="meta-container">
+    <div class="meta-wrapper">
         <div class="progress-bg"><div class="progress-fill" id="progress-bar"></div></div>
-        <button class="btn-meta" onclick="definirMeta()">🎯 Meta: <span id="label-meta">R$ --</span></button>
+        <button class="btn-meta" onclick="definirMeta()">
+            🎯 Meta: <span id="label-meta" style="margin-left:5px">Definir</span>
+        </button>
     </div>
 </div>
 
 <div class="add-area">
-    <input type="text" id="inp-nome" placeholder="Produto (Opcional)">
-    <input type="number" id="inp-preco" placeholder="R$ 0,00" step="0.01">
+    <input type="text" id="inp-nome" placeholder="Nome do produto (Opcional)">
     
-    <div style="display:flex; gap:5px; grid-column: span 2;">
-        <input type="number" id="inp-qtd" value="1" style="width: 70px; text-align:center;">
-        <button class="btn-add" onclick="adicionarItem()">＋ Adicionar ao Carrinho</button>
+    <div class="row-inputs">
+        <div class="input-group" style="flex: 2;"> <input type="number" id="inp-preco" placeholder="R$ Preço" step="0.01" inputmode="decimal">
+        </div>
+        <div class="input-group" style="flex: 1;"> <input type="number" id="inp-qtd" value="1" style="text-align:center" inputmode="numeric">
+        </div>
     </div>
+
+    <button class="btn-add" onclick="adicionarItem()">Adicionar ao Carrinho</button>
 </div>
 
 <div id="lista-itens" class="item-list">
-    <div style="text-align:center; color:#999; margin-top:30px;">
-        Seu carrinho está vazio 🛒
+    <div style="text-align:center; padding: 40px; opacity: 0.6;">
+        <div style="font-size: 3rem; margin-bottom:10px;">🛒</div>
+        <div>Seu carrinho está vazio</div>
     </div>
 </div>
 
@@ -83,7 +116,6 @@
     let itens = [];
     let meta = localStorage.getItem('metaCarrinho') || 0;
 
-    // Carregar dados salvos (se o usuário fechou o app sem querer)
     if(localStorage.getItem('carrinhoTemp')) {
         itens = JSON.parse(localStorage.getItem('carrinhoTemp'));
         renderizar();
@@ -91,108 +123,25 @@
     atualizarMetaDisplay();
 
     function adicionarItem() {
-        const nome = document.getElementById('inp-nome').value || 'Item ' + (itens.length + 1);
-        const preco = parseFloat(document.getElementById('inp-preco').value);
-        const qtd = parseFloat(document.getElementById('inp-qtd').value);
+        const nomeInp = document.getElementById('inp-nome');
+        const precoInp = document.getElementById('inp-preco');
+        const qtdInp = document.getElementById('inp-qtd');
 
-        if (!preco || isNaN(preco)) return alert("Digite o preço!");
+        const nome = nomeInp.value || 'Item ' + (itens.length + 1);
+        const preco = parseFloat(precoInp.value);
+        const qtd = parseFloat(qtdInp.value);
 
-        const item = {
-            id: Date.now(),
-            nome: nome,
-            preco: preco,
-            qtd: qtd,
-            total: preco * qtd
-        };
+        if (!preco || isNaN(preco)) {
+            alert("Digite o preço!");
+            precoInp.focus();
+            return;
+        }
 
-        itens.unshift(item); // Adiciona no topo
+        const item = { id: Date.now(), nome, preco, qtd, total: preco * qtd };
+
+        itens.unshift(item);
         salvar();
         renderizar();
-        limparInputs();
-    }
-
-    function removerItem(id) {
-        itens = itens.filter(i => i.id !== id);
-        salvar();
-        renderizar();
-    }
-
-    function renderizar() {
-        const lista = document.getElementById('lista-itens');
-        const displayTotal = document.getElementById('display-total');
-        const barra = document.getElementById('progress-bar');
         
-        lista.innerHTML = '';
-        let totalGeral = 0;
-
-        itens.forEach(item => {
-            totalGeral += item.total;
-            const div = document.createElement('div');
-            div.className = 'item-row';
-            div.innerHTML = `
-                <div class="item-info">
-                    <span class="item-name">${item.nome}</span>
-                    <span class="item-calc">${item.qtd}x ${formatarMoeda(item.preco)}</span>
-                </div>
-                <div style="display:flex; align-items:center;">
-                    <span class="item-price">${formatarMoeda(item.total)}</span>
-                    <button class="btn-remove" onclick="removerItem(${item.id})">&times;</button>
-                </div>
-            `;
-            lista.appendChild(div);
-        });
-
-        // Atualiza Total
-        displayTotal.innerText = formatarMoeda(totalGeral);
-        
-        // Lógica da Meta (Cor e Barra)
-        if (meta > 0) {
-            const porcentagem = (totalGeral / meta) * 100;
-            barra.style.width = Math.min(porcentagem, 100) + '%';
-            
-            if (totalGeral > meta) {
-                displayTotal.classList.add('estourou');
-                barra.style.backgroundColor = '#d32f2f'; // Vermelho
-            } else {
-                displayTotal.classList.remove('estourou');
-                barra.style.backgroundColor = '#2e7d32'; // Verde
-            }
-        } else {
-            barra.style.width = '0%';
-        }
-    }
-
-    function definirMeta() {
-        const novaMeta = prompt("Qual é o seu limite de gastos para hoje?", meta || "");
-        if (novaMeta) {
-            meta = parseFloat(novaMeta.replace(',', '.'));
-            localStorage.setItem('metaCarrinho', meta);
-            atualizarMetaDisplay();
-            renderizar();
-        }
-    }
-
-    function atualizarMetaDisplay() {
-        const label = document.getElementById('label-meta');
-        if(meta > 0) label.innerText = formatarMoeda(meta);
-        else label.innerText = "Definir";
-    }
-
-    function salvar() {
-        localStorage.setItem('carrinhoTemp', JSON.stringify(itens));
-    }
-
-    function limparInputs() {
-        document.getElementById('inp-nome').value = '';
-        document.getElementById('inp-preco').value = '';
-        document.getElementById('inp-qtd').value = '1';
-        document.getElementById('inp-preco').focus(); // Já foca no preço pro próximo
-    }
-
-    function formatarMoeda(valor) {
-        return valor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-    }
-</script>
-
-</body>
-</html>
+        // Limpar inteligente: Foca no preço direto
+        nomeInp.value =
