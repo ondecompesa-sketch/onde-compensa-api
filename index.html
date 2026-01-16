@@ -3,85 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minhas Compras</title>
+    <title>Dashboard - OndeCompensa</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
-    <meta name="theme-color" content="#007bff">
+    <meta name="theme-color" content="#ffffff">
     <meta name="mobile-web-app-capable" content="yes">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        /* ... MANTENHA O RESTO DO SEU CSS IGUALZINHO ... */
-        /* Vou resumir aqui para não ficar gigante, mas não apague seu CSS! */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 0; padding-bottom: 80px; color: #333; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f4f7fa; margin: 0; padding: 0; padding-bottom: 90px; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 15px; }
-        /* ... etc ... */
-        .app-header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
-        .app-title { font-size: 1.2rem; font-weight: 800; color: #007bff; margin: 0; }
-        .btn-icon { background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 5px; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .stat-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); text-align: center; }
-        .stat-val { font-size: 1.1rem; font-weight: bold; color: #2e7d32; display: block; }
-        .stat-lbl { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
-        .chart-container { background: white; margin-top: 15px; padding: 15px; border-radius: 12px; height: 200px; position: relative; }
-        .controls-area { margin-top: 15px; display: flex; gap: 10px; }
-        .search-input { flex: 1; padding: 12px; border: none; border-radius: 10px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.03); font-size: 1rem; }
-        .filter-select { padding: 10px; border: none; border-radius: 10px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.03); font-weight: bold; color: #555; }
-        .receipt-list { margin-top: 20px; list-style: none; padding: 0; }
-        .receipt-card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; }
-        .receipt-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: #007bff; }
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+
+        /* --- CABEÇALHO PERSONALIZADO --- */
+        .app-header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: #fff; padding: 15px 20px; 
+            position: sticky; top: 0; z-index: 100; 
+            box-shadow: 0 2px 15px rgba(0,0,0,0.04); 
+            border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; 
+        }
+        
+        .user-profile { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        
+        .avatar-img { 
+            width: 45px; height: 45px; border-radius: 50%; object-fit: cover; 
+            border: 2px solid #e0e0e0; 
+        }
+        
+        .user-texts { display: flex; flex-direction: column; }
+        .greeting { font-size: 0.8rem; color: #888; }
+        .user-name { font-size: 1rem; font-weight: 700; color: #333; }
+
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+
+        .btn-calc-mini {
+            background: #e3f2fd; color: #007bff; border: none;
+            width: 40px; height: 40px; border-radius: 12px;
+            font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+
+        .btn-menu { background: none; border: none; font-size: 1.5rem; color: #333; cursor: pointer; padding: 0 5px; }
+
+        /* --- MENU DROPDOWN --- */
+        .menu-dropdown { 
+            position: absolute; top: 70px; right: 20px; background: white; 
+            padding: 10px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); 
+            display: none; flex-direction: column; gap: 5px; z-index: 200; min-width: 150px;
+        }
+        .menu-item {
+            background: none; border: none; padding: 12px; text-align: left; 
+            font-size: 0.95rem; color: #333; border-radius: 8px; cursor: pointer;
+        }
+        .menu-item:active { background: #f5f5f5; }
+        .menu-danger { color: #d32f2f; }
+
+        /* --- RESTO DO DESIGN (IGUAL) --- */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+        .stat-card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: 800; color: #2e7d32; display: block; margin-top: 5px; }
+        .stat-lbl { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        
+        .chart-container { background: white; margin-top: 15px; padding: 20px; border-radius: 16px; height: 220px; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        
+        .controls-area { margin-top: 20px; display: flex; gap: 10px; }
+        .search-input { flex: 1; padding: 14px; border: none; border-radius: 12px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.03); font-size: 1rem; outline: none; }
+        .filter-select { padding: 10px; border: none; border-radius: 12px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.03); font-weight: bold; color: #555; outline: none; }
+        
+        #area-busca { margin-top:10px; background:white; border-radius:12px; display:none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; }
+        
+        .receipt-list { margin-top: 25px; display: flex; flex-direction: column; gap: 15px; }
+        .receipt-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); position: relative; overflow: hidden; }
+        .receipt-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: #007bff; }
+        
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
         .store-name { font-weight: 700; font-size: 1.1rem; color: #333; }
-        .card-date { font-size: 0.8rem; color: #999; }
-        .card-body { display: flex; justify-content: space-between; align-items: center; }
-        .item-count { font-size: 0.9rem; color: #666; background: #f0f2f5; padding: 4px 8px; border-radius: 6px; }
-        .total-price { font-size: 1.3rem; font-weight: 800; color: #2e7d32; }
-        .card-actions { border-top: 1px solid #f0f0f0; padding-top: 10px; margin-top: 5px; display: flex; gap: 10px; }
-        .btn-action { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .card-date { font-size: 0.85rem; color: #999; }
+        
+        .card-body { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 15px; }
+        .total-price { font-size: 1.4rem; font-weight: 800; color: #333; }
+        
+        .card-actions { display: flex; gap: 10px; }
+        .btn-action { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
         .btn-view { background: #e3f2fd; color: #1565c0; }
-        .btn-del { background: #ffebee; color: #c62828; max-width: 50px; }
-        .fab { position: fixed; bottom: 20px; right: 20px; background: #007bff; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 15px rgba(0,123,255,0.4); text-decoration: none; z-index: 200; }
+        .btn-del { background: #ffebee; color: #c62828; flex: 0 0 50px; }
+
+        /* FAB */
+        .fab { position: fixed; bottom: 25px; right: 25px; background: #007bff; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 20px rgba(0,123,255,0.4); text-decoration: none; z-index: 90; transition: transform 0.2s; }
         .fab:active { transform: scale(0.95); }
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: flex-end; }
-        .modal-content { background: white; width: 100%; max-height: 90vh; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 25px; overflow-y: auto; animation: slideUp 0.3s ease-out; }
+
+        /* MODAL */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-end; }
+        .modal-content { background: white; width: 100%; max-height: 85vh; border-top-left-radius: 25px; border-top-right-radius: 25px; padding: 25px; overflow-y: auto; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-title { margin: 0; font-size: 1.3rem; }
-        .item-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
-        .item-name { font-weight: 500; }
-        .item-sub { font-size: 0.8rem; color: #888; margin-top: 2px; }
-        .item-price { font-weight: bold; }
-        .empty-state { text-align: center; padding: 40px; color: #999; }
-        .menu-dropdown { position: absolute; top: 60px; right: 20px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); display: none; flex-direction: column; gap: 5px; z-index: 101; }
+        .item-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+        .empty-state { text-align: center; padding: 50px 20px; color: #999; }
     </style>
 </head>
 <body>
 
 <div class="app-header">
-    <button class="btn-icon" onclick="window.location.href='perfil.html'">👤</button>
-<div style="display:flex; align-items:center; gap:10px;">
-    <h1 class="app-title">OndeCompensa</h1>
-    <button onclick="window.location.href='calculadora.html'" style="background:#e3f2fd; border:none; padding:8px 12px; border-radius:20px; color:#007bff; font-weight:bold; cursor:pointer; font-size:0.8rem;">
-        🧮 Calc
-    </button>
-</div>
+    <div class="user-profile" onclick="window.location.href='perfil.html'">
+        <img id="user-avatar" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="avatar-img">
+        <div class="user-texts">
+            <span class="greeting">Olá,</span>
+            <span class="user-name" id="user-name">Visitante</span>
+        </div>
+    </div>
 
-<button class="btn-icon" onclick="toggleMenu()">⋮</button>
-    
+    <div class="header-actions">
+        <button onclick="window.location.href='calculadora.html'" class="btn-calc-mini" title="Calculadora">
+            🧮
+        </button>
+        <button class="btn-menu" onclick="toggleMenu()">⋮</button>
+    </div>
+
     <div id="menuDropdown" class="menu-dropdown">
-        <button onclick="fazerFaxina()" style="background:none; border:none; padding:10px; text-align:left; color:#d32f2f;">🧹 Limpar Erros</button>
-        <button onclick="sair()" style="background:none; border:none; padding:10px; text-align:left;">🚪 Sair</button>
+        <button class="menu-item" onclick="fazerFaxina()">🧹 Limpar Erros</button>
+        <button class="menu-item menu-danger" onclick="sair()">🚪 Sair da Conta</button>
     </div>
 </div>
 
 <div class="container">
     <div class="stats-grid">
         <div class="stat-card">
-            <span class="stat-lbl">Total Gasto</span>
+            <span class="stat-lbl">Gasto no Mês</span>
             <span class="stat-val" id="total-geral">R$ 0,00</span>
         </div>
         <div class="stat-card">
@@ -100,7 +150,8 @@
             <option value="todos">📅</option>
         </select>
     </div>
-    <div id="area-busca" style="margin-top:10px; background:white; border-radius:10px; display:none;"></div>
+    
+    <div id="area-busca"></div>
 
     <div id="lista-compras" class="receipt-list"></div>
 </div>
@@ -109,21 +160,22 @@
 
 <div id="modalDetalhes" class="modal-overlay" onclick="fecharModal(event)">
     <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title" id="modal-titulo">Detalhes</h2>
-            <button onclick="fecharModal(null)" style="background:none; border:none; font-size:1.5rem;">&times;</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 style="margin:0; font-size:1.4rem; color:#333;" id="modal-titulo">Detalhes</h2>
+            <button onclick="fecharModal(null)" style="background:#f0f2f5; border:none; width:35px; height:35px; border-radius:50%; font-weight:bold; cursor:pointer;">✕</button>
         </div>
         <div id="lista-itens-modal"></div>
-        <div style="margin-top:20px; text-align:right; font-size:1.5rem; font-weight:800; color:#2e7d32;" id="modal-total"></div>
+        <div style="margin-top:25px; padding-top:15px; border-top:2px dashed #eee; display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:#666;">Total da Nota</span>
+            <span style="font-size:1.6rem; font-weight:800; color:#2e7d32;" id="modal-total"></span>
+        </div>
     </div>
 </div>
 
 <script>
-    // --- ⚠️ MANTENHA SUAS CHAVES DO SUPABASE IGUAIS ---
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     
-    // ... O RESTANTE DO SCRIPT PODE DEIXAR COMO ESTAVA ...
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let todasAsCompras = [];
     let chartInstance = null;
@@ -132,17 +184,27 @@
     async function iniciar() {
         const { data } = await supabaseClient.auth.getSession();
         if (!data.session) return window.location.href = 'login.html';
-        userId = data.session.user.id;
         
-        const { data: perfil } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
-        if (!perfil || !perfil.bairro) { window.location.href = 'perfil.html'; return; }
+        // --- 👤 PERSONALIZAÇÃO DO USUÁRIO ---
+        const user = data.session.user;
+        userId = user.id;
 
+        // Tenta pegar o nome do Google, ou usa o email
+        const nomeCompleto = user.user_metadata.full_name || user.user_metadata.name || user.email;
+        const primeiroNome = nomeCompleto.split(' ')[0]; // Pega só o primeiro nome
+        const foto = user.user_metadata.avatar_url || user.user_metadata.picture;
+
+        // Atualiza na tela
+        document.getElementById('user-name').innerText = primeiroNome;
+        if (foto) document.getElementById('user-avatar').src = foto;
+        // -------------------------------------
+        
         carregar();
     }
 
     async function carregar() {
         try {
-            document.getElementById('lista-compras').innerHTML = '<div class="empty-state">⏳ Carregando suas compras...</div>';
+            document.getElementById('lista-compras').innerHTML = '<div class="empty-state">⏳ Atualizando...</div>';
             const res = await fetch(`https://onde-compensa-api.onrender.com/receipts?userId=${userId}`);
             todasAsCompras = await res.json();
             preencherFiltroMeses();
@@ -157,7 +219,7 @@
             const d = new Date(n.issue_date);
             meses.add(`${d.getMonth() + 1}/${d.getFullYear()}`);
         });
-        select.innerHTML = '<option value="todos">📅 Todo Período</option>';
+        select.innerHTML = '<option value="todos">📅 Todos</option>';
         Array.from(meses).sort().reverse().forEach(m => {
             select.innerHTML += `<option value="${m}">${m}</option>`;
         });
@@ -178,9 +240,14 @@
     function renderizarLista(dados) {
         const container = document.getElementById('lista-compras');
         container.innerHTML = '';
-        if (dados.length === 0) return container.innerHTML = '<div class="empty-state">📦 Nenhuma compra encontrada neste período.</div>';
+        if (dados.length === 0) return container.innerHTML = '<div class="empty-state">📦 Nenhuma compra neste período.</div>';
+        
+        // Ordena por data (mais recente primeiro)
+        dados.sort((a, b) => new Date(b.issue_date) - new Date(a.issue_date));
+
         dados.forEach(nota => {
-            const data = new Date(nota.issue_date).toLocaleDateString('pt-BR');
+            const dataObj = new Date(nota.issue_date);
+            const dataFmt = dataObj.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'}); // Ex: 15 jan
             const total = parseFloat(nota.total_amount).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
             const nomeLoja = nota.store?.name || nota.stores?.name || 'Loja Desconhecida';
             
@@ -189,14 +256,14 @@
             card.innerHTML = `
                 <div class="card-header">
                     <span class="store-name">${nomeLoja}</span>
-                    <span class="card-date">${data}</span>
+                    <span class="card-date">${dataFmt}</span>
                 </div>
                 <div class="card-body">
-                    <span class="item-count">${nota.receipt_items.length} itens</span>
+                    <span style="color:#666; font-size:0.9rem;">${nota.receipt_items.length} itens</span>
                     <span class="total-price">${total}</span>
                 </div>
                 <div class="card-actions">
-                    <button class="btn-action btn-view" onclick="abrirNotaPorId('${nota.id}')">📄 Ver Detalhes</button>
+                    <button class="btn-action btn-view" onclick="abrirNotaPorId('${nota.id}')">📄 Detalhes</button>
                     <button class="btn-action btn-del" onclick="deletarNota('${nota.id}')">🗑️</button>
                 </div>
             `;
@@ -217,38 +284,64 @@
         });
 
         document.getElementById('total-geral').innerText = totalGeral.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+        
         let topCat = '-'; let maxVal = 0;
         for (const [cat, val] of Object.entries(gastosPorCategoria)) { if (val > maxVal) { maxVal = val; topCat = cat; } }
         document.getElementById('top-categoria').innerText = topCat;
 
+        atualizarGrafico(gastosPorCategoria);
+    }
+
+    function atualizarGrafico(dadosCat) {
         const ctx = document.getElementById('meuGrafico').getContext('2d');
-        const labels = Object.keys(gastosPorCategoria);
-        const values = Object.values(gastosPorCategoria);
-        const cores = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#17a2b8', '#fd7e14', '#6c757d'];
+        const labels = Object.keys(dadosCat);
+        const values = Object.values(dadosCat);
+        // Cores vibrantes
+        const cores = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
 
         if (chartInstance) chartInstance.destroy();
         chartInstance = new Chart(ctx, {
             type: 'doughnut',
-            data: { labels: labels, datasets: [{ data: values, backgroundColor: cores, borderWidth: 0 }] },
-            options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
+            data: { 
+                labels: labels, 
+                datasets: [{ 
+                    data: values, 
+                    backgroundColor: cores, 
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                cutout: '75%', 
+                plugins: { 
+                    legend: { display: false } // Esconde legenda pra ficar clean
+                } 
+            }
         });
     }
 
     function abrirNotaPorId(id) {
         const nota = todasAsCompras.find(n => n.id === id);
         if(!nota) return;
+        
         const nomeLoja = nota.store?.name || nota.stores?.name || 'Loja';
+        const dataFmt = new Date(nota.issue_date).toLocaleDateString('pt-BR');
+        
         document.getElementById('modal-titulo').innerText = nomeLoja;
-        let html = '';
+        
+        let html = `<div style="text-align:center; color:#888; margin-bottom:15px; font-size:0.9rem;">📅 ${dataFmt}</div>`;
+        
         nota.receipt_items.forEach(i => {
-            const cat = i.product?.category || i.products?.category || 'Outros';
+            const cat = i.product?.category || i.products?.category || 'Geral';
             html += `
                 <div class="item-row">
-                    <div>
-                        <div class="item-name">${i.raw_name}</div>
-                        <div class="item-sub">${i.quantity} ${i.unit_measure || 'UN'} • ${cat}</div>
+                    <div style="flex:1">
+                        <div style="font-weight:600; color:#333;">${i.raw_name}</div>
+                        <div style="font-size:0.8rem; color:#999; margin-top:2px;">${i.quantity} ${i.unit_measure || 'un'} • ${cat}</div>
                     </div>
-                    <div class="item-price">${parseFloat(i.total_price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</div>
+                    <div style="font-weight:700; color:#333;">${parseFloat(i.total_price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</div>
                 </div>`;
         });
         document.getElementById('lista-itens-modal').innerHTML = html;
@@ -259,20 +352,34 @@
     async function buscar(texto) {
         const area = document.getElementById('area-busca');
         if(texto.length < 3) { area.style.display='none'; return; }
+        
+        area.style.display = 'block';
+        area.innerHTML = '<div style="padding:15px; color:#888;">🔎 Buscando...</div>';
+        
         const res = await fetch(`https://onde-compensa-api.onrender.com/search?q=${texto}&userId=${userId}`);
         const prods = await res.json();
-        area.innerHTML = ''; area.style.display = 'block';
-        if(prods.length===0) area.innerHTML='<div style="padding:15px; color:#666; text-align:center">Nenhum produto encontrado.</div>';
+        
+        area.innerHTML = '';
+        if(prods.length===0) {
+            area.innerHTML='<div style="padding:15px; color:#666; text-align:center">Nenhum produto encontrado.</div>';
+            return;
+        }
+        
         prods.forEach(p => {
             const pr = parseFloat(p.unit_price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
             const nomeLoja = p.receipt?.store?.name || p.receipt?.stores?.name || 'Loja';
+            // Data relativa (ex: 10/01)
+            const dt = new Date(p.receipt?.issue_date).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+            
             area.innerHTML += `
-                <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;" onclick="abrirNotaPorId('${p.receipt_id}')">
+                <div style="padding:15px; border-bottom:1px solid #f0f0f0; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="abrirNotaPorId('${p.receipt_id}')">
                     <div>
-                        <div style="font-weight:600">${p.raw_name}</div>
-                        <div style="font-size:0.8rem; color:#888">${nomeLoja}</div>
+                        <div style="font-weight:600; color:#333;">${p.raw_name}</div>
+                        <div style="font-size:0.75rem; color:#999;">${nomeLoja} • ${dt}</div>
                     </div>
-                    <div style="font-weight:bold; color:#2e7d32">${pr}</div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:bold; color:#2e7d32;">${pr}</div>
+                    </div>
                 </div>`;
         });
     }
@@ -283,17 +390,10 @@
     async function fazerFaxina() { if(confirm('Limpar notas com erro?')) { await fetch('https://onde-compensa-api.onrender.com/cleanup', {method:'DELETE'}); carregar(); } }
     async function sair() { await supabaseClient.auth.signOut(); window.location.href = 'login.html'; }
 
+    // Service Worker (PWA)
+    if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
+
     iniciar();
-</script>
-<script>
-    // Registro do Service Worker para PWA
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('Service Worker registrado!', reg))
-                .catch(err => console.log('Falha ao registrar SW:', err));
-        });
-    }
 </script>
 </body>
 </html>
