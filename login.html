@@ -24,14 +24,18 @@
 
 <div class="login-card">
     <h1>OndeCompensa</h1>
+    
     <button class="btn-google" onclick="loginGoogle()">
         <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G">
         Entrar com Google
     </button>
+
     <div class="divider"><span>OU USE EMAIL</span></div>
+
     <input type="email" id="email" placeholder="seu@email.com">
     <input type="password" id="senha" placeholder="Sua senha">
     <button class="btn-email" onclick="loginEmail()">Entrar</button>
+    
     <p class="error" id="msg-erro"></p>
     <p style="margin-top:20px; font-size:0.9rem">Não tem conta? <a href="cadastro.html" style="color:#007bff">Cadastre-se</a></p>
 </div>
@@ -40,36 +44,52 @@
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     
-    // Inicializa o cliente
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Inicialização segura
+    let supabase;
+    try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log("Supabase iniciado com sucesso!");
+    } catch (e) {
+        alert("Erro ao iniciar sistema: " + e.message);
+    }
 
+    // Verifica sessão automaticamente
     async function verificarSessao() {
         const { data } = await supabase.auth.getSession();
-        if (data.session) window.location.href = 'index.html';
+        if (data.session) {
+            console.log("Usuário já logado, redirecionando...");
+            window.location.href = 'index.html';
+        }
     }
     verificarSessao();
 
+    // LOGIN GOOGLE
     async function loginGoogle() {
-        console.log("Iniciando login Google..."); // Para debug
+        console.log("Tentando login Google...");
         try {
+            // Pega a URL base do site (funciona no localhost e no vercel)
+            const siteUrl = window.location.origin; 
+            
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    // Tenta redirecionar para o site atual
-                    redirectTo: window.location.href.replace('login.html', 'index.html').replace(/\/$/, '') + '/index.html'
+                    redirectTo: `${siteUrl}/index.html`
                 }
             });
             if (error) throw error;
         } catch (error) {
-            alert("Erro ao conectar com Google: " + error.message);
-            console.error(error);
+            alert("Erro Google: " + error.message);
         }
     }
 
+    // LOGIN EMAIL
     async function loginEmail() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('senha').value;
         const msg = document.getElementById('msg-erro');
+        
+        if(!email || !password) return alert("Preencha email e senha");
+
         try {
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) throw error;
@@ -80,6 +100,5 @@
         }
     }
 </script>
-
 </body>
 </html>

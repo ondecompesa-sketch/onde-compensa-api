@@ -9,41 +9,81 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; margin: 0; }
         .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 320px; text-align: center; }
-        h2 { color: #007bff; }
+        h2 { color: #007bff; margin-bottom: 20px; }
         input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        
         .btn { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn:hover { background: #218838; }
+
+        /* Botão Google igual ao login */
+        .btn-google { background: white; color: #555; border: 1px solid #ddd; width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn-google:hover { background: #f8f9fa; }
+        .btn-google img { width: 20px; }
+
         .link { display: block; margin-top: 15px; color: #666; text-decoration: none; font-size: 0.9em; }
+        .divider { display: flex; align-items: center; margin: 20px 0; color: #999; font-size: 0.8rem; }
+        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #eee; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>Crie sua Conta</h2>
+
+        <button class="btn-google" onclick="loginGoogle()">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G">
+            Cadastrar com Google
+        </button>
+
+        <div class="divider"><span>OU EMAIL</span></div>
+
         <input type="email" id="new-email" placeholder="Seu melhor email">
         <input type="password" id="new-pass" placeholder="Crie uma senha">
         <button class="btn" onclick="cadastrar()">Cadastrar</button>
-        <a href="login.html" class="link">Já tenho conta</a>
+        
+        <a href="login.html" class="link">Já tenho conta (Login)</a>
     </div>
 
     <script>
-        // MANTENHA SUAS CHAVES AQUI
         const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // Funcao Google (Mesma do login)
+        async function loginGoogle() {
+            try {
+                const siteUrl = window.location.origin;
+                const { data, error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: { redirectTo: `${siteUrl}/index.html` }
+                });
+                if (error) throw error;
+            } catch (error) {
+                alert("Erro Google: " + error.message);
+            }
+        }
+
+        // Funcao Email
         async function cadastrar() {
             const email = document.getElementById('new-email').value;
             const password = document.getElementById('new-pass').value;
 
-            if (!email || !password) return alert("Preencha tudo!");
+            if (!email || !password) return alert("Preencha email e senha!");
 
             try {
                 const { data, error } = await supabase.auth.signUp({ email, password });
                 if (error) throw error;
-                alert("Sucesso! Verifique seu email para confirmar.");
-                window.location.href = 'login.html';
+                
+                alert("Conta criada com sucesso! Você já pode fazer login.");
+                // O Supabase pode logar direto ou pedir confirmação de email dependendo da config.
+                // Vamos tentar jogar pro index, se não der, joga pro login.
+                if(data.session) {
+                    window.location.href = 'index.html';
+                } else {
+                    window.location.href = 'login.html';
+                }
+                
             } catch (error) {
-                alert("Erro: " + error.message);
+                alert("Erro ao cadastrar: " + error.message);
             }
         }
     </script>
