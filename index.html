@@ -305,18 +305,19 @@
         document.getElementById('modalDetalhes').style.display = 'flex';
     }
 
-    // --- FUNÇÃO BLINDADA: RECEBE O ÍNDICE, NÃO O NOME ---
+    // --- FUNÇÃO BLINDADA COM DELAY DE SALVAMENTO ---
     function enviarParaCalculadora(index) {
-        // Pega o objeto inteiro da memória
         const item = resultadosBusca[index];
-        
-        if (!item) return;
+        if (!item) return alert("Erro ao selecionar item.");
 
-        let itensCarrinho = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]');
+        let itensCarrinho = [];
+        try {
+            itensCarrinho = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]');
+        } catch(e) { itensCarrinho = []; }
         
         const novoItem = {
             id: Date.now(),
-            nome: item.raw_name, // Nome seguro
+            nome: item.raw_name,
             preco: parseFloat(item.unit_price),
             qtd: 1,
             total: parseFloat(item.unit_price)
@@ -325,8 +326,11 @@
         itensCarrinho.unshift(novoItem);
         localStorage.setItem('carrinhoTemp', JSON.stringify(itensCarrinho));
         
-        if(confirm(`"${item.raw_name}" enviado para a calculadora!\n\nIr para lá agora?`)) {
-            window.location.href = 'calculadora.html';
+        if(confirm(`"${item.raw_name}" adicionado!\n\nIr para a calculadora?`)) {
+            // AQUI É O PULO DO GATO: Espera 300ms antes de ir
+            setTimeout(() => {
+                window.location.href = 'calculadora.html';
+            }, 300);
         }
     }
 
