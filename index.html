@@ -45,7 +45,7 @@
         .search-input { flex: 1; padding: 14px; border: none; border-radius: 12px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.03); font-size: 1rem; outline: none; }
         .filter-select { padding: 10px; border: none; border-radius: 12px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.03); font-weight: bold; color: #555; outline: none; }
         
-        /* RANKING CARD (ATUALIZADO) */
+        /* RANKING CARD */
         #area-busca { margin-top:10px; display:none; flex-direction:column; gap:10px; }
         .rank-card { background: white; padding: 15px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid transparent; animation: fadeIn 0.3s; position: relative; }
         
@@ -53,7 +53,7 @@
         .rank-2 { border-left-color: #c0c0c0; }
         .rank-3 { border-left-color: #cd7f32; }
         
-        .rank-content { flex: 1; display: flex; align-items: center; cursor: pointer; } /* Área clicável p/ nota */
+        .rank-content { flex: 1; display: flex; align-items: center; cursor: pointer; } 
         .rank-badge { font-size: 1.5rem; margin-right: 10px; }
         .rank-info h3 { margin: 0; font-size: 1rem; color: #333; }
         .rank-info p { margin: 2px 0 0 0; font-size: 0.8rem; color: #666; }
@@ -63,7 +63,7 @@
         .price-date { font-size: 0.7rem; color: #999; }
         .old-price { color: #d32f2f; font-weight: bold; }
         
-        /* Novo Botão de Adicionar ao Carrinho */
+        /* Botão de Adicionar ao Carrinho */
         .btn-to-calc {
             background: #007bff; color: white; border: none;
             padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;
@@ -164,6 +164,7 @@
     
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let todasAsCompras = [];
+    let resultadosBusca = []; // Guarda os produtos da pesquisa
     let chartInstance = null;
     let userId = null;
 
@@ -304,31 +305,31 @@
         document.getElementById('modalDetalhes').style.display = 'flex';
     }
 
-    // --- FUNÇÃO DE ENVIAR PARA A CALCULADORA (NOVA) ---
-    function enviarParaCalculadora(nome, preco) {
-        // Pega o que já tem no carrinho ou cria array novo
-        let itens = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]');
+    // --- FUNÇÃO BLINDADA: RECEBE O ÍNDICE, NÃO O NOME ---
+    function enviarParaCalculadora(index) {
+        // Pega o objeto inteiro da memória
+        const item = resultadosBusca[index];
         
-        // Cria o novo item no formato que a calculadora entende
+        if (!item) return;
+
+        let itensCarrinho = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]');
+        
         const novoItem = {
             id: Date.now(),
-            nome: nome,
-            preco: parseFloat(preco),
+            nome: item.raw_name, // Nome seguro
+            preco: parseFloat(item.unit_price),
             qtd: 1,
-            total: parseFloat(preco)
+            total: parseFloat(item.unit_price)
         };
         
-        // Salva
-        itens.unshift(novoItem);
-        localStorage.setItem('carrinhoTemp', JSON.stringify(itens));
+        itensCarrinho.unshift(novoItem);
+        localStorage.setItem('carrinhoTemp', JSON.stringify(itensCarrinho));
         
-        // Pergunta se quer ir lá ver
-        if(confirm(`"${nome}" adicionado por R$ ${preco.toFixed(2)}!\n\nDeseja abrir a calculadora agora?`)) {
+        if(confirm(`"${item.raw_name}" enviado para a calculadora!\n\nIr para lá agora?`)) {
             window.location.href = 'calculadora.html';
         }
     }
 
-    // --- BUSCA COM RANKING + BOTÃO DE ADICIONAR ---
     async function buscar(texto) {
         const area = document.getElementById('area-busca');
         const lista = document.getElementById('lista-compras');
@@ -344,30 +345,26 @@
         area.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">🔎 Pesquisando preços...</div>';
         
         const res = await fetch(`https://onde-compensa-api.onrender.com/search?q=${texto}&userId=${userId}`);
-        let prods = await res.json();
+        resultadosBusca = await res.json(); // SALVA NA VARIAVEL GLOBAL
         
         area.innerHTML = '';
-        if(prods.length === 0) {
+        if(resultadosBusca.length === 0) {
             area.innerHTML='<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado com esse nome.</div>';
             return;
         }
 
-        prods.sort((a, b) => parseFloat(a.unit_price) - parseFloat(b.unit_price));
+        resultadosBusca.sort((a, b) => parseFloat(a.unit_price) - parseFloat(b.unit_price));
 
-        prods.forEach((p, index) => {
+        resultadosBusca.forEach((p, index) => {
             const preco = parseFloat(p.unit_price);
             const nomeLoja = p.receipt?.store?.name || p.receipt?.stores?.name || 'Loja Desconhecida';
             const dataCompra = new Date(p.receipt?.issue_date);
-            
             const diasAtras = Math.floor((new Date() - dataCompra) / (1000 * 60 * 60 * 24));
-            let alertaVelho = "";
-            let classePreco = "price-date";
-            if(diasAtras > 30) {
-                alertaVelho = `<span style="color:#d32f2f; font-weight:bold;">⚠️ Preço antigo (${diasAtras}d)</span>`;
-                classePreco = "old-price";
-            } else {
-                alertaVelho = `${diasAtras === 0 ? 'Hoje' : diasAtras + ' dias atrás'}`;
-            }
+            
+            let alertaVelho = diasAtras > 30 ? 
+                `<span style="color:#d32f2f; font-weight:bold;">⚠️ Preço antigo (${diasAtras}d)</span>` : 
+                `${diasAtras === 0 ? 'Hoje' : diasAtras + ' dias atrás'}`;
+            let classePreco = diasAtras > 30 ? "old-price" : "price-date";
 
             let classeRank = '';
             let medalha = '';
@@ -377,9 +374,8 @@
 
             const card = document.createElement('div');
             card.className = `rank-card ${classeRank}`;
-            // Atenção para as aspas no onclick
-            const nomeLimpo = p.raw_name.replace(/"/g, '&quot;').replace(/'/g, "\\'"); 
             
+            // Passa apenas o INDEX (0, 1, 2) para a função
             card.innerHTML = `
                 <div class="rank-content" onclick="abrirNotaPorId('${p.receipt_id}')">
                     <div class="rank-badge">${medalha}</div>
@@ -392,7 +388,7 @@
                     <span class="price-big">${preco.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</span>
                     <span class="${classePreco}">${alertaVelho}</span>
                     
-                    <button class="btn-to-calc" onclick="enviarParaCalculadora('${nomeLimpo}', ${preco})">
+                    <button class="btn-to-calc" onclick="enviarParaCalculadora(${index})">
                         ＋ 🛒
                     </button>
                 </div>
