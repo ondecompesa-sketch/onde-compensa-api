@@ -40,7 +40,7 @@
         #sugestao-preco {
             background: #fff3cd; color: #856404; border: 1px solid #ffeeba;
             padding: 10px; border-radius: 10px; font-size: 0.9rem;
-            display: none; align-items: center; gap: 8px; animation: fadeIn 0.3s;
+            display: none; align-items: center; gap: 8px; animation: fadeIn 0.3s; cursor: pointer;
         }
         @keyframes fadeIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
 
@@ -80,15 +80,18 @@
 <a href="index.html" class="fab-back">⬅</a>
 
 <script>
-    // --- SUPABASE SETUP ---
+    // --- SUPABASE SETUP (Variável Única) ---
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // Verifica se já existe para não dar erro
+    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
     let itens = [];
     let meta = localStorage.getItem('metaCarrinho') || 0;
-    let timerBusca = null; // Para não buscar a cada letra (debounce)
+    let timerBusca = null;
 
+    // Carrega dados iniciais
     function carregarDados() {
         try { itens = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]'); } catch (e) { itens = []; }
         renderizar();
@@ -101,23 +104,18 @@
         const divDica = document.getElementById('sugestao-preco');
         divDica.style.display = 'none';
 
-        if(texto.length < 3) return;
+        if(texto.length < 3 || !supabase) return;
 
-        // Espera o usuário parar de digitar por 500ms
         clearTimeout(timerBusca);
         timerBusca = setTimeout(async () => {
-            
-            // Busca o menor preço no banco (incluindo encartes válidos)
             const { data, error } = await supabase
                 .from('receipt_items')
                 .select(`
-                    unit_price, 
-                    raw_name,
-                    valid_until,
+                    unit_price, raw_name, valid_until,
                     receipt:receipts ( store:stores ( name ) )
                 `)
                 .ilike('raw_name', `%${texto}%`)
-                .order('unit_price', { ascending: true }) // O mais barato primeiro
+                .order('unit_price', { ascending: true })
                 .limit(1);
 
             if(data && data.length > 0) {
@@ -125,13 +123,11 @@
                 const loja = item.receipt?.store?.name || 'Mercado';
                 const preco = item.unit_price;
                 const isEncarte = item.valid_until && item.valid_until >= new Date().toISOString().split('T')[0];
-                
                 const icone = isEncarte ? '🔥' : '💡';
                 
-                divDica.innerHTML = `${icone} Melhor preço encontrado: <b>R$ ${parseFloat(preco).toFixed(2)}</b> no <b>${loja}</b>`;
+                divDica.innerHTML = `${icone} Melhor preço: <b>R$ ${parseFloat(preco).toFixed(2)}</b> no <b>${loja}</b>`;
                 divDica.style.display = 'flex';
                 
-                // Clicar na dica preenche o preço
                 divDica.onclick = () => {
                     document.getElementById('inp-preco').value = preco;
                     divDica.style.display = 'none';
@@ -155,7 +151,7 @@
         salvar(); renderizar();
         
         nomeInp.value = ''; precoInp.value = ''; qtdInp.value = '1';
-        document.getElementById('sugestao-preco').style.display = 'none'; // Esconde a dica
+        document.getElementById('sugestao-preco').style.display = 'none';
         nomeInp.focus(); 
     }
 
@@ -165,7 +161,6 @@
         const lista = document.getElementById('lista-itens');
         const displayTotal = document.getElementById('display-total');
         const barra = document.getElementById('progress-bar');
-        
         lista.innerHTML = '';
         let totalGeral = 0;
 
@@ -189,7 +184,6 @@
         });
 
         displayTotal.innerText = formatar(totalGeral);
-        
         if (meta > 0) {
             const pct = (totalGeral / meta) * 100;
             barra.style.width = Math.min(pct, 100) + '%';
