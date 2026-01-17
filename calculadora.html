@@ -80,18 +80,17 @@
 <a href="index.html" class="fab-back">⬅</a>
 
 <script>
-    // --- SUPABASE SETUP (Variável Única) ---
+    // --- CONFIGURAÇÃO ---
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     
-    // Verifica se já existe para não dar erro
-    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+    // Mudei o nome da variável para evitar conflito com qualquer código antigo
+    const clienteSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let itens = [];
     let meta = localStorage.getItem('metaCarrinho') || 0;
     let timerBusca = null;
 
-    // Carrega dados iniciais
     function carregarDados() {
         try { itens = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]'); } catch (e) { itens = []; }
         renderizar();
@@ -104,18 +103,21 @@
         const divDica = document.getElementById('sugestao-preco');
         divDica.style.display = 'none';
 
-        if(texto.length < 3 || !supabase) return;
+        if(texto.length < 3) return;
 
         clearTimeout(timerBusca);
         timerBusca = setTimeout(async () => {
-            const { data, error } = await supabase
+            // Busca o menor preço (incluindo encartes válidos)
+            const { data, error } = await clienteSupabase
                 .from('receipt_items')
                 .select(`
-                    unit_price, raw_name, valid_until,
+                    unit_price, 
+                    raw_name,
+                    valid_until,
                     receipt:receipts ( store:stores ( name ) )
                 `)
                 .ilike('raw_name', `%${texto}%`)
-                .order('unit_price', { ascending: true })
+                .order('unit_price', { ascending: true }) // Mais barato primeiro
                 .limit(1);
 
             if(data && data.length > 0) {
@@ -123,6 +125,7 @@
                 const loja = item.receipt?.store?.name || 'Mercado';
                 const preco = item.unit_price;
                 const isEncarte = item.valid_until && item.valid_until >= new Date().toISOString().split('T')[0];
+                
                 const icone = isEncarte ? '🔥' : '💡';
                 
                 divDica.innerHTML = `${icone} Melhor preço: <b>R$ ${parseFloat(preco).toFixed(2)}</b> no <b>${loja}</b>`;
@@ -151,7 +154,7 @@
         salvar(); renderizar();
         
         nomeInp.value = ''; precoInp.value = ''; qtdInp.value = '1';
-        document.getElementById('sugestao-preco').style.display = 'none';
+        document.getElementById('sugestao-preco').style.display = 'none'; // Esconde dica
         nomeInp.focus(); 
     }
 
@@ -161,6 +164,7 @@
         const lista = document.getElementById('lista-itens');
         const displayTotal = document.getElementById('display-total');
         const barra = document.getElementById('progress-bar');
+        
         lista.innerHTML = '';
         let totalGeral = 0;
 
