@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Importar JSON Gemini 🤖</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
+        textarea { width: 100%; height: 300px; padding: 10px; border-radius: 10px; border: 1px solid #ccc; font-family: monospace; }
+        button { background: #28a745; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 1.2rem; cursor: pointer; width: 100%; margin-top: 10px; }
+        button:hover { background: #218838; }
+        #status { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>🤖 Importador de Encarte (Via Gemini)</h2>
+    <p>Cole o JSON que o Gemini gerou aqui:</p>
+    
+    <textarea id="jsonInput" placeholder='{ "loja": "Mundial", ... }'></textarea>
+    
+    <button onclick="importar()">🚀 Processar e Salvar</button>
+    <div id="status"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function importar() {
+            const status = document.getElementById('status');
+            const texto = document.getElementById('jsonInput').value;
+            
+            try {
+                status.innerText = "⏳ Lendo JSON...";
+                const dados = JSON.parse(texto);
+                
+                // 1. Verifica login
+                const { data: { session } } = await supabase.auth.getSession();
+                if(!session) return alert("Faça login antes!");
+                const userId = session.user.id;
+
+                // 2. Busca ou Cria a Loja
+                status.innerText = `🏬 Verificando loja: ${dados.loja}...`;
+                
+                // Tenta achar a loja pelo nome (usando ilike para ignorar maiúscula/minúscula)
+                let { data: lojaExistente } = await supabase
+                    .from('stores')
+                    .select('id')
+                    .ilike('name', dados.loja) // Ex: 'mundial' acha 'Mundial'
+                    .single();
+
+                let lojaId;
+
+                if (lojaExistente) {
+                    lojaId = lojaExistente.id;
+                } else {
+                    // Cria loja nova se não existir
+                    const { data: novaLoja, error: erroLoja } = await supabase
+                        .from('stores')
+                        .insert({ name: dados.loja, city: dados.cidade || 'Local não informado' })
+                        .select()
+                        .single();
+                    
+                    if(erroLoja) throw erroLoja;
+                    lojaId = novaLoja.id;
+                }
+
+                // 3. Cria o "Cabeçalho" da Oferta (Receipt)
+                status.innerText = "📄 Criando registro do encarte...";
+                const { data: nota, error: erroNota } = await supabase
+                    .from('receipts')
+                    .insert({
+                        user_id: userId,
+                        store_id: lojaId,
+                        total_amount: 0, // Encarte não tem total pago
+                        issue_date: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+
+                if(erroNota) throw erroNota;
+
+                // 4. Prepara os Itens
+                status.innerText = `📦 Processando ${dados.itens.length} itens...`;
+                const itensParaSalvar = dados.itens.map(item => ({
+                    receipt_id: nota.id,
+                    raw_name: item.nome,
+                    unit_price: item.preco,
+                    total_price: item.preco,
+                    quantity: 1,
+                    valid_until: dados.validade // Data de validade que veio do JSON
+                }));
+
+                // 5. Salva todos os itens de uma vez
+                const { error: erroItens } = await supabase
+                    .from('receipt_items')
+                    .insert(itensParaSalvar);
+
+                if(erroItens) throw erroItens;
+
+                status.innerHTML = `<span style="color:green">✅ Sucesso! ${dados.itens.length} ofertas cadastradas no ${dados.loja}.</span>`;
+
+            } catch (e) {
+                console.error(e);
+                status.innerHTML = `<span style="color:red">❌ Erro: ${e.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
