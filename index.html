@@ -50,7 +50,7 @@
         .search-input { flex: 1; padding: 12px; border: 1px solid #eee; border-radius: 10px; font-size: 1rem; outline: none; }
         .filter-select { padding: 10px; border: 1px solid #eee; border-radius: 10px; background: white; font-weight: bold; color: #555; outline: none; }
 
-        /* RANKING CARD (Waze Mode) */
+        /* RANKING CARD */
         #area-busca { margin-top:10px; display:none; flex-direction:column; gap:10px; }
         .rank-card { background: white; padding: 15px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid transparent; animation: fadeIn 0.3s; position: relative; }
         
@@ -173,8 +173,7 @@
     let resultadosBusca = []; 
     let chartInstance = null;
     let userId = null;
-    let modoBusca = 'me'; // 'me' ou 'community'
-    let perfilUsuario = null; // Para saber a cidade do usuário
+    let modoBusca = 'me'; 
 
     async function iniciar() {
         const { data } = await supabaseClient.auth.getSession();
@@ -190,16 +189,14 @@
         document.getElementById('user-name').innerText = primeiroNome;
         if (foto) document.getElementById('user-avatar').src = foto;
         
-        // Carrega o Perfil para saber a cidade
-        const { data: perfil } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
-        if(perfil) perfilUsuario = perfil;
-
         carregar();
     }
 
     async function carregar() {
         try {
             document.getElementById('lista-compras').innerHTML = '<div class="empty-state">⏳ Atualizando...</div>';
+            // Busca inicial continua via API ou poderia ser convertida também, 
+            // mas por enquanto focamos na Busca que estava com erro.
             const res = await fetch(`https://onde-compensa-api.onrender.com/receipts?userId=${userId}`);
             todasAsCompras = await res.json();
             preencherFiltroMeses();
@@ -207,18 +204,134 @@
         } catch(e) { console.error("Erro:", e); }
     }
 
-    // --- CONTROLE DAS ABAS ---
     function mudarAba(modo) {
         modoBusca = modo;
-        // Atualiza visual dos botões
         document.getElementById('tab-me').className = modo === 'me' ? 'tab-btn active' : 'tab-btn';
         document.getElementById('tab-community').className = modo === 'community' ? 'tab-btn active' : 'tab-btn';
-        
-        // Refaz a busca se já tiver texto
         buscar();
     }
 
-    // ... (Funções preencherFiltroMeses, filtrarEAtualizar, renderizarLista, calcularEstatisticas e atualizarGrafico continuam iguais) ...
+    function enviarParaCalculadora(index) {
+        const item = resultadosBusca[index];
+        if (!item) return alert("Erro ao selecionar item.");
+        let itensCarrinho = [];
+        try { itensCarrinho = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]'); } catch(e) { itensCarrinho = []; }
+        const novoItem = { id: Date.now(), nome: item.raw_name, preco: parseFloat(item.unit_price), qtd: 1, total: parseFloat(item.unit_price) };
+        itensCarrinho.unshift(novoItem);
+        localStorage.setItem('carrinhoTemp', JSON.stringify(itensCarrinho));
+        if(confirm(`"${item.raw_name}" adicionado!\n\nIr para a calculadora?`)) { setTimeout(() => { window.location.href = 'calculadora.html'; }, 300); }
+    }
+
+    // --- NOVA BUSCA DIRETA (SEM API TRAVADA) ---
+    async function buscar() {
+        const texto = document.getElementById('campo-busca').value;
+        const area = document.getElementById('area-busca');
+        const lista = document.getElementById('lista-compras');
+
+        if(texto.length < 3) { 
+            area.style.display='none'; 
+            lista.style.display = 'flex'; 
+            return; 
+        }
+        
+        lista.style.display = 'none';
+        area.style.display = 'flex';
+        area.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">🔎 Pesquisando no Banco de Dados...</div>';
+        
+        // AQUI ESTÁ O SEGREDO: Usamos o cliente direto, não o fetch
+        // Selecionamos o item, o preço e fazemos o JOIN com a nota (para pegar data e loja)
+        const { data, error } = await supabaseClient
+            .from('receipt_items')
+            .select(`
+                id, 
+                raw_name, 
+                unit_price, 
+                receipt_id,
+                receipt:receipts (
+                    id, 
+                    issue_date,
+                    user_id,
+                    store:stores ( name, city ) 
+                )
+            `)
+            .ilike('raw_name', `%${texto}%`)
+            .limit(50); // Limita a 50 resultados para ser rápido
+
+        if (error) {
+            console.error("Erro na busca:", error);
+            area.innerHTML = '<div style="padding:30px; color:red; text-align:center">Erro na conexão.</div>';
+            return;
+        }
+
+        let resultados = data || [];
+
+        // FILTRO MANUAL INTELIGENTE
+        if (modoBusca === 'me') {
+            // Se for "Minhas Notas", filtramos aqui no Javascript
+            resultados = resultados.filter(item => item.receipt && item.receipt.user_id === userId);
+        }
+        // Se for "Community", mostramos tudo (graças ao SQL que você rodou!)
+
+        resultadosBusca = resultados;
+        resultadosBusca.sort((a, b) => parseFloat(a.unit_price) - parseFloat(b.unit_price));
+
+        area.innerHTML = '';
+        if(resultadosBusca.length === 0) {
+            area.innerHTML='<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado.</div>';
+            return;
+        }
+
+        resultadosBusca.forEach((p, index) => {
+            const preco = parseFloat(p.unit_price);
+            // Proteção contra dados incompletos
+            const nomeLoja = p.receipt?.store?.name || 'Loja Desconhecida';
+            const localizacao = p.receipt?.store?.city || 'Local não informado';
+            
+            const dataCompra = new Date(p.receipt?.issue_date);
+            const diasAtras = Math.floor((new Date() - dataCompra) / (1000 * 60 * 60 * 24));
+            
+            let alertaVelho = diasAtras > 30 ? 
+                `<span style="color:#d32f2f; font-weight:bold;">⚠️ Preço antigo (${diasAtras}d)</span>` : 
+                `${diasAtras === 0 ? 'Hoje' : diasAtras + 'd atrás'}`;
+            let classePreco = diasAtras > 30 ? "old-price" : "price-date";
+
+            let classeRank = '';
+            let medalha = '';
+            if (diasAtras < 30) {
+                if (index === 0) { classeRank = 'rank-1'; medalha = '🏆'; }
+                else if (index === 1) { classeRank = 'rank-2'; medalha = '🥈'; }
+                else if (index === 2) { classeRank = 'rank-3'; medalha = '🥉'; }
+            }
+
+            const card = document.createElement('div');
+            card.className = `rank-card ${classeRank}`;
+            
+            // Usamos p.receipt_id (que agora vem direto do banco)
+            card.innerHTML = `
+                <div class="rank-content" onclick="abrirNotaPorId('${p.receipt_id}')">
+                    <div class="rank-badge">${medalha}</div>
+                    <div class="rank-info">
+                        <h3>${p.raw_name}</h3>
+                        <p>
+                            ${nomeLoja} 
+                            ${modoBusca === 'community' ? `<span class="location-tag">📍 ${localizacao}</span>` : ''}
+                        </p>
+                    </div>
+                </div>
+                <div class="rank-actions">
+                    <span class="price-big">${preco.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</span>
+                    <span class="${classePreco}">${alertaVelho}</span>
+                    
+                    <button class="btn-to-calc" onclick="enviarParaCalculadora(${index})">
+                        ＋ 🛒
+                    </button>
+                </div>
+            `;
+            area.appendChild(card);
+        });
+    }
+
+    // --- OUTRAS FUNÇÕES IGUAIS ---
     function preencherFiltroMeses() {
         const select = document.getElementById('filtro-mes');
         const meses = new Set();
@@ -327,110 +440,6 @@
         document.getElementById('lista-itens-modal').innerHTML = html;
         document.getElementById('modal-total').innerText = parseFloat(nota.total_amount).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
         document.getElementById('modalDetalhes').style.display = 'flex';
-    }
-
-    function enviarParaCalculadora(index) {
-        const item = resultadosBusca[index];
-        if (!item) return alert("Erro ao selecionar item.");
-        let itensCarrinho = [];
-        try { itensCarrinho = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]'); } catch(e) { itensCarrinho = []; }
-        const novoItem = { id: Date.now(), nome: item.raw_name, preco: parseFloat(item.unit_price), qtd: 1, total: parseFloat(item.unit_price) };
-        itensCarrinho.unshift(novoItem);
-        localStorage.setItem('carrinhoTemp', JSON.stringify(itensCarrinho));
-        if(confirm(`"${item.raw_name}" adicionado!\n\nIr para a calculadora?`)) { setTimeout(() => { window.location.href = 'calculadora.html'; }, 300); }
-    }
-
-    // --- NOVA LÓGICA DE BUSCA COMUNITÁRIA (WAZE) ---
-    async function buscar() {
-        const texto = document.getElementById('campo-busca').value;
-        const area = document.getElementById('area-busca');
-        const lista = document.getElementById('lista-compras');
-
-        if(texto.length < 3) { 
-            area.style.display='none'; 
-            lista.style.display = 'flex'; 
-            return; 
-        }
-        
-        lista.style.display = 'none';
-        area.style.display = 'flex';
-        area.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">🔎 Pesquisando na rede...</div>';
-        
-        // PULO DO GATO: Se for "community", remove o userId da busca
-        let url = `https://onde-compensa-api.onrender.com/search?q=${texto}`;
-        if(modoBusca === 'me') {
-            url += `&userId=${userId}`;
-        }
-
-        const res = await fetch(url);
-        resultadosBusca = await res.json();
-        
-        area.innerHTML = '';
-        if(resultadosBusca.length === 0) {
-            area.innerHTML='<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado.</div>';
-            return;
-        }
-
-        // ORDENAÇÃO POR PREÇO
-        resultadosBusca.sort((a, b) => parseFloat(a.unit_price) - parseFloat(b.unit_price));
-
-        // FILTRO DE CIDADE (Só exibe se for na mesma cidade do usuário ou se o usuário não tiver cidade definida)
-        // OBS: Se a API não retornar cidade, a gente mostra tudo por segurança
-        let resultadosFiltrados = resultadosBusca;
-        if(modoBusca === 'community' && perfilUsuario && perfilUsuario.cidade) {
-            // Aqui filtraríamos se tivéssemos a cidade no objeto da nota. 
-            // Como MVP, vamos mostrar tudo e colocar uma TAG de localização.
-        }
-
-        resultadosFiltrados.forEach((p, index) => {
-            const preco = parseFloat(p.unit_price);
-            const nomeLoja = p.receipt?.store?.name || p.receipt?.stores?.name || 'Loja Desconhecida';
-            
-            // Tenta achar localização (simulada ou real se vier da API)
-            const localizacao = p.receipt?.store?.city || p.receipt?.stores?.city || 'Local não informado';
-            
-            const dataCompra = new Date(p.receipt?.issue_date);
-            const diasAtras = Math.floor((new Date() - dataCompra) / (1000 * 60 * 60 * 24));
-            
-            let alertaVelho = diasAtras > 30 ? 
-                `<span style="color:#d32f2f; font-weight:bold;">⚠️ Preço antigo (${diasAtras}d)</span>` : 
-                `${diasAtras === 0 ? 'Hoje' : diasAtras + 'd atrás'}`;
-            let classePreco = diasAtras > 30 ? "old-price" : "price-date";
-
-            let classeRank = '';
-            let medalha = '';
-            // Só dá medalha se for um preço recente (menos de 30 dias)
-            if (diasAtras < 30) {
-                if (index === 0) { classeRank = 'rank-1'; medalha = '🏆'; }
-                else if (index === 1) { classeRank = 'rank-2'; medalha = '🥈'; }
-                else if (index === 2) { classeRank = 'rank-3'; medalha = '🥉'; }
-            }
-
-            const card = document.createElement('div');
-            card.className = `rank-card ${classeRank}`;
-            
-            card.innerHTML = `
-                <div class="rank-content" onclick="abrirNotaPorId('${p.receipt_id}')">
-                    <div class="rank-badge">${medalha}</div>
-                    <div class="rank-info">
-                        <h3>${p.raw_name}</h3>
-                        <p>
-                            ${nomeLoja} 
-                            ${modoBusca === 'community' ? `<span class="location-tag">📍 ${localizacao}</span>` : ''}
-                        </p>
-                    </div>
-                </div>
-                <div class="rank-actions">
-                    <span class="price-big">${preco.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</span>
-                    <span class="${classePreco}">${alertaVelho}</span>
-                    
-                    <button class="btn-to-calc" onclick="enviarParaCalculadora(${index})">
-                        ＋ 🛒
-                    </button>
-                </div>
-            `;
-            area.appendChild(card);
-        });
     }
 
     function toggleMenu() { const m = document.getElementById('menuDropdown'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; }
