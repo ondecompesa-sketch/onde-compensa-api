@@ -26,8 +26,9 @@
         .user-texts { display: flex; flex-direction: column; }
         .greeting { font-size: 0.8rem; color: #888; }
         .user-name { font-size: 1rem; font-weight: 700; color: #333; }
-        .user-location { font-size: 0.75rem; color: #007bff; background: #e3f2fd; padding: 2px 8px; border-radius: 10px; margin-top: 2px; display: inline-block; width: fit-content; }
-        
+        /* Badge de Localização */
+        .user-location { font-size: 0.75rem; color: #007bff; background: #e3f2fd; padding: 2px 8px; border-radius: 10px; margin-top: 2px; display: inline-block; width: fit-content; border: 1px solid #b3e5fc; }
+
         .header-actions { display: flex; align-items: center; gap: 8px; }
         .btn-calc-mini { background: #e3f2fd; color: #007bff; border: none; width: 40px; height: 40px; border-radius: 12px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-menu { background: none; border: none; font-size: 1.5rem; color: #333; cursor: pointer; padding: 0 5px; }
@@ -42,7 +43,7 @@
         .stat-lbl { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
         .chart-container { background: white; margin-top: 15px; padding: 20px; border-radius: 16px; height: 220px; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         
-        /* BUSCA COM ABAS */
+        /* BUSCA COM 3 ABAS */
         .search-wrapper { margin-top: 20px; background: white; border-radius: 16px; padding: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 10px; }
         .search-tabs { display: flex; background: #f0f2f5; border-radius: 12px; padding: 4px; gap: 4px; }
         .tab-btn { flex: 1; border: none; padding: 8px 4px; border-radius: 10px; background: transparent; color: #666; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; white-space: nowrap; }
@@ -174,16 +175,18 @@
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Variável renomeada para evitar conflitos
+    const clienteSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
     let todasAsCompras = [];
     let resultadosBusca = []; 
     let chartInstance = null;
     let userId = null;
     let modoBusca = 'me';
-    let minhaCidade = localStorage.getItem('minhaCidade') || ''; // Recupera a cidade salva
+    let minhaCidade = localStorage.getItem('minhaCidade') || '';
 
     async function iniciar() {
-        const { data } = await supabaseClient.auth.getSession();
+        const { data } = await clienteSupabase.auth.getSession();
         if (!data.session) return window.location.href = 'login.html';
         
         const user = data.session.user;
@@ -199,14 +202,13 @@
         carregar();
     }
 
-    // --- NOVA FUNÇÃO PARA DEFINIR A CIDADE DO USUÁRIO ---
     function mudarLocalizacao() {
         const nova = prompt("Em qual cidade você costuma comprar?", minhaCidade || "Ex: Nova Iguaçu");
         if(nova !== null) {
             minhaCidade = nova.trim();
             localStorage.setItem('minhaCidade', minhaCidade);
             atualizarDisplayCidade();
-            // Se tiver uma busca aberta, refaz ela com o novo filtro
+            // Refaz a busca se estiver aberta
             if(document.getElementById('area-busca').style.display === 'flex') {
                 buscar();
             }
@@ -226,7 +228,7 @@
         try {
             document.getElementById('lista-compras').innerHTML = '<div class="empty-state">⏳ Atualizando...</div>';
             
-            const { data, error } = await supabaseClient
+            const { data, error } = await clienteSupabase
                 .from('receipts')
                 .select(`
                     id, total_amount, issue_date, image_url,
@@ -234,7 +236,7 @@
                     receipt_items ( id, total_price, raw_name, quantity, unit_measure, product:products ( category ) )
                 `)
                 .eq('user_id', userId)
-                .gt('total_amount', 0)
+                .gt('total_amount', 0) // Só notas pagas
                 .order('issue_date', { ascending: false });
 
             if(error) throw error;
@@ -266,7 +268,7 @@
         lista.style.display='none'; area.style.display='flex';
         area.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">🔎 Pesquisando...</div>';
         
-        const { data, error } = await supabaseClient
+        const { data, error } = await clienteSupabase
             .from('receipt_items')
             .select(`
                 id, raw_name, unit_price, valid_until, receipt_id,
@@ -279,7 +281,7 @@
 
         let resultados = data || [];
         
-        // --- FILTROS DE CATEGORIA ---
+        // --- FILTROS DE ABAS ---
         if (modoBusca === 'me') {
             resultados = resultados.filter(item => 
                 item.receipt && item.receipt.user_id === userId && parseFloat(item.receipt.total_amount) > 0
@@ -294,15 +296,23 @@
             );
         }
 
-        // --- FILTRO DE CIDADE (A GRANDE MUDANÇA) ---
-        // Se a pessoa definiu uma cidade, e NÃO está vendo "Minhas Notas" (porque minhas notas eu vejo onde for)
-        // Filtramos para mostrar só a cidade dela OU locais sem cidade definida
+        // --- FILTRO DE LOCALIZAÇÃO (COM CHAVE MESTRA) ---
         if (minhaCidade && modoBusca !== 'me') {
             resultados = resultados.filter(item => {
                 const cidadeLoja = item.receipt?.store?.city;
-                // Se a loja não tem cidade, mostra. Se tem, tem que bater com a minha (buscando pedaço do nome)
                 if (!cidadeLoja || cidadeLoja === 'Local não informado') return true;
-                return cidadeLoja.toLowerCase().includes(minhaCidade.toLowerCase());
+                
+                const cLoja = cidadeLoja.toLowerCase();
+                const cMinha = minhaCidade.toLowerCase();
+                
+                // CHAVES MESTRAS: Se a loja for "RJ" ou "Todas", mostra pra todo mundo
+                const chavesMestras = ['rj', 'estado do rio', 'todas', 'brasil'];
+                
+                // Verifica se a cidade da loja É uma chave mestra
+                if (chavesMestras.some(chave => cLoja === chave || cLoja.includes('estado'))) return true;
+
+                // Verifica match normal de cidade
+                return cLoja.includes(cMinha);
             });
         }
 
@@ -310,7 +320,7 @@
         area.innerHTML = '';
         
         if(resultados.length === 0) {
-            area.innerHTML=`<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado em <b>${minhaCidade || 'qualquer lugar'}</b>.</div>`;
+            area.innerHTML=`<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado para <b>${minhaCidade || 'sua região'}</b>.</div>`;
             return;
         }
 
@@ -383,8 +393,6 @@
         localStorage.setItem('carrinhoTemp', JSON.stringify(itensCarrinho));
         if(confirm(`"${item.raw_name}" adicionado!\n\nIr para a calculadora?`)) { setTimeout(() => { window.location.href = 'calculadora.html'; }, 300); }
     }
-    
-    // ... Funções auxiliares (preencherFiltroMeses, filtrarEAtualizar, renderizarLista, calcularEstatisticas, atualizarGrafico, abrirNotaPorId, toggleMenu, fecharModal, deletarNota, fazerFaxina, sair) mantidas iguais ...
     
     function preencherFiltroMeses() {
         const select = document.getElementById('filtro-mes');
@@ -498,9 +506,9 @@
 
     function toggleMenu() { const m = document.getElementById('menuDropdown'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; }
     function fecharModal(e) { if(!e || e.target.className.includes('modal') || e.target.tagName==='BUTTON') document.getElementById('modalDetalhes').style.display='none'; }
-    async function deletarNota(id) { if(confirm('Deseja apagar esta nota?')) { await supabaseClient.from('receipts').delete().eq('id', id); carregar(); } }
-    async function fazerFaxina() { if(confirm('Limpar notas vazias?')) { await supabaseClient.from('receipts').delete().eq('total_amount', 0); carregar(); } }
-    async function sair() { await supabaseClient.auth.signOut(); window.location.href = 'login.html'; }
+    async function deletarNota(id) { if(confirm('Deseja apagar esta nota?')) { await clienteSupabase.from('receipts').delete().eq('id', id); carregar(); } }
+    async function fazerFaxina() { if(confirm('Limpar notas vazias?')) { await clienteSupabase.from('receipts').delete().eq('total_amount', 0); carregar(); } }
+    async function sair() { await clienteSupabase.auth.signOut(); window.location.href = 'login.html'; }
 
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
 
