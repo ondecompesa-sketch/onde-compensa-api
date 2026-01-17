@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Calculadora</title>
+    <title>Calculadora Inteligente</title>
     <meta name="theme-color" content="#007bff">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; margin: 0; padding: 0; padding-bottom: 90px; }
@@ -15,14 +16,13 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.06);
             border-bottom-left-radius: 24px; border-bottom-right-radius: 24px;
         }
-        .label-total { font-size: 0.85rem; color: #888; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
         .valor-total { font-size: 3.2rem; font-weight: 800; color: #2e7d32; margin: 5px 0 15px 0; letter-spacing: -1px; transition: color 0.3s; }
         .valor-total.estourou { color: #d32f2f; }
 
         .meta-wrapper { display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .progress-bg { width: 100%; max-width: 220px; height: 10px; background: #f1f3f5; border-radius: 10px; overflow: hidden; }
-        .progress-fill { height: 100%; background: #2e7d32; width: 0%; transition: width 0.5s, background 0.3s; border-radius: 10px; }
-        .btn-meta { background: #fff; border: 1px solid #e0e0e0; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; color: #666; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .progress-fill { height: 100%; background: #2e7d32; width: 0%; transition: width 0.5s; }
+        .btn-meta { background: #fff; border: 1px solid #e0e0e0; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; color: #666; font-weight: 600; cursor: pointer; }
 
         .add-area { 
             background: white; margin: 20px 15px; padding: 20px; 
@@ -30,101 +30,115 @@
             display: flex; flex-direction: column; gap: 12px;
         }
         
-        input { 
-            width: 100%; padding: 14px; border: 1px solid #eee; border-radius: 12px; 
-            font-size: 1.1rem; outline: none; background: #f9f9f9; transition: 0.2s;
-        }
-        input:focus { border-color: #007bff; background: #fff; box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
+        input { width: 100%; padding: 14px; border: 1px solid #eee; border-radius: 12px; font-size: 1.1rem; outline: none; background: #f9f9f9; }
+        input:focus { border-color: #007bff; background: #fff; }
         
         .row-inputs { display: flex; gap: 10px; }
-        .input-group { flex: 1; }
-        
-        .btn-add { 
-            width: 100%; padding: 16px; background: #007bff; color: white; border: none; 
-            border-radius: 12px; font-weight: 700; font-size: 1.1rem; cursor: pointer; 
-            box-shadow: 0 4px 12px rgba(0,123,255,0.25); margin-top: 5px;
+        .btn-add { width: 100%; padding: 16px; background: #007bff; color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 1.1rem; cursor: pointer; margin-top: 5px; }
+
+        /* RADAR DE PREÇO */
+        #sugestao-preco {
+            background: #fff3cd; color: #856404; border: 1px solid #ffeeba;
+            padding: 10px; border-radius: 10px; font-size: 0.9rem;
+            display: none; align-items: center; gap: 8px; animation: fadeIn 0.3s;
         }
-        .btn-add:active { transform: scale(0.98); background: #0069d9; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
 
         .item-list { list-style: none; padding: 0; margin: 0 15px; }
-        .item-row { 
-            background: white; padding: 16px; margin-bottom: 12px; border-radius: 16px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03); 
-        }
-        .item-name { font-weight: 700; font-size: 1.05rem; color: #333; display: block; margin-bottom: 4px; }
+        .item-row { background: white; padding: 16px; margin-bottom: 12px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .item-name { font-weight: 700; font-size: 1.05rem; color: #333; display: block; }
         .item-calc { font-size: 0.9rem; color: #888; }
-        .item-price-total { font-weight: 800; font-size: 1.1rem; color: #2e7d32; }
-        
-        .btn-remove { 
-            background: #fff5f5; color: #e53935; border: none; width: 40px; height: 40px; 
-            border-radius: 12px; margin-left: 12px; cursor: pointer; font-size: 1.4rem; 
-            display: flex; align-items: center; justify-content: center;
-        }
+        .btn-remove { background: #fff5f5; color: #e53935; border: none; width: 40px; height: 40px; border-radius: 12px; margin-left: 12px; font-size: 1.4rem; }
 
-        .fab-back { 
-            position: fixed; bottom: 25px; left: 25px; 
-            background: white; color: #333; width: 55px; height: 55px; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-decoration: none; font-size: 24px; z-index: 200; 
-        }
+        .fab-back { position: fixed; bottom: 25px; left: 25px; background: white; color: #333; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-decoration: none; font-size: 24px; z-index: 200; }
     </style>
 </head>
 <body>
 
 <div class="header-total">
-    <div class="label-total">Total Previsto</div>
+    <div style="font-size:0.85rem; color:#888; font-weight:600;">Total Previsto</div>
     <div class="valor-total" id="display-total">R$ 0,00</div>
-    
     <div class="meta-wrapper">
         <div class="progress-bg"><div class="progress-fill" id="progress-bar"></div></div>
-        <button class="btn-meta" onclick="definirMeta()">
-            🎯 Meta: <span id="label-meta" style="margin-left:5px">Definir</span>
-        </button>
+        <button class="btn-meta" onclick="definirMeta()">🎯 Meta: <span id="label-meta">Definir</span></button>
     </div>
 </div>
 
 <div class="add-area">
-    <input type="text" id="inp-nome" placeholder="Nome do produto (Opcional)">
+    <input type="text" id="inp-nome" placeholder="Nome do produto (Opcional)" onkeyup="buscarMelhorPreco(this.value)">
+    
+    <div id="sugestao-preco"></div>
+
     <div class="row-inputs">
-        <div class="input-group" style="flex: 2;">
-            <input type="number" id="inp-preco" placeholder="R$ Preço" step="0.01" inputmode="decimal">
-        </div>
-        <div class="input-group" style="flex: 1;">
-            <input type="number" id="inp-qtd" value="1" style="text-align:center" inputmode="numeric">
-        </div>
+        <div style="flex: 2;"><input type="number" id="inp-preco" placeholder="R$ Preço" step="0.01" inputmode="decimal"></div>
+        <div style="flex: 1;"><input type="number" id="inp-qtd" value="1" style="text-align:center" inputmode="numeric"></div>
     </div>
     <button class="btn-add" onclick="adicionarItem()">Adicionar ao Carrinho</button>
 </div>
 
 <div id="lista-itens" class="item-list"></div>
-
 <a href="index.html" class="fab-back">⬅</a>
 
 <script>
+    // --- SUPABASE SETUP ---
+    const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     let itens = [];
     let meta = localStorage.getItem('metaCarrinho') || 0;
+    let timerBusca = null; // Para não buscar a cada letra (debounce)
 
-    // --- CARREGAMENTO ROBUSTO ---
     function carregarDados() {
-        const dadosSalvos = localStorage.getItem('carrinhoTemp');
-        console.log("Dados no Storage:", dadosSalvos); // Para Debug
-
-        if(dadosSalvos) {
-            try {
-                itens = JSON.parse(dadosSalvos);
-            } catch (e) {
-                console.error("Erro ao ler carrinho:", e);
-                itens = [];
-            }
-        }
+        try { itens = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]'); } catch (e) { itens = []; }
         renderizar();
         atualizarMetaDisplay();
     }
-
-    // Carrega ao iniciar e ao focar na janela
     carregarDados();
-    window.addEventListener('focus', carregarDados);
+
+    // --- FUNÇÃO DO RADAR DE PREÇO ---
+    function buscarMelhorPreco(texto) {
+        const divDica = document.getElementById('sugestao-preco');
+        divDica.style.display = 'none';
+
+        if(texto.length < 3) return;
+
+        // Espera o usuário parar de digitar por 500ms
+        clearTimeout(timerBusca);
+        timerBusca = setTimeout(async () => {
+            
+            // Busca o menor preço no banco (incluindo encartes válidos)
+            const { data, error } = await supabase
+                .from('receipt_items')
+                .select(`
+                    unit_price, 
+                    raw_name,
+                    valid_until,
+                    receipt:receipts ( store:stores ( name ) )
+                `)
+                .ilike('raw_name', `%${texto}%`)
+                .order('unit_price', { ascending: true }) // O mais barato primeiro
+                .limit(1);
+
+            if(data && data.length > 0) {
+                const item = data[0];
+                const loja = item.receipt?.store?.name || 'Mercado';
+                const preco = item.unit_price;
+                const isEncarte = item.valid_until && item.valid_until >= new Date().toISOString().split('T')[0];
+                
+                const icone = isEncarte ? '🔥' : '💡';
+                
+                divDica.innerHTML = `${icone} Melhor preço encontrado: <b>R$ ${parseFloat(preco).toFixed(2)}</b> no <b>${loja}</b>`;
+                divDica.style.display = 'flex';
+                
+                // Clicar na dica preenche o preço
+                divDica.onclick = () => {
+                    document.getElementById('inp-preco').value = preco;
+                    divDica.style.display = 'none';
+                };
+            }
+        }, 500);
+    }
 
     function adicionarItem() {
         const nomeInp = document.getElementById('inp-nome');
@@ -135,29 +149,17 @@
         const preco = parseFloat(precoInp.value);
         const qtd = parseFloat(qtdInp.value);
 
-        if (!preco || isNaN(preco)) {
-            alert("Digite o preço!");
-            precoInp.focus();
-            return;
-        }
+        if (!preco || isNaN(preco)) { alert("Digite o preço!"); precoInp.focus(); return; }
 
-        const item = { id: Date.now(), nome, preco, qtd, total: preco * qtd };
-
-        itens.unshift(item);
-        salvar();
-        renderizar();
+        itens.unshift({ id: Date.now(), nome, preco, qtd, total: preco * qtd });
+        salvar(); renderizar();
         
-        nomeInp.value = '';
-        precoInp.value = '';
-        qtdInp.value = '1';
-        precoInp.focus(); 
+        nomeInp.value = ''; precoInp.value = ''; qtdInp.value = '1';
+        document.getElementById('sugestao-preco').style.display = 'none'; // Esconde a dica
+        nomeInp.focus(); 
     }
 
-    function removerItem(id) {
-        itens = itens.filter(i => i.id !== id);
-        salvar();
-        renderizar();
-    }
+    function removerItem(id) { itens = itens.filter(i => i.id !== id); salvar(); renderizar(); }
 
     function renderizar() {
         const lista = document.getElementById('lista-itens');
@@ -167,9 +169,7 @@
         lista.innerHTML = '';
         let totalGeral = 0;
 
-        if(itens.length === 0) {
-            lista.innerHTML = '<div style="text-align:center; padding: 40px; opacity: 0.6;"><div style="font-size: 3rem; margin-bottom:10px;">🛒</div><div>Carrinho vazio</div></div>';
-        }
+        if(itens.length === 0) lista.innerHTML = '<div style="text-align:center; padding: 40px; opacity: 0.6;"><div style="font-size: 3rem;">🛒</div><div>Carrinho vazio</div></div>';
 
         itens.forEach(item => {
             totalGeral += item.total;
@@ -181,7 +181,7 @@
                     <span class="item-calc">${item.qtd}x ${formatar(item.preco)}</span>
                 </div>
                 <div style="display:flex; align-items:center;">
-                    <span class="item-price-total">${formatar(item.total)}</span>
+                    <span style="font-weight:800; font-size:1.1rem; color:#2e7d32;">${formatar(item.total)}</span>
                     <button class="btn-remove" onclick="removerItem(${item.id})">&times;</button>
                 </div>
             `;
@@ -193,36 +193,18 @@
         if (meta > 0) {
             const pct = (totalGeral / meta) * 100;
             barra.style.width = Math.min(pct, 100) + '%';
-            if (totalGeral > meta) {
-                displayTotal.classList.add('estourou');
-                barra.style.backgroundColor = '#e53935';
-            } else {
-                displayTotal.classList.remove('estourou');
-                barra.style.backgroundColor = '#2e7d32';
-            }
-        } else {
-            barra.style.width = '0%';
-        }
+            if (totalGeral > meta) { displayTotal.classList.add('estourou'); barra.style.backgroundColor = '#e53935'; } 
+            else { displayTotal.classList.remove('estourou'); barra.style.backgroundColor = '#2e7d32'; }
+        } else { barra.style.width = '0%'; }
     }
 
     function definirMeta() {
         const nova = prompt("Qual seu limite de gasto?", meta || "");
-        if (nova) {
-            meta = parseFloat(nova.replace(',', '.'));
-            localStorage.setItem('metaCarrinho', meta);
-            atualizarMetaDisplay();
-            renderizar();
-        }
+        if (nova) { meta = parseFloat(nova.replace(',', '.')); localStorage.setItem('metaCarrinho', meta); atualizarMetaDisplay(); renderizar(); }
     }
-
-    function atualizarMetaDisplay() {
-        const label = document.getElementById('label-meta');
-        label.innerText = meta > 0 ? formatar(meta) : "Definir";
-    }
-
+    function atualizarMetaDisplay() { document.getElementById('label-meta').innerText = meta > 0 ? formatar(meta) : "Definir"; }
     function salvar() { localStorage.setItem('carrinhoTemp', JSON.stringify(itens)); }
     function formatar(v) { return v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}); }
 </script>
-
 </body>
 </html>

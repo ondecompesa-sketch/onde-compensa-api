@@ -199,7 +199,7 @@
         try {
             document.getElementById('lista-compras').innerHTML = '<div class="empty-state">⏳ Atualizando...</div>';
             
-            // --- MUDANÇA PRINCIPAL: Usa Supabase Direto (Sem API quebrada) ---
+            // CARREGA APENAS NOTAS COM VALOR (Ignora Encartes de R$ 0,00)
             const { data, error } = await supabaseClient
                 .from('receipts')
                 .select(`
@@ -214,6 +214,7 @@
                     )
                 `)
                 .eq('user_id', userId)
+                .gt('total_amount', 0) // <--- O FILTRO MÁGICO
                 .order('issue_date', { ascending: false });
 
             if(error) throw error;
@@ -228,7 +229,6 @@
         }
     }
 
-    // ... (Resto das funções mantidas e corrigidas para a estrutura direta) ...
     function mudarAba(modo) {
         modoBusca = modo;
         document.getElementById('tab-me').className = modo === 'me' ? 'tab-btn active' : 'tab-btn';
@@ -314,10 +314,16 @@
             }
 
             let medalha = '';
-            if (index === 0) medalha = '🏆';
-            else if (index === 1) medalha = '🥈';
-            else if (index === 2) medalha = '🥉';
-            if(isEncarte) medalha = '🔥';
+            // Se for encarte válido, ganha Fogo. Se não, ganha Ouro/Prata/Bronze
+            if(isEncarte) {
+                 medalha = '🔥';
+            } else if (index === 0) {
+                 medalha = '🏆';
+            } else if (index === 1) {
+                 medalha = '🥈';
+            } else if (index === 2) {
+                 medalha = '🥉';
+            }
 
             const card = document.createElement('div');
             card.className = `rank-card`;
@@ -342,6 +348,7 @@
         });
     }
 
+    // FUNÇÕES DE FILTRO E ESTATISTICAS
     function preencherFiltroMeses() {
         const select = document.getElementById('filtro-mes');
         const meses = new Set();
@@ -404,7 +411,6 @@
         dados.forEach(nota => {
             totalGeral += parseFloat(nota.total_amount);
             nota.receipt_items.forEach(item => {
-                // Proteção para itens importados sem categoria
                 let cat = item.product?.category || 'Outros'; 
                 if (!gastosPorCategoria[cat]) gastosPorCategoria[cat] = 0;
                 gastosPorCategoria[cat] += parseFloat(item.total_price);
@@ -438,7 +444,6 @@
         document.getElementById('modal-titulo').innerText = nomeLoja;
         let html = `<div style="text-align:center; color:#888; margin-bottom:15px; font-size:0.9rem;">📅 ${dataFmt}</div>`;
         nota.receipt_items.forEach(i => {
-            // Proteção para itens sem produto vinculado
             const cat = i.product?.category || 'Geral'; 
             html += `
                 <div class="item-row">
