@@ -148,7 +148,10 @@
     <div id="lista-compras" class="receipt-list"></div>
 </div>
 
-<a href="nova-nota.html" class="fab">＋</a>
+<div style="position:fixed; bottom:25px; right:25px; display:flex; flex-direction:column; gap:15px; z-index:90; align-items:center;">
+    <a href="oferta.html" style="background:#fff; color:#d32f2f; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none; box-shadow:0 4px 15px rgba(0,0,0,0.2); font-size:24px; border:2px solid #d32f2f;">🔥</a>
+    <a href="nova-nota.html" class="fab" style="position:static; margin:0;">＋</a>
+</div>
 
 <div id="modalDetalhes" class="modal-overlay" onclick="fecharModal(event)">
     <div class="modal-content">
@@ -195,15 +198,37 @@
     async function carregar() {
         try {
             document.getElementById('lista-compras').innerHTML = '<div class="empty-state">⏳ Atualizando...</div>';
-            // Busca inicial continua via API ou poderia ser convertida também, 
-            // mas por enquanto focamos na Busca que estava com erro.
-            const res = await fetch(`https://onde-compensa-api.onrender.com/receipts?userId=${userId}`);
-            todasAsCompras = await res.json();
+            
+            // --- MUDANÇA PRINCIPAL: Usa Supabase Direto (Sem API quebrada) ---
+            const { data, error } = await supabaseClient
+                .from('receipts')
+                .select(`
+                    id, 
+                    total_amount, 
+                    issue_date, 
+                    image_url,
+                    store:stores ( name ),
+                    receipt_items (
+                        id, total_price, raw_name, quantity, unit_measure,
+                        product:products ( category )
+                    )
+                `)
+                .eq('user_id', userId)
+                .order('issue_date', { ascending: false });
+
+            if(error) throw error;
+            
+            todasAsCompras = data || [];
             preencherFiltroMeses();
             filtrarEAtualizar();
-        } catch(e) { console.error("Erro:", e); }
+
+        } catch(e) { 
+            console.error("Erro ao carregar:", e);
+            document.getElementById('lista-compras').innerHTML = '<div class="empty-state" style="color:red">❌ Erro ao conectar.</div>';
+        }
     }
 
+    // ... (Resto das funções mantidas e corrigidas para a estrutura direta) ...
     function mudarAba(modo) {
         modoBusca = modo;
         document.getElementById('tab-me').className = modo === 'me' ? 'tab-btn active' : 'tab-btn';
@@ -222,7 +247,6 @@
         if(confirm(`"${item.raw_name}" adicionado!\n\nIr para a calculadora?`)) { setTimeout(() => { window.location.href = 'calculadora.html'; }, 300); }
     }
 
-    // --- NOVA BUSCA DIRETA (SEM API TRAVADA) ---
     async function buscar() {
         const texto = document.getElementById('campo-busca').value;
         const area = document.getElementById('area-busca');
@@ -238,100 +262,86 @@
         area.style.display = 'flex';
         area.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">🔎 Pesquisando no Banco de Dados...</div>';
         
-        // AQUI ESTÁ O SEGREDO: Usamos o cliente direto, não o fetch
-        // Selecionamos o item, o preço e fazemos o JOIN com a nota (para pegar data e loja)
         const { data, error } = await supabaseClient
             .from('receipt_items')
             .select(`
-                id, 
-                raw_name, 
-                unit_price, 
-                receipt_id,
-                receipt:receipts (
-                    id, 
-                    issue_date,
-                    user_id,
-                    store:stores ( name, city ) 
-                )
+                id, raw_name, unit_price, valid_until, receipt_id,
+                receipt:receipts ( id, issue_date, user_id, store:stores ( name, city ) )
             `)
             .ilike('raw_name', `%${texto}%`)
-            .limit(50); // Limita a 50 resultados para ser rápido
+            .limit(50);
 
         if (error) {
-            console.error("Erro na busca:", error);
-            area.innerHTML = '<div style="padding:30px; color:red; text-align:center">Erro na conexão.</div>';
-            return;
+            console.error(error);
+            area.innerHTML = '<div style="padding:30px; color:red; text-align:center">Erro na busca.</div>';
+            return; 
         }
 
         let resultados = data || [];
+        if (modoBusca === 'me') resultados = resultados.filter(item => item.receipt && item.receipt.user_id === userId);
 
-        // FILTRO MANUAL INTELIGENTE
-        if (modoBusca === 'me') {
-            // Se for "Minhas Notas", filtramos aqui no Javascript
-            resultados = resultados.filter(item => item.receipt && item.receipt.user_id === userId);
-        }
-        // Se for "Community", mostramos tudo (graças ao SQL que você rodou!)
-
-        resultadosBusca = resultados;
-        resultadosBusca.sort((a, b) => parseFloat(a.unit_price) - parseFloat(b.unit_price));
-
+        resultados.sort((a, b) => parseFloat(a.unit_price) - parseFloat(b.unit_price));
         area.innerHTML = '';
-        if(resultadosBusca.length === 0) {
+        if(resultados.length === 0) {
             area.innerHTML='<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado.</div>';
             return;
         }
 
-        resultadosBusca.forEach((p, index) => {
-            const preco = parseFloat(p.unit_price);
-            // Proteção contra dados incompletos
-            const nomeLoja = p.receipt?.store?.name || 'Loja Desconhecida';
-            const localizacao = p.receipt?.store?.city || 'Local não informado';
-            
-            const dataCompra = new Date(p.receipt?.issue_date);
-            const diasAtras = Math.floor((new Date() - dataCompra) / (1000 * 60 * 60 * 24));
-            
-            let alertaVelho = diasAtras > 30 ? 
-                `<span style="color:#d32f2f; font-weight:bold;">⚠️ Preço antigo (${diasAtras}d)</span>` : 
-                `${diasAtras === 0 ? 'Hoje' : diasAtras + 'd atrás'}`;
-            let classePreco = diasAtras > 30 ? "old-price" : "price-date";
+        const hoje = new Date().toISOString().split('T')[0];
 
-            let classeRank = '';
-            let medalha = '';
-            if (diasAtras < 30) {
-                if (index === 0) { classeRank = 'rank-1'; medalha = '🏆'; }
-                else if (index === 1) { classeRank = 'rank-2'; medalha = '🥈'; }
-                else if (index === 2) { classeRank = 'rank-3'; medalha = '🥉'; }
+        resultados.forEach((p, index) => {
+            const preco = parseFloat(p.unit_price);
+            const nomeLoja = p.receipt?.store?.name || 'Loja Desconhecida';
+            const localizacao = p.receipt?.store?.city || '';
+            
+            let isEncarte = false;
+            let textoValidade = "";
+            let classeExtra = "";
+            
+            if (p.valid_until) {
+                if (p.valid_until >= hoje) {
+                    isEncarte = true; 
+                    const dataVal = new Date(p.valid_until).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+                    textoValidade = `<span style="color:#d32f2f; font-weight:bold; font-size:0.75rem; background:#ffebee; padding:2px 6px; border-radius:4px;">🔥 Até ${dataVal}</span>`;
+                    classeExtra = "border-left: 5px solid #d32f2f !important;"; 
+                } else {
+                    textoValidade = `<span style="color:#999; font-size:0.7rem;">(Oferta expirou)</span>`;
+                }
+            } else {
+                const dataCompra = new Date(p.receipt?.issue_date);
+                const diasAtras = Math.floor((new Date() - dataCompra) / (1000 * 60 * 60 * 24));
+                textoValidade = diasAtras > 30 ? `⚠️ ${diasAtras}d atrás` : `${diasAtras === 0 ? 'Hoje' : diasAtras + 'd atrás'}`;
             }
 
+            let medalha = '';
+            if (index === 0) medalha = '🏆';
+            else if (index === 1) medalha = '🥈';
+            else if (index === 2) medalha = '🥉';
+            if(isEncarte) medalha = '🔥';
+
             const card = document.createElement('div');
-            card.className = `rank-card ${classeRank}`;
+            card.className = `rank-card`;
+            if(isEncarte) card.style.cssText = classeExtra;
+            if(!isEncarte && index === 0) card.classList.add('rank-1');
             
-            // Usamos p.receipt_id (que agora vem direto do banco)
             card.innerHTML = `
                 <div class="rank-content" onclick="abrirNotaPorId('${p.receipt_id}')">
                     <div class="rank-badge">${medalha}</div>
                     <div class="rank-info">
                         <h3>${p.raw_name}</h3>
-                        <p>
-                            ${nomeLoja} 
-                            ${modoBusca === 'community' ? `<span class="location-tag">📍 ${localizacao}</span>` : ''}
-                        </p>
+                        <p>${nomeLoja} ${modoBusca === 'community' && localizacao ? `<span class="location-tag">📍 ${localizacao}</span>` : ''}</p>
                     </div>
                 </div>
                 <div class="rank-actions">
-                    <span class="price-big">${preco.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</span>
-                    <span class="${classePreco}">${alertaVelho}</span>
-                    
-                    <button class="btn-to-calc" onclick="enviarParaCalculadora(${index})">
-                        ＋ 🛒
-                    </button>
+                    <span class="price-big" style="${isEncarte ? 'color:#d32f2f':''}">${preco.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</span>
+                    <span class="price-date">${textoValidade}</span>
+                    <button class="btn-to-calc" onclick="enviarParaCalculadora(${index})">＋ 🛒</button>
                 </div>
             `;
             area.appendChild(card);
         });
     }
 
-    // --- OUTRAS FUNÇÕES IGUAIS ---
     function preencherFiltroMeses() {
         const select = document.getElementById('filtro-mes');
         const meses = new Set();
@@ -366,7 +376,7 @@
             const dataObj = new Date(nota.issue_date);
             const dataFmt = dataObj.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
             const total = parseFloat(nota.total_amount).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            const nomeLoja = nota.store?.name || nota.stores?.name || 'Loja Desconhecida';
+            const nomeLoja = nota.store?.name || 'Loja Desconhecida';
             
             const card = document.createElement('div');
             card.className = 'receipt-card';
@@ -394,7 +404,8 @@
         dados.forEach(nota => {
             totalGeral += parseFloat(nota.total_amount);
             nota.receipt_items.forEach(item => {
-                let cat = item.product?.category || item.products?.category || 'Outros';
+                // Proteção para itens importados sem categoria
+                let cat = item.product?.category || 'Outros'; 
                 if (!gastosPorCategoria[cat]) gastosPorCategoria[cat] = 0;
                 gastosPorCategoria[cat] += parseFloat(item.total_price);
             });
@@ -422,12 +433,13 @@
     function abrirNotaPorId(id) {
         const nota = todasAsCompras.find(n => n.id === id);
         if(!nota) return;
-        const nomeLoja = nota.store?.name || nota.stores?.name || 'Loja';
+        const nomeLoja = nota.store?.name || 'Loja';
         const dataFmt = new Date(nota.issue_date).toLocaleDateString('pt-BR');
         document.getElementById('modal-titulo').innerText = nomeLoja;
         let html = `<div style="text-align:center; color:#888; margin-bottom:15px; font-size:0.9rem;">📅 ${dataFmt}</div>`;
         nota.receipt_items.forEach(i => {
-            const cat = i.product?.category || i.products?.category || 'Geral';
+            // Proteção para itens sem produto vinculado
+            const cat = i.product?.category || 'Geral'; 
             html += `
                 <div class="item-row">
                     <div style="flex:1">
@@ -444,8 +456,8 @@
 
     function toggleMenu() { const m = document.getElementById('menuDropdown'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; }
     function fecharModal(e) { if(!e || e.target.className.includes('modal') || e.target.tagName==='BUTTON') document.getElementById('modalDetalhes').style.display='none'; }
-    async function deletarNota(id) { if(confirm('Deseja apagar esta nota?')) { await fetch(`https://onde-compensa-api.onrender.com/receipts/${id}`, {method:'DELETE'}); carregar(); } }
-    async function fazerFaxina() { if(confirm('Limpar notas com erro?')) { await fetch('https://onde-compensa-api.onrender.com/cleanup', {method:'DELETE'}); carregar(); } }
+    async function deletarNota(id) { if(confirm('Deseja apagar esta nota?')) { await supabaseClient.from('receipts').delete().eq('id', id); carregar(); } }
+    async function fazerFaxina() { if(confirm('Limpar notas vazias?')) { await supabaseClient.from('receipts').delete().eq('total_amount', 0); carregar(); } }
     async function sair() { await supabaseClient.auth.signOut(); window.location.href = 'login.html'; }
 
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
