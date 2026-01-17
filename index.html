@@ -40,12 +40,17 @@
         .stat-lbl { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
         .chart-container { background: white; margin-top: 15px; padding: 20px; border-radius: 16px; height: 220px; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         
-        /* BUSCA */
-        .controls-area { margin-top: 20px; display: flex; gap: 10px; }
-        .search-input { flex: 1; padding: 14px; border: none; border-radius: 12px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.03); font-size: 1rem; outline: none; }
-        .filter-select { padding: 10px; border: none; border-radius: 12px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.03); font-weight: bold; color: #555; outline: none; }
-        
-        /* RANKING CARD */
+        /* BUSCA COM TABS */
+        .search-wrapper { margin-top: 20px; background: white; border-radius: 16px; padding: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 10px; }
+        .search-tabs { display: flex; background: #f0f2f5; border-radius: 12px; padding: 4px; }
+        .tab-btn { flex: 1; border: none; padding: 8px; border-radius: 10px; background: transparent; color: #666; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
+        .tab-btn.active { background: white; color: #007bff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+        .search-row { display: flex; gap: 10px; padding: 0 10px 10px 10px; }
+        .search-input { flex: 1; padding: 12px; border: 1px solid #eee; border-radius: 10px; font-size: 1rem; outline: none; }
+        .filter-select { padding: 10px; border: 1px solid #eee; border-radius: 10px; background: white; font-weight: bold; color: #555; outline: none; }
+
+        /* RANKING CARD (Waze Mode) */
         #area-busca { margin-top:10px; display:none; flex-direction:column; gap:10px; }
         .rank-card { background: white; padding: 15px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid transparent; animation: fadeIn 0.3s; position: relative; }
         
@@ -57,19 +62,14 @@
         .rank-badge { font-size: 1.5rem; margin-right: 10px; }
         .rank-info h3 { margin: 0; font-size: 1rem; color: #333; }
         .rank-info p { margin: 2px 0 0 0; font-size: 0.8rem; color: #666; }
+        .location-tag { font-size: 0.7rem; background: #e3f2fd; color: #007bff; padding: 2px 6px; border-radius: 4px; margin-left: 5px; display: inline-block; }
         
         .rank-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
         .price-big { font-size: 1.1rem; font-weight: 800; color: #2e7d32; }
         .price-date { font-size: 0.7rem; color: #999; }
         .old-price { color: #d32f2f; font-weight: bold; }
         
-        /* Botão de Adicionar ao Carrinho */
-        .btn-to-calc {
-            background: #007bff; color: white; border: none;
-            padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;
-            display: flex; align-items: center; gap: 5px; cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,123,255,0.3); transition: transform 0.1s;
-        }
+        .btn-to-calc { background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; gap: 5px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,123,255,0.3); transition: transform 0.1s; }
         .btn-to-calc:active { transform: scale(0.95); }
 
         /* LISTA */
@@ -130,11 +130,17 @@
         <canvas id="meuGrafico"></canvas>
     </div>
 
-    <div class="controls-area">
-        <input type="text" class="search-input" placeholder="🔍 Comparar (ex: Leite)..." onkeyup="buscar(this.value)">
-        <select id="filtro-mes" class="filter-select" onchange="filtrarEAtualizar()">
-            <option value="todos">📅</option>
-        </select>
+    <div class="search-wrapper">
+        <div class="search-tabs">
+            <button class="tab-btn active" id="tab-me" onclick="mudarAba('me')">👤 Minhas Notas</button>
+            <button class="tab-btn" id="tab-community" onclick="mudarAba('community')">🌍 Comunidade</button>
+        </div>
+        <div class="search-row">
+            <input type="text" id="campo-busca" class="search-input" placeholder="Buscar produto..." onkeyup="buscar()">
+            <select id="filtro-mes" class="filter-select" onchange="filtrarEAtualizar()">
+                <option value="todos">📅</option>
+            </select>
+        </div>
     </div>
     
     <div id="area-busca"></div>
@@ -164,9 +170,11 @@
     
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let todasAsCompras = [];
-    let resultadosBusca = []; // Guarda os produtos da pesquisa
+    let resultadosBusca = []; 
     let chartInstance = null;
     let userId = null;
+    let modoBusca = 'me'; // 'me' ou 'community'
+    let perfilUsuario = null; // Para saber a cidade do usuário
 
     async function iniciar() {
         const { data } = await supabaseClient.auth.getSession();
@@ -182,6 +190,10 @@
         document.getElementById('user-name').innerText = primeiroNome;
         if (foto) document.getElementById('user-avatar').src = foto;
         
+        // Carrega o Perfil para saber a cidade
+        const { data: perfil } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
+        if(perfil) perfilUsuario = perfil;
+
         carregar();
     }
 
@@ -195,6 +207,18 @@
         } catch(e) { console.error("Erro:", e); }
     }
 
+    // --- CONTROLE DAS ABAS ---
+    function mudarAba(modo) {
+        modoBusca = modo;
+        // Atualiza visual dos botões
+        document.getElementById('tab-me').className = modo === 'me' ? 'tab-btn active' : 'tab-btn';
+        document.getElementById('tab-community').className = modo === 'community' ? 'tab-btn active' : 'tab-btn';
+        
+        // Refaz a busca se já tiver texto
+        buscar();
+    }
+
+    // ... (Funções preencherFiltroMeses, filtrarEAtualizar, renderizarLista, calcularEstatisticas e atualizarGrafico continuam iguais) ...
     function preencherFiltroMeses() {
         const select = document.getElementById('filtro-mes');
         const meses = new Set();
@@ -305,36 +329,20 @@
         document.getElementById('modalDetalhes').style.display = 'flex';
     }
 
-    // --- FUNÇÃO BLINDADA COM DELAY DE SALVAMENTO ---
     function enviarParaCalculadora(index) {
         const item = resultadosBusca[index];
         if (!item) return alert("Erro ao selecionar item.");
-
         let itensCarrinho = [];
-        try {
-            itensCarrinho = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]');
-        } catch(e) { itensCarrinho = []; }
-        
-        const novoItem = {
-            id: Date.now(),
-            nome: item.raw_name,
-            preco: parseFloat(item.unit_price),
-            qtd: 1,
-            total: parseFloat(item.unit_price)
-        };
-        
+        try { itensCarrinho = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]'); } catch(e) { itensCarrinho = []; }
+        const novoItem = { id: Date.now(), nome: item.raw_name, preco: parseFloat(item.unit_price), qtd: 1, total: parseFloat(item.unit_price) };
         itensCarrinho.unshift(novoItem);
         localStorage.setItem('carrinhoTemp', JSON.stringify(itensCarrinho));
-        
-        if(confirm(`"${item.raw_name}" adicionado!\n\nIr para a calculadora?`)) {
-            // AQUI É O PULO DO GATO: Espera 300ms antes de ir
-            setTimeout(() => {
-                window.location.href = 'calculadora.html';
-            }, 300);
-        }
+        if(confirm(`"${item.raw_name}" adicionado!\n\nIr para a calculadora?`)) { setTimeout(() => { window.location.href = 'calculadora.html'; }, 300); }
     }
 
-    async function buscar(texto) {
+    // --- NOVA LÓGICA DE BUSCA COMUNITÁRIA (WAZE) ---
+    async function buscar() {
+        const texto = document.getElementById('campo-busca').value;
         const area = document.getElementById('area-busca');
         const lista = document.getElementById('lista-compras');
 
@@ -346,46 +354,70 @@
         
         lista.style.display = 'none';
         area.style.display = 'flex';
-        area.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">🔎 Pesquisando preços...</div>';
+        area.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">🔎 Pesquisando na rede...</div>';
         
-        const res = await fetch(`https://onde-compensa-api.onrender.com/search?q=${texto}&userId=${userId}`);
-        resultadosBusca = await res.json(); // SALVA NA VARIAVEL GLOBAL
+        // PULO DO GATO: Se for "community", remove o userId da busca
+        let url = `https://onde-compensa-api.onrender.com/search?q=${texto}`;
+        if(modoBusca === 'me') {
+            url += `&userId=${userId}`;
+        }
+
+        const res = await fetch(url);
+        resultadosBusca = await res.json();
         
         area.innerHTML = '';
         if(resultadosBusca.length === 0) {
-            area.innerHTML='<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado com esse nome.</div>';
+            area.innerHTML='<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado.</div>';
             return;
         }
 
+        // ORDENAÇÃO POR PREÇO
         resultadosBusca.sort((a, b) => parseFloat(a.unit_price) - parseFloat(b.unit_price));
 
-        resultadosBusca.forEach((p, index) => {
+        // FILTRO DE CIDADE (Só exibe se for na mesma cidade do usuário ou se o usuário não tiver cidade definida)
+        // OBS: Se a API não retornar cidade, a gente mostra tudo por segurança
+        let resultadosFiltrados = resultadosBusca;
+        if(modoBusca === 'community' && perfilUsuario && perfilUsuario.cidade) {
+            // Aqui filtraríamos se tivéssemos a cidade no objeto da nota. 
+            // Como MVP, vamos mostrar tudo e colocar uma TAG de localização.
+        }
+
+        resultadosFiltrados.forEach((p, index) => {
             const preco = parseFloat(p.unit_price);
             const nomeLoja = p.receipt?.store?.name || p.receipt?.stores?.name || 'Loja Desconhecida';
+            
+            // Tenta achar localização (simulada ou real se vier da API)
+            const localizacao = p.receipt?.store?.city || p.receipt?.stores?.city || 'Local não informado';
+            
             const dataCompra = new Date(p.receipt?.issue_date);
             const diasAtras = Math.floor((new Date() - dataCompra) / (1000 * 60 * 60 * 24));
             
             let alertaVelho = diasAtras > 30 ? 
                 `<span style="color:#d32f2f; font-weight:bold;">⚠️ Preço antigo (${diasAtras}d)</span>` : 
-                `${diasAtras === 0 ? 'Hoje' : diasAtras + ' dias atrás'}`;
+                `${diasAtras === 0 ? 'Hoje' : diasAtras + 'd atrás'}`;
             let classePreco = diasAtras > 30 ? "old-price" : "price-date";
 
             let classeRank = '';
             let medalha = '';
-            if (index === 0) { classeRank = 'rank-1'; medalha = '🏆'; }
-            else if (index === 1) { classeRank = 'rank-2'; medalha = '🥈'; }
-            else if (index === 2) { classeRank = 'rank-3'; medalha = '🥉'; }
+            // Só dá medalha se for um preço recente (menos de 30 dias)
+            if (diasAtras < 30) {
+                if (index === 0) { classeRank = 'rank-1'; medalha = '🏆'; }
+                else if (index === 1) { classeRank = 'rank-2'; medalha = '🥈'; }
+                else if (index === 2) { classeRank = 'rank-3'; medalha = '🥉'; }
+            }
 
             const card = document.createElement('div');
             card.className = `rank-card ${classeRank}`;
             
-            // Passa apenas o INDEX (0, 1, 2) para a função
             card.innerHTML = `
                 <div class="rank-content" onclick="abrirNotaPorId('${p.receipt_id}')">
                     <div class="rank-badge">${medalha}</div>
                     <div class="rank-info">
                         <h3>${p.raw_name}</h3>
-                        <p>${nomeLoja}</p>
+                        <p>
+                            ${nomeLoja} 
+                            ${modoBusca === 'community' ? `<span class="location-tag">📍 ${localizacao}</span>` : ''}
+                        </p>
                     </div>
                 </div>
                 <div class="rank-actions">
