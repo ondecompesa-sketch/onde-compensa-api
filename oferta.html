@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nova Oferta 🔥</title>
+    <meta name="theme-color" content="#d32f2f">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff5f5; margin: 0; padding: 0; color: #333; }
+        
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+
+        .card { 
+            background: white; padding: 25px; border-radius: 20px; 
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.1); 
+            border-top: 5px solid #d32f2f; 
+        }
+        
+        h1 { margin: 0 0 20px 0; color: #d32f2f; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+        
+        label { display: block; margin: 15px 0 8px; font-weight: 700; color: #555; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        input, select { 
+            width: 100%; padding: 16px; border: 2px solid #ffcdd2; 
+            border-radius: 12px; font-size: 1rem; outline: none; background: #fff; 
+            transition: 0.2s;
+        }
+        input:focus, select:focus { border-color: #d32f2f; background: #fff; }
+        
+        .btn-salvar { 
+            background: #d32f2f; color: white; border: none; padding: 18px; 
+            border-radius: 12px; width: 100%; font-weight: 800; font-size: 1.1rem; 
+            margin-top: 30px; cursor: pointer; display: flex; align-items: center; 
+            justify-content: center; gap: 8px; box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3); 
+            transition: transform 0.1s;
+        }
+        .btn-salvar:active { transform: scale(0.98); }
+        
+        .fab-back { 
+            position: fixed; bottom: 25px; left: 25px; 
+            background: white; color: #d32f2f; width: 55px; height: 55px; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            box-shadow: 0 4px 15px rgba(211,47,47,0.2); text-decoration: none; 
+            font-size: 24px; z-index: 200; font-weight: bold; border: 1px solid #ffcdd2;
+        }
+
+        .loading { opacity: 0.7; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h1>🔥 Cadastrar Encarte</h1>
+        <p style="color:#666; font-size:0.9rem; margin-top:-10px; margin-bottom:20px;">Viu uma promoção na rua? Cadastre aqui rapidinho para ajudar a comunidade.</p>
+        
+        <label>🏠 Qual Mercado?</label>
+        <select id="select-loja">
+            <option value="">Carregando lojas...</option>
+        </select>
+        
+        <label>📦 Produto em Oferta</label>
+        <input type="text" id="inp-produto" placeholder="Ex: Picanha Fatiada">
+        
+        <label>💰 Preço Promocional</label>
+        <input type="number" id="inp-preco" placeholder="R$ 0,00" step="0.01" inputmode="decimal">
+        
+        <label>📅 Válido Até (Data do Encarte)</label>
+        <input type="date" id="inp-validade">
+
+        <button class="btn-salvar" onclick="salvarOferta()" id="btn-submit">Publicar Oferta 🚀</button>
+    </div>
+</div>
+
+<a href="index.html" class="fab-back">⬅</a>
+
+<script>
+    const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
+    
+    // Cliente Supabase Direto
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // 1. Carregar Lojas do Banco de Dados
+    async function carregarLojas() {
+        try {
+            const { data: lojas, error } = await supabase
+                .from('stores')
+                .select('id, name, city')
+                .order('name');
+
+            if (error) throw error;
+
+            const select = document.getElementById('select-loja');
+            select.innerHTML = '<option value="">Selecione a Loja...</option>';
+            
+            lojas.forEach(loja => {
+                // Mostra a cidade da loja se tiver, para facilitar
+                const nomeExibicao = loja.name + (loja.city && loja.city !== 'Local não informado' ? ` (${loja.city})` : '');
+                select.innerHTML += `<option value="${loja.id}">${nomeExibicao}</option>`;
+            });
+        } catch (e) {
+            alert('Erro ao carregar lojas: ' + e.message);
+        }
+    }
+    
+    // Inicia carregando as lojas
+    carregarLojas();
+
+    // 2. Salvar a Oferta no Banco
+    async function salvarOferta() {
+        const btn = document.getElementById('btn-submit');
+        const lojaId = document.getElementById('select-loja').value;
+        const nome = document.getElementById('inp-produto').value;
+        const preco = document.getElementById('inp-preco').value;
+        const validade = document.getElementById('inp-validade').value;
+
+        if(!lojaId || !nome || !preco || !validade) return alert("Preencha todos os campos!");
+
+        try {
+            btn.classList.add('loading');
+            btn.innerText = "Salvando...";
+
+            // Verifica login
+            const { data: { session } } = await supabase.auth.getSession();
+            if(!session) return alert("Você precisa fazer login novamente.");
+
+            // A Mágica: Criamos uma nota "vazia" (Total R$ 0) para segurar a oferta
+            const { data: nota, error: errNota } = await supabase
+                .from('receipts')
+                .insert({
+                    user_id: session.user.id,
+                    store_id: lojaId,
+                    total_amount: 0, // Indica que é oferta/encarte
+                    issue_date: new Date().toISOString()
+                })
+                .select()
+                .single();
+
+            if(errNota) throw errNota;
+
+            // Insere o Produto com a Validade
+            const { error: errItem } = await supabase
+                .from('receipt_items')
+                .insert({
+                    receipt_id: nota.id,
+                    raw_name: nome,
+                    unit_price: parseFloat(preco),
+                    total_price: parseFloat(preco),
+                    quantity: 1,
+                    valid_until: validade // Campo chave para aparecer o Fogo 🔥
+                });
+
+            if(errItem) throw errItem;
+
+            if(confirm("Oferta publicada com sucesso! 🔥\nDeseja cadastrar outra?")) {
+                // Limpa campos para a próxima
+                document.getElementById('inp-produto').value = '';
+                document.getElementById('inp-preco').value = '';
+                document.getElementById('inp-produto').focus();
+            } else {
+                window.location.href = 'index.html';
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao salvar: " + e.message);
+        } finally {
+            btn.classList.remove('loading');
+            btn.innerText = "Publicar Oferta 🚀";
+        }
+    }
+    
+    // Sugere automaticamente "Próximo Domingo" como validade
+    const hoje = new Date();
+    const diasParaDomingo = 7 - hoje.getDay(); 
+    hoje.setDate(hoje.getDate() + diasParaDomingo);
+    document.getElementById('inp-validade').value = hoje.toISOString().split('T')[0];
+</script>
+</body>
+</html>
