@@ -40,11 +40,12 @@
         .stat-lbl { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
         .chart-container { background: white; margin-top: 15px; padding: 20px; border-radius: 16px; height: 220px; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         
-        /* BUSCA COM TABS */
+        /* BUSCA COM TABS (Agora com 3 botões) */
         .search-wrapper { margin-top: 20px; background: white; border-radius: 16px; padding: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 10px; }
-        .search-tabs { display: flex; background: #f0f2f5; border-radius: 12px; padding: 4px; }
-        .tab-btn { flex: 1; border: none; padding: 8px; border-radius: 10px; background: transparent; color: #666; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
+        .search-tabs { display: flex; background: #f0f2f5; border-radius: 12px; padding: 4px; gap: 4px; }
+        .tab-btn { flex: 1; border: none; padding: 8px 4px; border-radius: 10px; background: transparent; color: #666; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; white-space: nowrap; }
         .tab-btn.active { background: white; color: #007bff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .tab-btn.active-fire { background: white; color: #d32f2f; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
         .search-row { display: flex; gap: 10px; padding: 0 10px 10px 10px; }
         .search-input { flex: 1; padding: 12px; border: 1px solid #eee; border-radius: 10px; font-size: 1rem; outline: none; }
@@ -134,6 +135,7 @@
         <div class="search-tabs">
             <button class="tab-btn active" id="tab-me" onclick="mudarAba('me')">👤 Minhas Notas</button>
             <button class="tab-btn" id="tab-community" onclick="mudarAba('community')">🌍 Comunidade</button>
+            <button class="tab-btn" id="tab-offers" onclick="mudarAba('offers')">🔥 Ofertas</button>
         </div>
         <div class="search-row">
             <input type="text" id="campo-busca" class="search-input" placeholder="Buscar produto..." onkeyup="buscar()">
@@ -176,7 +178,7 @@
     let resultadosBusca = []; 
     let chartInstance = null;
     let userId = null;
-    let modoBusca = 'me'; 
+    let modoBusca = 'me'; // 'me', 'community' ou 'offers'
 
     async function iniciar() {
         const { data } = await supabaseClient.auth.getSession();
@@ -195,26 +197,20 @@
         carregar();
     }
 
+    // CARREGA A LISTA DE GASTOS (Só notas reais > 0)
     async function carregar() {
         try {
             document.getElementById('lista-compras').innerHTML = '<div class="empty-state">⏳ Atualizando...</div>';
             
-            // CARREGA APENAS NOTAS COM VALOR (Ignora Encartes de R$ 0,00)
             const { data, error } = await supabaseClient
                 .from('receipts')
                 .select(`
-                    id, 
-                    total_amount, 
-                    issue_date, 
-                    image_url,
+                    id, total_amount, issue_date, image_url,
                     store:stores ( name ),
-                    receipt_items (
-                        id, total_price, raw_name, quantity, unit_measure,
-                        product:products ( category )
-                    )
+                    receipt_items ( id, total_price, raw_name, quantity, unit_measure, product:products ( category ) )
                 `)
                 .eq('user_id', userId)
-                .gt('total_amount', 0) // <--- O FILTRO MÁGICO
+                .gt('total_amount', 0) // <--- O FILTRO QUE ESCONDE OS ENCARTES
                 .order('issue_date', { ascending: false });
 
             if(error) throw error;
@@ -231,8 +227,22 @@
 
     function mudarAba(modo) {
         modoBusca = modo;
-        document.getElementById('tab-me').className = modo === 'me' ? 'tab-btn active' : 'tab-btn';
-        document.getElementById('tab-community').className = modo === 'community' ? 'tab-btn active' : 'tab-btn';
+        
+        // Reseta todos os botões
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active');
+            b.classList.remove('active-fire');
+        });
+
+        // Ativa o botão certo
+        if (modo === 'offers') {
+            document.getElementById('tab-offers').classList.add('active-fire'); // Vermelho pra ofertas
+        } else if (modo === 'community') {
+            document.getElementById('tab-community').classList.add('active');
+        } else {
+            document.getElementById('tab-me').classList.add('active');
+        }
+        
         buscar();
     }
 
@@ -247,6 +257,7 @@
         if(confirm(`"${item.raw_name}" adicionado!\n\nIr para a calculadora?`)) { setTimeout(() => { window.location.href = 'calculadora.html'; }, 300); }
     }
 
+    // --- NOVA LÓGICA DE BUSCA COM 3 FILTROS ---
     async function buscar() {
         const texto = document.getElementById('campo-busca').value;
         const area = document.getElementById('area-busca');
@@ -266,24 +277,44 @@
             .from('receipt_items')
             .select(`
                 id, raw_name, unit_price, valid_until, receipt_id,
-                receipt:receipts ( id, issue_date, user_id, store:stores ( name, city ) )
+                receipt:receipts ( id, issue_date, user_id, total_amount, store:stores ( name, city ) )
             `)
             .ilike('raw_name', `%${texto}%`)
             .limit(50);
 
-        if (error) {
-            console.error(error);
-            area.innerHTML = '<div style="padding:30px; color:red; text-align:center">Erro na busca.</div>';
-            return; 
-        }
+        if (error) { console.error(error); return; }
 
         let resultados = data || [];
-        if (modoBusca === 'me') resultados = resultados.filter(item => item.receipt && item.receipt.user_id === userId);
+        
+        // --- FILTROS MÁGICOS ---
+        if (modoBusca === 'me') {
+            // Só minhas notas REAIS (pagas)
+            resultados = resultados.filter(item => 
+                item.receipt && 
+                item.receipt.user_id === userId && 
+                parseFloat(item.receipt.total_amount) > 0
+            );
+        } 
+        else if (modoBusca === 'community') {
+            // Só notas REAIS (pagas) de QUALQUER PESSOA (exceto eu, opcional)
+            resultados = resultados.filter(item => 
+                item.receipt && 
+                parseFloat(item.receipt.total_amount) > 0
+            );
+        } 
+        else if (modoBusca === 'offers') {
+            // Só ENCARTES/OFERTAS (Total = 0)
+            resultados = resultados.filter(item => 
+                item.receipt && 
+                parseFloat(item.receipt.total_amount) === 0
+            );
+        }
 
         resultados.sort((a, b) => parseFloat(a.unit_price) - parseFloat(b.unit_price));
         area.innerHTML = '';
+        
         if(resultados.length === 0) {
-            area.innerHTML='<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado.</div>';
+            area.innerHTML='<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado nesta categoria.</div>';
             return;
         }
 
@@ -298,6 +329,7 @@
             let textoValidade = "";
             let classeExtra = "";
             
+            // Verifica validade (apenas relevante para Ofertas)
             if (p.valid_until) {
                 if (p.valid_until >= hoje) {
                     isEncarte = true; 
@@ -305,7 +337,7 @@
                     textoValidade = `<span style="color:#d32f2f; font-weight:bold; font-size:0.75rem; background:#ffebee; padding:2px 6px; border-radius:4px;">🔥 Até ${dataVal}</span>`;
                     classeExtra = "border-left: 5px solid #d32f2f !important;"; 
                 } else {
-                    textoValidade = `<span style="color:#999; font-size:0.7rem;">(Oferta expirou)</span>`;
+                    textoValidade = `<span style="color:#999; font-size:0.7rem;">(Expirou)</span>`;
                 }
             } else {
                 const dataCompra = new Date(p.receipt?.issue_date);
@@ -314,15 +346,13 @@
             }
 
             let medalha = '';
-            // Se for encarte válido, ganha Fogo. Se não, ganha Ouro/Prata/Bronze
-            if(isEncarte) {
-                 medalha = '🔥';
-            } else if (index === 0) {
-                 medalha = '🏆';
-            } else if (index === 1) {
-                 medalha = '🥈';
-            } else if (index === 2) {
-                 medalha = '🥉';
+            // Lógica visual da medalha
+            if (modoBusca === 'offers') {
+                medalha = '🔥'; // Na aba Ofertas, tudo é fogo
+            } else {
+                if (index === 0) medalha = '🏆';
+                else if (index === 1) medalha = '🥈';
+                else if (index === 2) medalha = '🥉';
             }
 
             const card = document.createElement('div');
@@ -330,12 +360,19 @@
             if(isEncarte) card.style.cssText = classeExtra;
             if(!isEncarte && index === 0) card.classList.add('rank-1');
             
+            // No modo 'me', não precisa mostrar localidade, eu sei onde fui.
+            // Nos outros modos, mostra cidade.
+            const mostrarLocal = (modoBusca !== 'me') && localizacao;
+
             card.innerHTML = `
                 <div class="rank-content" onclick="abrirNotaPorId('${p.receipt_id}')">
                     <div class="rank-badge">${medalha}</div>
                     <div class="rank-info">
                         <h3>${p.raw_name}</h3>
-                        <p>${nomeLoja} ${modoBusca === 'community' && localizacao ? `<span class="location-tag">📍 ${localizacao}</span>` : ''}</p>
+                        <p>
+                            ${nomeLoja} 
+                            ${mostrarLocal ? `<span class="location-tag">📍 ${localizacao}</span>` : ''}
+                        </p>
                     </div>
                 </div>
                 <div class="rank-actions">
@@ -348,7 +385,8 @@
         });
     }
 
-    // FUNÇÕES DE FILTRO E ESTATISTICAS
+    // ... (As demais funções: preencherFiltroMeses, filtrarEAtualizar, renderizarLista, calcularEstatisticas, atualizarGrafico, abrirNotaPorId, deletarNota, etc continuam iguais) ...
+
     function preencherFiltroMeses() {
         const select = document.getElementById('filtro-mes');
         const meses = new Set();
