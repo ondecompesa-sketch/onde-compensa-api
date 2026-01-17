@@ -27,7 +27,7 @@
         button:hover { background: #1b5e20; }
         button:active { transform: scale(0.98); }
         
-        #status { margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: 500; display: none; }
+        #status { margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: 500; display: none; line-height: 1.6; }
         .sucesso { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
         .erro { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
     </style>
@@ -35,19 +35,17 @@
 <body>
 
 <div class="container">
-    <h2>🤖 Importador de Encarte (Via Gemini)</h2>
-    <p style="color:#666; margin-bottom:20px;">Cole abaixo o JSON que o Gemini gerou a partir da foto do encarte.</p>
+    <h2>🤖 Importador Multi-Lojas</h2>
+    <p style="color:#666; margin-bottom:20px;">Cole o JSON do Gemini. Se o encarte for de várias cidades, o sistema vai criar uma oferta para cada cidade automaticamente!</p>
     
-    <textarea id="jsonInput" placeholder='Cole o código JSON aqui...
-Exemplo:
-{
-  "loja": "Mundial",
-  "cidade": "Rio de Janeiro - RJ",
-  "validade": "2026-01-20",
-  "itens": [ ... ]
+    <textarea id="jsonInput" placeholder='{
+  "loja": "Royal",
+  "cidades": ["Volta Redonda", "Barra Mansa"],
+  "validade": "2026-02-20",
+  "itens": [...]
 }'></textarea>
     
-    <button onclick="importar()">🚀 Processar e Salvar no Banco</button>
+    <button onclick="importar()">🚀 Processar e Distribuir Ofertas</button>
     <div id="status"></div>
     <div style="text-align:center; margin-top:20px;">
         <a href="index.html" style="color:#666; text-decoration:none;">← Voltar para Dashboard</a>
@@ -55,18 +53,16 @@ Exemplo:
 </div>
 
 <script>
-    // --- CONFIGURAÇÃO ---
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     
-    // Mudei o nome da variável para evitar conflito
     const clienteSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    function mostrarStatus(msg, tipo) {
+    function mostrarStatus(html, tipo) {
         const div = document.getElementById('status');
         div.style.display = 'block';
         div.className = tipo === 'erro' ? 'erro' : 'sucesso';
-        div.innerHTML = msg;
+        div.innerHTML = html;
     }
 
     async function importar() {
@@ -74,86 +70,90 @@ Exemplo:
         if(!texto.trim()) return alert("Cole o JSON primeiro!");
 
         try {
-            mostrarStatus("⏳ Lendo e validando JSON...", "sucesso");
+            mostrarStatus("⏳ Analisando JSON...", "sucesso");
+            const dados = JSON.parse(texto);
             
-            // Tenta corrigir aspas simples se o Gemini mandar errado, só por garantia
-            const jsonLimpo = texto.replace(/'/g, '"'); 
-            const dados = JSON.parse(texto); // Tenta ler o original primeiro
-            
-            // 1. Verifica login
+            // Verifica Login
             const { data: { session } } = await clienteSupabase.auth.getSession();
-            if(!session) {
-                mostrarStatus("❌ Você precisa estar logado! <a href='login.html'>Ir para Login</a>", "erro");
-                return;
-            }
+            if(!session) return mostrarStatus("❌ Você precisa estar logado!", "erro");
             const userId = session.user.id;
 
-            // 2. Busca ou Cria a Loja
-            mostrarStatus(`🏬 Verificando loja: <b>${dados.loja}</b>...`, "sucesso");
-            
-            let { data: lojaExistente } = await clienteSupabase
-                .from('stores')
-                .select('id')
-                .ilike('name', dados.loja)
-                .maybeSingle(); // Usa maybeSingle para não dar erro se não achar
-
-            let lojaId;
-
-            if (lojaExistente) {
-                lojaId = lojaExistente.id;
+            // NORMALIZA AS CIDADES (Transforma string única em lista se precisar)
+            let listaCidades = [];
+            if (Array.isArray(dados.cidades)) {
+                listaCidades = dados.cidades;
+            } else if (dados.cidade) {
+                listaCidades = [dados.cidade]; // Se vier no formato antigo (uma só)
             } else {
-                // Cria loja nova
-                const { data: novaLoja, error: erroLoja } = await clienteSupabase
-                    .from('stores')
-                    .insert({ name: dados.loja, city: dados.cidade || 'Local não informado' })
-                    .select()
-                    .single();
-                
-                if(erroLoja) throw new Error("Erro ao criar loja: " + erroLoja.message);
-                lojaId = novaLoja.id;
+                listaCidades = ['Local não informado'];
             }
 
-            // 3. Cria o "Cabeçalho" da Oferta
-            mostrarStatus("📄 Criando registro do encarte...", "sucesso");
-            const { data: nota, error: erroNota } = await clienteSupabase
-                .from('receipts')
-                .insert({
-                    user_id: userId,
-                    store_id: lojaId,
-                    total_amount: 0,
-                    issue_date: new Date().toISOString()
-                })
-                .select()
-                .single();
+            let relatorio = `<b>Iniciando importação para ${listaCidades.length} locais:</b><br>`;
 
-            if(erroNota) throw new Error("Erro ao criar nota: " + erroNota.message);
+            // LOOP PRINCIPAL: Repete o processo para cada cidade da lista
+            for (const nomeCidade of listaCidades) {
+                relatorio += `📍 Processando <b>${nomeCidade}</b>... `;
+                
+                // 1. Achar ou Criar a Loja Específica (Ex: Royal - Volta Redonda)
+                // A gente procura pelo Nome E pela Cidade para não misturar
+                let { data: loja } = await clienteSupabase
+                    .from('stores')
+                    .select('id')
+                    .ilike('name', dados.loja)
+                    .ilike('city', nomeCidade)
+                    .maybeSingle();
 
-            // 4. Prepara os Itens
-            mostrarStatus(`📦 Processando ${dados.itens.length} itens...`, "sucesso");
-            
-            // Garante que o preço venha como número, mesmo se o JSON vier como string "10.90"
-            const itensParaSalvar = dados.itens.map(item => ({
-                receipt_id: nota.id,
-                raw_name: item.nome,
-                unit_price: parseFloat(item.preco), 
-                total_price: parseFloat(item.preco),
-                quantity: 1,
-                valid_until: dados.validade || null
-            }));
+                let lojaId;
+                if (loja) {
+                    lojaId = loja.id;
+                } else {
+                    // Cria loja nova se não existir naquela cidade
+                    const { data: novaLoja, error: errLoja } = await clienteSupabase
+                        .from('stores')
+                        .insert({ name: dados.loja, city: nomeCidade })
+                        .select()
+                        .single();
+                    if(errLoja) throw errLoja;
+                    lojaId = novaLoja.id;
+                }
 
-            // 5. Salva Itens
-            const { error: erroItens } = await clienteSupabase
-                .from('receipt_items')
-                .insert(itensParaSalvar);
+                // 2. Criar o Cabeçalho da Oferta
+                const { data: nota, error: errNota } = await clienteSupabase
+                    .from('receipts')
+                    .insert({
+                        user_id: userId,
+                        store_id: lojaId,
+                        total_amount: 0,
+                        issue_date: new Date().toISOString()
+                    })
+                    .select().single();
+                if(errNota) throw errNota;
 
-            if(erroItens) throw new Error("Erro ao salvar itens: " + erroItens.message);
+                // 3. Salvar os Itens
+                const itensParaSalvar = dados.itens.map(item => ({
+                    receipt_id: nota.id,
+                    raw_name: item.nome,
+                    unit_price: parseFloat(item.preco), 
+                    total_price: parseFloat(item.preco),
+                    quantity: 1,
+                    valid_until: dados.validade || null
+                }));
 
-            mostrarStatus(`✅ <b>Sucesso Absoluto!</b><br>${dados.itens.length} ofertas importadas para o <b>${dados.loja}</b>.<br><a href='index.html'>Ver no Painel</a>`, "sucesso");
-            document.getElementById('jsonInput').value = ''; // Limpa a área
+                const { error: errItens } = await clienteSupabase
+                    .from('receipt_items')
+                    .insert(itensParaSalvar);
+
+                if(errItens) throw errItens;
+
+                relatorio += `<span style="color:green">✅ OK!</span><br>`;
+            }
+
+            mostrarStatus(`${relatorio}<br><b>🏁 Tudo pronto! ${dados.itens.length} ofertas espalhadas por todas as filiais.</b>`, "sucesso");
+            document.getElementById('jsonInput').value = '';
 
         } catch (e) {
             console.error(e);
-            mostrarStatus(`❌ <b>Erro:</b> ${e.message}<br>Verifique se o JSON está correto.`, "erro");
+            mostrarStatus(`❌ Erro: ${e.message}`, "erro");
         }
     }
 </script>
