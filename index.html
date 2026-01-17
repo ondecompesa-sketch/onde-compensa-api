@@ -26,6 +26,8 @@
         .user-texts { display: flex; flex-direction: column; }
         .greeting { font-size: 0.8rem; color: #888; }
         .user-name { font-size: 1rem; font-weight: 700; color: #333; }
+        .user-location { font-size: 0.75rem; color: #007bff; background: #e3f2fd; padding: 2px 8px; border-radius: 10px; margin-top: 2px; display: inline-block; width: fit-content; }
+        
         .header-actions { display: flex; align-items: center; gap: 8px; }
         .btn-calc-mini { background: #e3f2fd; color: #007bff; border: none; width: 40px; height: 40px; border-radius: 12px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-menu { background: none; border: none; font-size: 1.5rem; color: #333; cursor: pointer; padding: 0 5px; }
@@ -40,7 +42,7 @@
         .stat-lbl { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
         .chart-container { background: white; margin-top: 15px; padding: 20px; border-radius: 16px; height: 220px; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         
-        /* BUSCA COM TABS (Agora com 3 botões) */
+        /* BUSCA COM ABAS */
         .search-wrapper { margin-top: 20px; background: white; border-radius: 16px; padding: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 10px; }
         .search-tabs { display: flex; background: #f0f2f5; border-radius: 12px; padding: 4px; gap: 4px; }
         .tab-btn { flex: 1; border: none; padding: 8px 4px; border-radius: 10px; background: transparent; color: #666; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; white-space: nowrap; }
@@ -98,11 +100,11 @@
 <body>
 
 <div class="app-header">
-    <div class="user-profile" onclick="window.location.href='perfil.html'">
+    <div class="user-profile" onclick="mudarLocalizacao()">
         <img id="user-avatar" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="avatar-img">
         <div class="user-texts">
-            <span class="greeting">Olá,</span>
-            <span class="user-name" id="user-name">Visitante</span>
+            <span class="greeting">Olá, <span class="user-name" id="user-name">Visitante</span></span>
+            <span class="user-location" id="user-location-display">📍 Definir Cidade</span>
         </div>
     </div>
     <div class="header-actions">
@@ -146,7 +148,6 @@
     </div>
     
     <div id="area-busca"></div>
-
     <div id="lista-compras" class="receipt-list"></div>
 </div>
 
@@ -178,7 +179,8 @@
     let resultadosBusca = []; 
     let chartInstance = null;
     let userId = null;
-    let modoBusca = 'me'; // 'me', 'community' ou 'offers'
+    let modoBusca = 'me';
+    let minhaCidade = localStorage.getItem('minhaCidade') || ''; // Recupera a cidade salva
 
     async function iniciar() {
         const { data } = await supabaseClient.auth.getSession();
@@ -188,16 +190,38 @@
         userId = user.id;
 
         const nomeCompleto = user.user_metadata.full_name || user.user_metadata.name || user.email;
-        const primeiroNome = nomeCompleto.split(' ')[0];
-        const foto = user.user_metadata.avatar_url || user.user_metadata.picture;
-
-        document.getElementById('user-name').innerText = primeiroNome;
-        if (foto) document.getElementById('user-avatar').src = foto;
+        document.getElementById('user-name').innerText = nomeCompleto.split(' ')[0];
         
+        const foto = user.user_metadata.avatar_url || user.user_metadata.picture;
+        if (foto) document.getElementById('user-avatar').src = foto;
+
+        atualizarDisplayCidade();
         carregar();
     }
 
-    // CARREGA A LISTA DE GASTOS (Só notas reais > 0)
+    // --- NOVA FUNÇÃO PARA DEFINIR A CIDADE DO USUÁRIO ---
+    function mudarLocalizacao() {
+        const nova = prompt("Em qual cidade você costuma comprar?", minhaCidade || "Ex: Nova Iguaçu");
+        if(nova !== null) {
+            minhaCidade = nova.trim();
+            localStorage.setItem('minhaCidade', minhaCidade);
+            atualizarDisplayCidade();
+            // Se tiver uma busca aberta, refaz ela com o novo filtro
+            if(document.getElementById('area-busca').style.display === 'flex') {
+                buscar();
+            }
+        }
+    }
+
+    function atualizarDisplayCidade() {
+        const display = document.getElementById('user-location-display');
+        if(minhaCidade) {
+            display.innerText = `📍 ${minhaCidade}`;
+        } else {
+            display.innerText = `📍 Definir Cidade`;
+        }
+    }
+
     async function carregar() {
         try {
             document.getElementById('lista-compras').innerHTML = '<div class="empty-state">⏳ Atualizando...</div>';
@@ -210,68 +234,37 @@
                     receipt_items ( id, total_price, raw_name, quantity, unit_measure, product:products ( category ) )
                 `)
                 .eq('user_id', userId)
-                .gt('total_amount', 0) // <--- O FILTRO QUE ESCONDE OS ENCARTES
+                .gt('total_amount', 0)
                 .order('issue_date', { ascending: false });
 
             if(error) throw error;
-            
             todasAsCompras = data || [];
             preencherFiltroMeses();
             filtrarEAtualizar();
-
-        } catch(e) { 
-            console.error("Erro ao carregar:", e);
-            document.getElementById('lista-compras').innerHTML = '<div class="empty-state" style="color:red">❌ Erro ao conectar.</div>';
-        }
+        } catch(e) { console.error(e); }
     }
 
     function mudarAba(modo) {
         modoBusca = modo;
-        
-        // Reseta todos os botões
         document.querySelectorAll('.tab-btn').forEach(b => {
-            b.classList.remove('active');
-            b.classList.remove('active-fire');
+            b.classList.remove('active'); b.classList.remove('active-fire');
         });
-
-        // Ativa o botão certo
-        if (modo === 'offers') {
-            document.getElementById('tab-offers').classList.add('active-fire'); // Vermelho pra ofertas
-        } else if (modo === 'community') {
-            document.getElementById('tab-community').classList.add('active');
-        } else {
-            document.getElementById('tab-me').classList.add('active');
-        }
+        if (modo === 'offers') document.getElementById('tab-offers').classList.add('active-fire');
+        else if (modo === 'community') document.getElementById('tab-community').classList.add('active');
+        else document.getElementById('tab-me').classList.add('active');
         
         buscar();
     }
 
-    function enviarParaCalculadora(index) {
-        const item = resultadosBusca[index];
-        if (!item) return alert("Erro ao selecionar item.");
-        let itensCarrinho = [];
-        try { itensCarrinho = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]'); } catch(e) { itensCarrinho = []; }
-        const novoItem = { id: Date.now(), nome: item.raw_name, preco: parseFloat(item.unit_price), qtd: 1, total: parseFloat(item.unit_price) };
-        itensCarrinho.unshift(novoItem);
-        localStorage.setItem('carrinhoTemp', JSON.stringify(itensCarrinho));
-        if(confirm(`"${item.raw_name}" adicionado!\n\nIr para a calculadora?`)) { setTimeout(() => { window.location.href = 'calculadora.html'; }, 300); }
-    }
-
-    // --- NOVA LÓGICA DE BUSCA COM 3 FILTROS ---
     async function buscar() {
         const texto = document.getElementById('campo-busca').value;
         const area = document.getElementById('area-busca');
         const lista = document.getElementById('lista-compras');
 
-        if(texto.length < 3) { 
-            area.style.display='none'; 
-            lista.style.display = 'flex'; 
-            return; 
-        }
+        if(texto.length < 3) { area.style.display='none'; lista.style.display='flex'; return; }
         
-        lista.style.display = 'none';
-        area.style.display = 'flex';
-        area.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">🔎 Pesquisando no Banco de Dados...</div>';
+        lista.style.display='none'; area.style.display='flex';
+        area.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">🔎 Pesquisando...</div>';
         
         const { data, error } = await supabaseClient
             .from('receipt_items')
@@ -286,35 +279,38 @@
 
         let resultados = data || [];
         
-        // --- FILTROS MÁGICOS ---
+        // --- FILTROS DE CATEGORIA ---
         if (modoBusca === 'me') {
-            // Só minhas notas REAIS (pagas)
             resultados = resultados.filter(item => 
-                item.receipt && 
-                item.receipt.user_id === userId && 
-                parseFloat(item.receipt.total_amount) > 0
+                item.receipt && item.receipt.user_id === userId && parseFloat(item.receipt.total_amount) > 0
             );
-        } 
-        else if (modoBusca === 'community') {
-            // Só notas REAIS (pagas) de QUALQUER PESSOA (exceto eu, opcional)
+        } else if (modoBusca === 'community') {
             resultados = resultados.filter(item => 
-                item.receipt && 
-                parseFloat(item.receipt.total_amount) > 0
+                item.receipt && parseFloat(item.receipt.total_amount) > 0
             );
-        } 
-        else if (modoBusca === 'offers') {
-            // Só ENCARTES/OFERTAS (Total = 0)
+        } else if (modoBusca === 'offers') {
             resultados = resultados.filter(item => 
-                item.receipt && 
-                parseFloat(item.receipt.total_amount) === 0
+                item.receipt && parseFloat(item.receipt.total_amount) === 0
             );
+        }
+
+        // --- FILTRO DE CIDADE (A GRANDE MUDANÇA) ---
+        // Se a pessoa definiu uma cidade, e NÃO está vendo "Minhas Notas" (porque minhas notas eu vejo onde for)
+        // Filtramos para mostrar só a cidade dela OU locais sem cidade definida
+        if (minhaCidade && modoBusca !== 'me') {
+            resultados = resultados.filter(item => {
+                const cidadeLoja = item.receipt?.store?.city;
+                // Se a loja não tem cidade, mostra. Se tem, tem que bater com a minha (buscando pedaço do nome)
+                if (!cidadeLoja || cidadeLoja === 'Local não informado') return true;
+                return cidadeLoja.toLowerCase().includes(minhaCidade.toLowerCase());
+            });
         }
 
         resultados.sort((a, b) => parseFloat(a.unit_price) - parseFloat(b.unit_price));
         area.innerHTML = '';
         
         if(resultados.length === 0) {
-            area.innerHTML='<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado nesta categoria.</div>';
+            area.innerHTML=`<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado em <b>${minhaCidade || 'qualquer lugar'}</b>.</div>`;
             return;
         }
 
@@ -329,7 +325,6 @@
             let textoValidade = "";
             let classeExtra = "";
             
-            // Verifica validade (apenas relevante para Ofertas)
             if (p.valid_until) {
                 if (p.valid_until >= hoje) {
                     isEncarte = true; 
@@ -346,10 +341,8 @@
             }
 
             let medalha = '';
-            // Lógica visual da medalha
-            if (modoBusca === 'offers') {
-                medalha = '🔥'; // Na aba Ofertas, tudo é fogo
-            } else {
+            if (modoBusca === 'offers') medalha = '🔥';
+            else {
                 if (index === 0) medalha = '🏆';
                 else if (index === 1) medalha = '🥈';
                 else if (index === 2) medalha = '🥉';
@@ -360,8 +353,6 @@
             if(isEncarte) card.style.cssText = classeExtra;
             if(!isEncarte && index === 0) card.classList.add('rank-1');
             
-            // No modo 'me', não precisa mostrar localidade, eu sei onde fui.
-            // Nos outros modos, mostra cidade.
             const mostrarLocal = (modoBusca !== 'me') && localizacao;
 
             card.innerHTML = `
@@ -369,10 +360,7 @@
                     <div class="rank-badge">${medalha}</div>
                     <div class="rank-info">
                         <h3>${p.raw_name}</h3>
-                        <p>
-                            ${nomeLoja} 
-                            ${mostrarLocal ? `<span class="location-tag">📍 ${localizacao}</span>` : ''}
-                        </p>
+                        <p>${nomeLoja} ${mostrarLocal ? `<span class="location-tag">📍 ${localizacao}</span>` : ''}</p>
                     </div>
                 </div>
                 <div class="rank-actions">
@@ -385,8 +373,19 @@
         });
     }
 
-    // ... (As demais funções: preencherFiltroMeses, filtrarEAtualizar, renderizarLista, calcularEstatisticas, atualizarGrafico, abrirNotaPorId, deletarNota, etc continuam iguais) ...
-
+    function enviarParaCalculadora(index) {
+        const item = resultadosBusca[index];
+        if (!item) return alert("Erro ao selecionar item.");
+        let itensCarrinho = [];
+        try { itensCarrinho = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]'); } catch(e) { itensCarrinho = []; }
+        const novoItem = { id: Date.now(), nome: item.raw_name, preco: parseFloat(item.unit_price), qtd: 1, total: parseFloat(item.unit_price) };
+        itensCarrinho.unshift(novoItem);
+        localStorage.setItem('carrinhoTemp', JSON.stringify(itensCarrinho));
+        if(confirm(`"${item.raw_name}" adicionado!\n\nIr para a calculadora?`)) { setTimeout(() => { window.location.href = 'calculadora.html'; }, 300); }
+    }
+    
+    // ... Funções auxiliares (preencherFiltroMeses, filtrarEAtualizar, renderizarLista, calcularEstatisticas, atualizarGrafico, abrirNotaPorId, toggleMenu, fecharModal, deletarNota, fazerFaxina, sair) mantidas iguais ...
+    
     function preencherFiltroMeses() {
         const select = document.getElementById('filtro-mes');
         const meses = new Set();
