@@ -80,20 +80,20 @@
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     
-    // Cliente Supabase Direto
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Mudei aqui também: clienteSupabase para evitar conflitos
+    const clienteSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // 1. Carregar Lojas do Banco de Dados
     async function carregarLojas() {
         try {
-            // Verifica Login primeiro
-            const { data: { session } } = await supabase.auth.getSession();
+            // Verifica Login
+            const { data: { session } } = await clienteSupabase.auth.getSession();
             if(!session) {
                 document.getElementById('select-loja').innerHTML = '<option>⚠️ Faça Login primeiro</option>';
                 return;
             }
 
-            const { data: lojas, error } = await supabase
+            const { data: lojas, error } = await clienteSupabase
                 .from('stores')
                 .select('id, name, city')
                 .order('name');
@@ -112,7 +112,7 @@
                 });
             }
         } catch (e) {
-            console.error(e);
+            console.error("Erro ao carregar:", e);
             document.getElementById('select-loja').innerHTML = '<option>Erro ao carregar lojas</option>';
         }
     }
@@ -134,11 +134,11 @@
             btn.classList.add('loading');
             btn.innerText = "Salvando...";
 
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await clienteSupabase.auth.getSession();
             if(!session) return alert("Você precisa fazer login novamente.");
 
             // A Mágica: Criamos uma nota "vazia" (Total R$ 0) para segurar a oferta
-            const { data: nota, error: errNota } = await supabase
+            const { data: nota, error: errNota } = await clienteSupabase
                 .from('receipts')
                 .insert({
                     user_id: session.user.id,
@@ -152,7 +152,7 @@
             if(errNota) throw errNota;
 
             // Insere o Produto com a Validade
-            const { error: errItem } = await supabase
+            const { error: errItem } = await clienteSupabase
                 .from('receipt_items')
                 .insert({
                     receipt_id: nota.id,
