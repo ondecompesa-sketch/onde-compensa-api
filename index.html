@@ -42,7 +42,7 @@
         .stat-lbl { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
         .chart-container { background: white; margin-top: 15px; padding: 20px; border-radius: 16px; height: 220px; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         
-        /* BUSCA COM 3 ABAS */
+        /* BUSCA COM ABAS */
         .search-wrapper { margin-top: 20px; background: white; border-radius: 16px; padding: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 10px; }
         .search-tabs { display: flex; background: #f0f2f5; border-radius: 12px; padding: 4px; gap: 4px; }
         .tab-btn { flex: 1; border: none; padding: 8px 4px; border-radius: 10px; background: transparent; color: #666; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; white-space: nowrap; }
@@ -174,7 +174,6 @@
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     
-    // Variável renomeada para evitar conflitos
     const clienteSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
     let todasAsCompras = [];
@@ -190,6 +189,9 @@
         
         const user = data.session.user;
         userId = user.id;
+
+        // FAXINA AUTOMÁTICA
+        clienteSupabase.rpc('limpar_vencidos').then(() => console.log("🧹 Faxina OK"));
 
         const nomeCompleto = user.user_metadata.full_name || user.user_metadata.name || user.email;
         document.getElementById('user-name').innerText = nomeCompleto.split(' ')[0];
@@ -207,7 +209,6 @@
             minhaCidade = nova.trim();
             localStorage.setItem('minhaCidade', minhaCidade);
             atualizarDisplayCidade();
-            // Refaz a busca se estiver aberta
             if(document.getElementById('area-busca').style.display === 'flex') {
                 buscar();
             }
@@ -216,11 +217,7 @@
 
     function atualizarDisplayCidade() {
         const display = document.getElementById('user-location-display');
-        if(minhaCidade) {
-            display.innerText = `📍 ${minhaCidade}`;
-        } else {
-            display.innerText = `📍 Definir Cidade`;
-        }
+        display.innerText = minhaCidade ? `📍 ${minhaCidade}` : `📍 Definir Cidade`;
     }
 
     async function carregar() {
@@ -235,7 +232,7 @@
                     receipt_items ( id, total_price, raw_name, quantity, unit_measure, product:products ( category ) )
                 `)
                 .eq('user_id', userId)
-                .gt('total_amount', 0) // Só notas pagas
+                .gt('total_amount', 0) 
                 .order('issue_date', { ascending: false });
 
             if(error) throw error;
@@ -267,20 +264,25 @@
         lista.style.display='none'; area.style.display='flex';
         area.innerHTML = '<div style="padding:20px; color:#888; text-align:center;">🔎 Pesquisando...</div>';
         
+        // --- BUSCA INTELIGENTE (SEM ACENTO/TAGS) ---
+        // Se a função 'buscar_produtos' não existir no banco, vai dar erro. Rode o SQL antes!
         const { data, error } = await clienteSupabase
-            .from('receipt_items')
+            .rpc('buscar_produtos', { termo: texto }) 
             .select(`
                 id, raw_name, unit_price, valid_until, receipt_id,
                 receipt:receipts ( id, issue_date, user_id, total_amount, store:stores ( name, city ) )
             `)
-            .ilike('raw_name', `%${texto}%`)
             .limit(50);
 
-        if (error) { console.error(error); return; }
+        if (error) { 
+            console.error(error); 
+            area.innerHTML = '<div style="padding:20px; color:red; text-align:center;">Erro: Execute o SQL "buscar_produtos" no Supabase.</div>';
+            return; 
+        }
 
         let resultados = data || [];
         
-        // --- FILTROS DE ABAS ---
+        // --- FILTROS ---
         if (modoBusca === 'me') {
             resultados = resultados.filter(item => 
                 item.receipt && item.receipt.user_id === userId && parseFloat(item.receipt.total_amount) > 0
@@ -295,7 +297,7 @@
             );
         }
 
-        // --- FILTRO DE LOCALIZAÇÃO (COM CHAVE MESTRA: "Rio de Janeiro" etc) ---
+        // --- FILTRO LOCALIZAÇÃO ---
         if (minhaCidade && modoBusca !== 'me') {
             resultados = resultados.filter(item => {
                 const cidadeLoja = item.receipt?.store?.city;
@@ -304,13 +306,9 @@
                 const cLoja = cidadeLoja.toLowerCase();
                 const cMinha = minhaCidade.toLowerCase();
                 
-                // CHAVES MESTRAS: Adicionei 'rio de janeiro' aqui
                 const chavesMestras = ['rj', 'estado do rio', 'todas', 'brasil', 'rio de janeiro'];
-                
-                // Se a cidade da loja for uma chave mestra, mostra para todos
                 if (chavesMestras.some(chave => cLoja === chave || cLoja.includes('estado'))) return true;
 
-                // Verifica match normal de cidade
                 return cLoja.includes(cMinha);
             });
         }
@@ -319,7 +317,7 @@
         area.innerHTML = '';
         
         if(resultados.length === 0) {
-            area.innerHTML=`<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado para <b>${minhaCidade || 'sua região'}</b>.</div>`;
+            area.innerHTML=`<div style="padding:30px; color:#666; text-align:center">🤔 Nada encontrado.</div>`;
             return;
         }
 
@@ -382,6 +380,7 @@
         });
     }
 
+    // ... (Mantendo as funções auxiliares iguais: enviarParaCalculadora, preencherFiltroMeses, filtrarEAtualizar, renderizarLista, calcularEstatisticas, atualizarGrafico, abrirNotaPorId, toggleMenu, fecharModal, deletarNota, fazerFaxina, sair) ...
     function enviarParaCalculadora(index) {
         const item = resultadosBusca[index];
         if (!item) return alert("Erro ao selecionar item.");

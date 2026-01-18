@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Importar JSON Gemini 🤖</title>
+    <title>Importar Ofertas (IA) 🤖</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; background: #f4f4f9; color: #333; }
@@ -11,9 +11,9 @@
         h2 { color: #2e7d32; display: flex; align-items: center; gap: 10px; margin-top: 0; }
         
         textarea { 
-            width: 100%; height: 300px; padding: 15px; 
+            width: 100%; height: 350px; padding: 15px; 
             border-radius: 10px; border: 2px solid #eee; 
-            font-family: monospace; font-size: 0.9rem; 
+            font-family: monospace; font-size: 0.85rem; 
             background: #fafafa; resize: vertical;
         }
         textarea:focus { border-color: #2e7d32; outline: none; background: white; }
@@ -30,22 +30,37 @@
         #status { margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: 500; display: none; line-height: 1.6; }
         .sucesso { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
         .erro { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        
+        .hint { background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.9rem; color: #0d47a1; border: 1px solid #bbdefb; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🤖 Importador Multi-Lojas</h2>
-    <p style="color:#666; margin-bottom:20px;">Cole o JSON do Gemini. Se o encarte for de várias cidades, o sistema vai criar uma oferta para cada cidade automaticamente!</p>
+    <h2>🤖 Importador com Tags Inteligentes</h2>
     
-    <textarea id="jsonInput" placeholder='{
-  "loja": "Royal",
-  "cidades": ["Volta Redonda", "Barra Mansa"],
-  "validade": "2026-02-20",
-  "itens": [...]
-}'></textarea>
+    <div class="hint">
+        💡 <b>Dica:</b> Ao enviar a foto para o Gemini, use o prompt abaixo para ele gerar as tags de busca (sinônimos) e listar as cidades corretamente.
+    </div>
+
+    <textarea id="jsonInput" placeholder='Copie este prompt para o Gemini:
+
+"Analise a imagem deste encarte. Extraia os dados em JSON.
+1. Se a oferta vale para várias cidades, liste todas em "cidades". Se for para todo o estado, use "RJ".
+2. Crie um campo "tags" para cada item com sinônimos populares (sem acento) para facilitar a busca.
+
+Formato Obrigatório:
+{
+  "loja": "Supermercados Guanabara",
+  "cidades": ["Nova Iguaçu", "Duque de Caxias", "RJ"],
+  "validade": "2026-02-15",
+  "itens": [
+     { "nome": "Lava Roupas Omo 1kg", "preco": 15.90, "tags": "sabao em po, limpeza, omo, lavagem" },
+     { "nome": "Cerveja Heineken Lata", "preco": 4.99, "tags": "bebida, cerveja, alcool, heineken" }
+  ]
+}"'></textarea>
     
-    <button onclick="importar()">🚀 Processar e Distribuir Ofertas</button>
+    <button onclick="importar()">🚀 Processar e Salvar</button>
     <div id="status"></div>
     <div style="text-align:center; margin-top:20px;">
         <a href="index.html" style="color:#666; text-decoration:none;">← Voltar para Dashboard</a>
@@ -71,31 +86,29 @@
 
         try {
             mostrarStatus("⏳ Analisando JSON...", "sucesso");
-            const dados = JSON.parse(texto);
             
-            // Verifica Login
+            // Tratamento de erro comum do Gemini (Markdown ```json ... ```)
+            let jsonLimpo = texto.replace(/```json/g, '').replace(/```/g, '').trim();
+            const dados = JSON.parse(jsonLimpo);
+            
             const { data: { session } } = await clienteSupabase.auth.getSession();
-            if(!session) return mostrarStatus("❌ Você precisa estar logado!", "erro");
+            if(!session) return mostrarStatus("❌ Faça login!", "erro");
             const userId = session.user.id;
 
-            // NORMALIZA AS CIDADES (Transforma string única em lista se precisar)
+            // Normaliza lista de cidades
             let listaCidades = [];
             if (Array.isArray(dados.cidades)) {
                 listaCidades = dados.cidades;
             } else if (dados.cidade) {
-                listaCidades = [dados.cidade]; // Se vier no formato antigo (uma só)
+                listaCidades = [dados.cidade];
             } else {
                 listaCidades = ['Local não informado'];
             }
 
-            let relatorio = `<b>Iniciando importação para ${listaCidades.length} locais:</b><br>`;
+            let relatorio = `<b>Processando ${listaCidades.length} locais:</b><br>`;
 
-            // LOOP PRINCIPAL: Repete o processo para cada cidade da lista
             for (const nomeCidade of listaCidades) {
-                relatorio += `📍 Processando <b>${nomeCidade}</b>... `;
-                
-                // 1. Achar ou Criar a Loja Específica (Ex: Royal - Volta Redonda)
-                // A gente procura pelo Nome E pela Cidade para não misturar
+                // 1. Busca ou Cria Loja
                 let { data: loja } = await clienteSupabase
                     .from('stores')
                     .select('id')
@@ -104,56 +117,60 @@
                     .maybeSingle();
 
                 let lojaId;
+                
                 if (loja) {
                     lojaId = loja.id;
+                    // --- VERIFICAÇÃO DE DUPLICIDADE ---
+                    const hoje = new Date().toISOString().split('T')[0];
+                    const { data: duplicata } = await clienteSupabase
+                        .from('receipts')
+                        .select('id')
+                        .eq('store_id', lojaId)
+                        .eq('total_amount', 0)
+                        .gte('issue_date', hoje)
+                        .maybeSingle();
+
+                    if (duplicata) {
+                        if(!confirm(`⚠️ Já existe oferta para ${dados.loja} em ${nomeCidade} hoje.\nDuplicar?`)) {
+                            relatorio += `⚠️ <b>${nomeCidade}</b>: Pulado.<br>`;
+                            continue;
+                        }
+                    }
                 } else {
-                    // Cria loja nova se não existir naquela cidade
-                    const { data: novaLoja, error: errLoja } = await clienteSupabase
-                        .from('stores')
-                        .insert({ name: dados.loja, city: nomeCidade })
-                        .select()
-                        .single();
+                    const { data: novaLoja, error: errLoja } = await clienteSupabase.from('stores').insert({ name: dados.loja, city: nomeCidade }).select().single();
                     if(errLoja) throw errLoja;
                     lojaId = novaLoja.id;
                 }
 
-                // 2. Criar o Cabeçalho da Oferta
-                const { data: nota, error: errNota } = await clienteSupabase
-                    .from('receipts')
-                    .insert({
-                        user_id: userId,
-                        store_id: lojaId,
-                        total_amount: 0,
-                        issue_date: new Date().toISOString()
-                    })
-                    .select().single();
+                // 2. Cria Nota
+                const { data: nota, error: errNota } = await clienteSupabase.from('receipts').insert({
+                    user_id: userId, store_id: lojaId, total_amount: 0, issue_date: new Date().toISOString()
+                }).select().single();
                 if(errNota) throw errNota;
 
-                // 3. Salvar os Itens
+                // 3. Salva Itens COM TAGS
                 const itensParaSalvar = dados.itens.map(item => ({
                     receipt_id: nota.id,
                     raw_name: item.nome,
                     unit_price: parseFloat(item.preco), 
                     total_price: parseFloat(item.preco),
                     quantity: 1,
-                    valid_until: dados.validade || null
+                    valid_until: dados.validade || null,
+                    tags: item.tags || '' // Salva as tags
                 }));
 
-                const { error: errItens } = await clienteSupabase
-                    .from('receipt_items')
-                    .insert(itensParaSalvar);
-
+                const { error: errItens } = await clienteSupabase.from('receipt_items').insert(itensParaSalvar);
                 if(errItens) throw errItens;
 
-                relatorio += `<span style="color:green">✅ OK!</span><br>`;
+                relatorio += `✅ <b>${nomeCidade}</b>: OK!<br>`;
             }
 
-            mostrarStatus(`${relatorio}<br><b>🏁 Tudo pronto! ${dados.itens.length} ofertas espalhadas por todas as filiais.</b>`, "sucesso");
+            mostrarStatus(`${relatorio}<br>🏁 <b>Sucesso Total!</b>`, "sucesso");
             document.getElementById('jsonInput').value = '';
 
         } catch (e) {
             console.error(e);
-            mostrarStatus(`❌ Erro: ${e.message}`, "erro");
+            mostrarStatus(`❌ Erro no JSON: ${e.message}`, "erro");
         }
     }
 </script>
