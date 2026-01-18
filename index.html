@@ -26,7 +26,6 @@
         .user-texts { display: flex; flex-direction: column; }
         .greeting { font-size: 0.8rem; color: #888; }
         .user-name { font-size: 1rem; font-weight: 700; color: #333; }
-        /* Badge de Localização */
         .user-location { font-size: 0.75rem; color: #007bff; background: #e3f2fd; padding: 2px 8px; border-radius: 10px; margin-top: 2px; display: inline-block; width: fit-content; border: 1px solid #b3e5fc; }
 
         .header-actions { display: flex; align-items: center; gap: 8px; }
@@ -296,7 +295,7 @@
             );
         }
 
-        // --- FILTRO DE LOCALIZAÇÃO (COM CHAVE MESTRA) ---
+        // --- FILTRO DE LOCALIZAÇÃO (COM CHAVE MESTRA: "Rio de Janeiro" etc) ---
         if (minhaCidade && modoBusca !== 'me') {
             resultados = resultados.filter(item => {
                 const cidadeLoja = item.receipt?.store?.city;
@@ -305,10 +304,10 @@
                 const cLoja = cidadeLoja.toLowerCase();
                 const cMinha = minhaCidade.toLowerCase();
                 
-                // CHAVES MESTRAS: Se a loja for "RJ" ou "Todas", mostra pra todo mundo
-                const chavesMestras = ['rj', 'estado do rio', 'todas', 'brasil'];
+                // CHAVES MESTRAS: Adicionei 'rio de janeiro' aqui
+                const chavesMestras = ['rj', 'estado do rio', 'todas', 'brasil', 'rio de janeiro'];
                 
-                // Verifica se a cidade da loja É uma chave mestra
+                // Se a cidade da loja for uma chave mestra, mostra para todos
                 if (chavesMestras.some(chave => cLoja === chave || cLoja.includes('estado'))) return true;
 
                 // Verifica match normal de cidade
