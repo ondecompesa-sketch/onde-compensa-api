@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Importar Ofertas (IA) 🤖</title>
-    <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; background: #f4f4f9; color: #333; }
         .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -14,7 +14,7 @@
             width: 100%; height: 350px; padding: 15px; 
             border-radius: 10px; border: 2px solid #eee; 
             font-family: monospace; font-size: 0.85rem; 
-            background: #fafafa; resize: vertical;
+            background: #fafafa; resize: vertical; white-space: pre; overflow-x: auto;
         }
         textarea:focus { border-color: #2e7d32; outline: none; background: white; }
         
@@ -27,9 +27,10 @@
         button:hover { background: #1b5e20; }
         button:active { transform: scale(0.98); }
         
-        #status { margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: 500; display: none; line-height: 1.6; }
+        #status { margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: 500; display: none; line-height: 1.6; word-wrap: break-word; }
         .sucesso { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
         .erro { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        .erro code { background: rgba(255,0,0,0.1); padding: 2px 5px; border-radius: 4px; font-family: monospace; display: block; margin: 10px 0; white-space: pre-wrap; }
         
         .hint { background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.9rem; color: #0d47a1; border: 1px solid #bbdefb; }
     </style>
@@ -37,10 +38,10 @@
 <body>
 
 <div class="container">
-    <h2>🤖 Importador Blindado</h2>
+    <h2>🤖 Importador (Versão Detetive)</h2>
     
     <div class="hint">
-        💡 <b>Dica:</b> O sistema agora aceita listas (`[...]`) e corrige pequenas falhas no JSON do Gemini. Pode colar sem medo!
+        💡 <b>Dica:</b> Se der erro, o sistema agora vai mostrar qual linha está com problema para você corrigir manualmente (geralmente falta uma vírgula).
     </div>
 
     <textarea id="jsonInput" placeholder='Cole o JSON do Gemini aqui...'></textarea>
@@ -53,10 +54,16 @@
 </div>
 
 <script>
-    const SUPABASE_URL = '[https://sjhvftndaplufqnrjxcs.supabase.co](https://sjhvftndaplufqnrjxcs.supabase.co)';
+    const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     
-    const clienteSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Verifica se a biblioteca carregou antes de tentar usar
+    let clienteSupabase = null;
+    if (window.supabase) {
+        clienteSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } else {
+        alert("⚠️ A biblioteca do Supabase não carregou. Verifique sua conexão ou recarregue a página.");
+    }
 
     function mostrarStatus(html, tipo) {
         const div = document.getElementById('status');
@@ -66,31 +73,47 @@
     }
 
     async function importar() {
+        if (!clienteSupabase) return alert("Erro crítico: Supabase não carregado.");
+        
         const inputRaw = document.getElementById('jsonInput').value;
         if(!inputRaw.trim()) return alert("Cole o JSON primeiro!");
 
         try {
-            mostrarStatus("⏳ Analisando e corrigindo JSON...", "sucesso");
+            mostrarStatus("⏳ Analisando JSON...", "sucesso");
             
-            // 1. LIMPEZA DO JSON (Remove markdown e espaços extras)
+            // 1. LIMPEZA INICIAL
             let jsonLimpo = inputRaw
                 .replace(/```json/g, '')
                 .replace(/```/g, '')
                 .trim();
 
-            // 2. PARSE SEGURO
+            // Tenta corrigir erro comum: objetos colados "}{" vira "},{"
+            jsonLimpo = jsonLimpo.replace(/}\s*{/g, '},{');
+
+            // 2. TENTATIVA DE PARSE
             let dados;
             try {
                 dados = JSON.parse(jsonLimpo);
             } catch (e) {
-                // Tenta remover vírgulas traçoeiras (ex: "preco": 10, } -> "preco": 10 })
-                jsonLimpo = jsonLimpo.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
-                dados = JSON.parse(jsonLimpo); // Tenta de novo
+                // --- MODO DETETIVE: Encontra onde está o erro ---
+                // O erro geralmente diz a posição (ex: position 8153)
+                const match = e.message.match(/position (\d+)/);
+                if (match) {
+                    const pos = parseInt(match[1]);
+                    const inicio = Math.max(0, pos - 50);
+                    const fim = Math.min(jsonLimpo.length, pos + 50);
+                    const trecho = jsonLimpo.substring(inicio, fim);
+                    
+                    // Destaca o erro
+                    const trechoDestacado = trecho.slice(0, 50) + " 👉🛑👈 " + trecho.slice(50);
+                    
+                    throw new Error(`Erro de sintaxe próximo a este trecho:\n\n...${trechoDestacado}...\n\nO que verificar:\n1. Falta uma vírgula (,) entre itens?\n2. Falta fechar aspas (")?\n3. Tem uma vírgula sobrando no final?`);
+                } else {
+                    throw e;
+                }
             }
 
-            // 3. NORMALIZAÇÃO (Transforma tudo em Array)
-            // Se o Gemini mandou um objeto só, transforma em lista [objeto]
-            // Se mandou lista, usa a lista.
+            // 3. PROCESSAMENTO (Igual ao anterior)
             const listaOfertas = Array.isArray(dados) ? dados : [dados];
             
             const { data: { session } } = await clienteSupabase.auth.getSession();
@@ -99,10 +122,7 @@
 
             let relatorio = `<b>Processando ${listaOfertas.length} encarte(s):</b><br>`;
 
-            // 4. LOOP PRINCIPAL (Processa cada oferta da lista)
             for (const oferta of listaOfertas) {
-                
-                // Normaliza cidades daquela oferta
                 let listaCidades = [];
                 if (Array.isArray(oferta.cidades)) listaCidades = oferta.cidades;
                 else if (oferta.cidade) listaCidades = [oferta.cidade];
@@ -111,55 +131,31 @@
                 relatorio += `<hr style="opacity:0.3">🛒 <b>${oferta.loja}</b>:<br>`;
 
                 for (const nomeCidade of listaCidades) {
-                    // Busca ou Cria Loja
-                    let { data: loja } = await clienteSupabase
-                        .from('stores')
-                        .select('id')
-                        .ilike('name', oferta.loja)
-                        .ilike('city', nomeCidade)
-                        .maybeSingle();
+                    let { data: loja } = await clienteSupabase.from('stores').select('id').ilike('name', oferta.loja).ilike('city', nomeCidade).maybeSingle();
 
                     let lojaId;
                     if (loja) {
                         lojaId = loja.id;
-                        // Verifica Duplicidade Hoje
                         const hoje = new Date().toISOString().split('T')[0];
-                        const { data: duplicata } = await clienteSupabase
-                            .from('receipts')
-                            .select('id')
-                            .eq('store_id', lojaId)
-                            .eq('total_amount', 0)
-                            .gte('issue_date', hoje)
-                            .maybeSingle();
+                        const { data: duplicata } = await clienteSupabase.from('receipts').select('id').eq('store_id', lojaId).eq('total_amount', 0).gte('issue_date', hoje).maybeSingle();
 
                         if (duplicata) {
                             relatorio += `⚠️ <b>${nomeCidade}</b>: Já existe hoje (Pulado).<br>`;
                             continue; 
                         }
                     } else {
-                        const { data: novaLoja, error: errLoja } = await clienteSupabase
-                            .from('stores')
-                            .insert({ name: oferta.loja, city: nomeCidade })
-                            .select().single();
+                        const { data: novaLoja, error: errLoja } = await clienteSupabase.from('stores').insert({ name: oferta.loja, city: nomeCidade }).select().single();
                         if(errLoja) throw errLoja;
                         lojaId = novaLoja.id;
                     }
 
-                    // Cria Nota
                     const { data: nota, error: errNota } = await clienteSupabase.from('receipts').insert({
                         user_id: userId, store_id: lojaId, total_amount: 0, issue_date: new Date().toISOString()
                     }).select().single();
                     if(errNota) throw errNota;
 
-                    // Salva Itens
                     const itensParaSalvar = oferta.itens.map(item => ({
-                        receipt_id: nota.id,
-                        raw_name: item.nome,
-                        unit_price: parseFloat(item.preco), 
-                        total_price: parseFloat(item.preco),
-                        quantity: 1,
-                        valid_until: oferta.validade || null,
-                        tags: item.tags || ''
+                        receipt_id: nota.id, raw_name: item.nome, unit_price: parseFloat(item.preco), total_price: parseFloat(item.preco), quantity: 1, valid_until: oferta.validade || null, tags: item.tags || ''
                     }));
 
                     const { error: errItens } = await clienteSupabase.from('receipt_items').insert(itensParaSalvar);
@@ -174,7 +170,7 @@
 
         } catch (e) {
             console.error(e);
-            mostrarStatus(`❌ Erro de JSON crítico: Verifique se não faltam chaves "}" ou colchetes "]".<br><small>${e.message}</small>`, "erro");
+            mostrarStatus(`❌ <b>JSON Inválido:</b><br>${e.message}`, "erro");
         }
     }
 </script>
