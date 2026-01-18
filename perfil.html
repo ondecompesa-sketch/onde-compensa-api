@@ -2,227 +2,107 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Perfil - OndeCompensa</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#007bff">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Meu Perfil</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h1 { color: #333; margin-bottom: 10px; }
-        p { color: #666; margin-bottom: 30px; }
-        input, select { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1em; background: white; }
-        select:disabled { background: #f9f9f9; color: #aaa; cursor: not-allowed; }
-        .btn { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1em; margin-top: 20px; transition: 0.2s; }
-        .btn:hover { background: #0056b3; }
-        .btn-voltar { background: transparent; color: #666; border: 1px solid #ddd; margin-top: 10px; }
-        .btn-voltar:hover { background: #eee; }
-        .loading { opacity: 0.7; pointer-events: none; }
-        .loading-text { font-size: 0.8em; color: #888; margin-top: -5px; margin-bottom: 10px; display: none; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: #f4f7fa; padding: 20px; color: #333; }
+        .container { max-width: 500px; margin: 0 auto; }
+        
+        .profile-header { text-align: center; margin-bottom: 30px; }
+        .avatar { width: 100px; height: 100px; border-radius: 50%; background: #ddd; margin-bottom: 10px; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 20px; }
+        
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; font-size: 0.9rem; }
+        input { width: 100%; padding: 14px; border: 1px solid #eee; border-radius: 12px; font-size: 1rem; margin-bottom: 20px; background: #f9f9f9; outline: none; transition: 0.2s; }
+        input:focus { border-color: #007bff; background: white; }
+        
+        .btn-save { background: #007bff; color: white; border: none; padding: 16px; width: 100%; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .btn-logout { background: #ffebee; color: #c62828; border: none; padding: 16px; width: 100%; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px; }
+        
+        .fab-back { position: fixed; bottom: 25px; left: 25px; background: white; color: #333; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-decoration: none; font-size: 24px; z-index: 200; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>👤 Meu Perfil</h1>
-    <p>Localização exata para ofertas exatas.</p>
+<div class="container">
+    <div class="profile-header">
+        <img id="img-avatar" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="avatar">
+        <h2 id="txt-nome" style="margin:0;">Carregando...</h2>
+        <p id="txt-email" style="color:#888; margin:5px 0 0 0; font-size:0.9rem;">...</p>
+    </div>
 
-    <input type="text" id="nome" placeholder="Seu Nome Completo">
-    
-    <select id="cidade" onchange="aoMudarCidade()">
-        <option value="" disabled selected>Carregando cidades...</option>
-    </select>
-    <div id="loading-cidade" class="loading-text">Buscando cidades...</div>
-    
-    <select id="bairro" disabled>
-        <option value="" disabled selected>Selecione a Cidade primeiro</option>
-    </select>
-    <div id="loading-bairro" class="loading-text">Buscando bairros...</div>
+    <div class="card">
+        <label>📍 Cidade Padrão (Filtro Automático)</label>
+        <input type="text" id="inp-cidade" placeholder="Ex: Nova Iguaçu">
 
-    <button onclick="salvarPerfil()" id="btn-salvar" class="btn">Salvar Alterações</button>
-    <button onclick="voltar()" class="btn btn-voltar">Voltar</button>
+        <label>🎯 Meta de Gastos Mensal (R$)</label>
+        <input type="number" id="inp-meta" placeholder="Ex: 2000.00">
+
+        <button class="btn-save" onclick="salvarPerfil()">💾 Salvar Alterações</button>
+    </div>
+
+    <button class="btn-logout" onclick="sair()">🚪 Sair da Conta</button>
 </div>
 
+<a href="index.html" class="fab-back">⬅</a>
+
 <script>
-    // --- ⚠️ SUAS CHAVES DO SUPABASE (PREENCHA AQUI) ---
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
-    // -----------------------------------------------
+    const cliente = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const API_URL = 'https://onde-compensa-api.onrender.com'; // URL do seu Backend
+    async function carregar() {
+        const { data: { session } } = await cliente.auth.getSession();
+        if(!session) return window.location.href = 'login.html';
 
-    // 1. Carrega as Cidades do Estado 33 (RJ) via API
-    async function carregarCidades() {
-        const select = document.getElementById('cidade');
-        const loading = document.getElementById('loading-cidade');
+        const user = session.user;
+        document.getElementById('txt-email').innerText = user.email;
+        document.getElementById('txt-nome').innerText = user.user_metadata.full_name || 'Usuário';
+        if(user.user_metadata.avatar_url) document.getElementById('img-avatar').src = user.user_metadata.avatar_url;
+
+        // Carrega dados do perfil
+        let { data: perfil } = await cliente.from('profiles').select('*').eq('id', user.id).single();
         
-        loading.style.display = 'block';
-        select.disabled = true;
+        // Se não existir perfil (usuários antigos), cria um agora
+        if (!perfil) {
+            const { data: novo } = await cliente.from('profiles').insert({ id: user.id }).select().single();
+            perfil = novo;
+        }
 
-        try {
-            const res = await fetch(`${API_URL}/locations/states/33/cities`);
-            const cidades = await res.json();
-
-            select.innerHTML = '<option value="" disabled selected>Selecione sua Cidade</option>';
+        if(perfil) {
+            document.getElementById('inp-cidade').value = perfil.city || '';
+            document.getElementById('inp-meta').value = perfil.monthly_goal || '';
             
-            cidades.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.id; // ID do IBGE
-                opt.innerText = c.name;
-                select.appendChild(opt);
-            });
-
-        } catch (error) {
-            console.error(error);
-            alert('Erro ao carregar cidades. O servidor pode estar dormindo (Render). Tente novamente em 1 min.');
-        } finally {
-            loading.style.display = 'none';
-            select.disabled = false;
+            // Sincroniza com localStorage para o index.html usar rápido
+            if(perfil.city) localStorage.setItem('minhaCidade', perfil.city);
         }
     }
 
-    // 2. Carrega Bairros (Distritos) quando escolhe a cidade
-    async function aoMudarCidade() {
-        const cityId = document.getElementById('cidade').value;
-        const selectBairro = document.getElementById('bairro');
-        const loading = document.getElementById('loading-bairro');
-
-        if (!cityId) return;
-
-        selectBairro.innerHTML = '<option value="" disabled selected>Carregando...</option>';
-        selectBairro.disabled = true;
-        loading.style.display = 'block';
-
-        try {
-            const res = await fetch(`${API_URL}/locations/cities/${cityId}/districts`);
-            const bairros = await res.json();
-
-            selectBairro.innerHTML = '<option value="" disabled selected>Selecione seu Bairro</option>';
-            
-            bairros.forEach(b => {
-                const opt = document.createElement('option');
-                opt.value = b.id; // ID do IBGE
-                opt.innerText = b.name;
-                selectBairro.appendChild(opt);
-            });
-            
-            selectBairro.disabled = false;
-
-        } catch (error) {
-            console.error(error);
-            selectBairro.innerHTML = '<option value="" disabled>Erro ao carregar</option>';
-        } finally {
-            loading.style.display = 'none';
-        }
-    }
-
-    // 3. Carrega o Perfil do Usuário e preenche os campos
-    async function carregarPerfil() {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) return window.location.href = 'login.html';
-
-        await carregarCidades(); // Espera as cidades carregarem primeiro
-
-        const { data: perfil } = await supabaseClient
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-
-        if (perfil) {
-            if(perfil.full_name) document.getElementById('nome').value = perfil.full_name;
-            
-            // Lógica inteligente para selecionar Cidade e Bairro salvos
-            if (perfil.city_name || perfil.cidade) {
-                const nomeCidadeSalva = perfil.city_name || perfil.cidade;
-                const selectCidade = document.getElementById('cidade');
-                
-                // Tenta achar a cidade pelo nome na lista carregada
-                for (let i = 0; i < selectCidade.options.length; i++) {
-                    if (selectCidade.options[i].text === nomeCidadeSalva) {
-                        selectCidade.selectedIndex = i;
-                        // Dispara o carregamento dos bairros
-                        await aoMudarCidade();
-                        
-                        // Depois que carregar bairros, seleciona o bairro
-                        const nomeBairroSalvo = perfil.district_name || perfil.bairro;
-                        const selectBairro = document.getElementById('bairro');
-                        
-                        // Tenta pelo ID primeiro (mais seguro), senão pelo nome
-                        if (perfil.district_id) {
-                            selectBairro.value = perfil.district_id;
-                        } else {
-                            for (let j = 0; j < selectBairro.options.length; j++) {
-                                if (selectBairro.options[j].text === nomeBairroSalvo) {
-                                    selectBairro.selectedIndex = j;
-                                    break;
-                                }
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    // 4. Salvar com IDs oficiais e Nomes
     async function salvarPerfil() {
-        const btn = document.getElementById('btn-salvar');
-        const nome = document.getElementById('nome').value;
+        const cidade = document.getElementById('inp-cidade').value;
+        const meta = document.getElementById('inp-meta').value;
         
-        const selectCidade = document.getElementById('cidade');
-        const selectBairro = document.getElementById('bairro');
-
-        // Pega valores e textos
-        const cityId = selectCidade.value;
-        const cityName = selectCidade.options[selectCidade.selectedIndex]?.text;
+        const { data: { session } } = await cliente.auth.getSession();
         
-        const districtId = selectBairro.value;
-        const districtName = selectBairro.options[selectBairro.selectedIndex]?.text;
+        const { error } = await cliente.from('profiles')
+            .update({ city: cidade, monthly_goal: meta })
+            .eq('id', session.user.id);
 
-        if (!nome || !cityId || !districtId) return alert("Por favor, preencha tudo!");
-
-        btn.innerText = "Salvando...";
-        btn.classList.add("loading");
-
-        const { data: { user } } = await supabaseClient.auth.getUser();
-
-        // Salva tudo: IDs oficiais para o sistema, Nomes para facilitar leitura
-        const { error } = await supabaseClient.from('profiles').upsert({
-            id: user.id,
-            email: user.email,
-            full_name: nome,
-            
-            // Novos campos oficiais (Link com tabelas IBGE)
-            district_id: districtId, 
-            city_name: cityName,
-            district_name: districtName,
-
-            // Campos legado (para manter compatibilidade se precisar)
-            cidade: cityName,
-            bairro: districtName,
-            
-            updated_at: new Date()
-        });
-
-        if (error) {
-            alert("Erro: " + error.message);
-            btn.innerText = "Salvar Alterações";
-            btn.classList.remove("loading");
-        } else {
-            alert("Perfil atualizado! ✅");
-            window.location.href = 'index.html';
+        if(error) alert('Erro ao salvar: ' + error.message);
+        else {
+            localStorage.setItem('minhaCidade', cidade); // Atualiza cache local
+            alert('Perfil atualizado com sucesso! ✅');
         }
     }
 
-    function voltar() { window.location.href = 'index.html'; }
+    async function sair() {
+        await cliente.auth.signOut();
+        window.location.href = 'login.html';
+    }
 
-    // Inicia
-    carregarPerfil();
+    carregar();
 </script>
-
 </body>
 </html>
