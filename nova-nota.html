@@ -2,241 +2,159 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Nota - OndeCompensa</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2e7d32">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>Nova Nota Manual</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <meta name="theme-color" content="#007bff">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: -apple-system, system-ui, sans-serif; background: #fff; padding: 20px; padding-bottom: 100px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        h2 { margin: 0; color: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h1 { color: #333; margin: 0 0 10px 0; font-size: 1.8rem; }
+        p { color: #666; margin-bottom: 30px; font-size: 0.95rem; }
         
-        .form-group { margin-bottom: 15px; position: relative; }
-        label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 5px; font-weight: 600; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; outline: none; }
-        input:focus { border-color: #007bff; }
+        /* Área de Preview */
+        .preview-container { 
+            width: 100%; height: 250px; background: #f8fbff; border-radius: 12px; 
+            border: 2px dashed #cfe2ff; margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;
+        }
+        .preview-placeholder { color: #99c2ff; font-size: 4rem; }
+        #preview { width: 100%; height: 100%; object-fit: contain; display: none; }
+
+        /* Botões de Ação (Grid) */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         
-        /* Lista de Itens Adicionados */
-        .items-list { margin-top: 20px; border-top: 1px solid #eee; }
-        .item-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f9f9f9; align-items: center; }
-        .item-info div { font-weight: 500; }
-        .item-info small { color: #888; }
+        .btn-select {
+            padding: 15px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; gap: 8px; transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        .btn-camera { background: #e3f2fd; color: #1565c0; } /* Azul claro */
+        .btn-gallery { background: #fff3e0; color: #e65100; } /* Laranja claro */
         
-        .btn-add { background: #e3f2fd; color: #007bff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 10px; }
+        .btn-select:active { transform: scale(0.95); opacity: 0.8; }
+        .btn-icon { font-size: 1.8rem; }
+
+        /* Botão Enviar */
+        .btn-main { width: 100%; padding: 16px; background: #007bff; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,123,255,0.3); }
+        .btn-main:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
         
-        .btn-finish { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #2e7d32; color: white; padding: 15px; border-radius: 12px; font-size: 1.1rem; border: none; font-weight: bold; box-shadow: 0 4px 15px rgba(46,125,50,0.3); cursor: pointer; }
-        
-        /* Sugestão de Preço */
-        .price-hint { font-size: 0.8rem; color: #e65100; background: #fff3e0; padding: 5px 10px; border-radius: 4px; display: none; margin-top: 5px; cursor: pointer; }
-        
-        /* Dropdown de Autocomplete */
-        .autocomplete-list { position: absolute; background: white; border: 1px solid #ddd; width: 100%; z-index: 10; max-height: 150px; overflow-y: auto; display: none; border-radius: 0 0 8px 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .autocomplete-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
-        .autocomplete-item:hover { background: #f5f5f5; }
+        .btn-voltar { background: transparent; color: #666; border: none; margin-top: 15px; font-weight: 600; cursor: pointer; }
+
+        /* Inputs escondidos */
+        .hidden-input { display: none; }
+
+        /* Loading */
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 100; justify-content: center; align-items: center; flex-direction: column; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h2>📝 Nova Nota</h2>
-    <a href="index.html" style="text-decoration:none; font-size:1.5rem;">✕</a>
-</div>
+<div class="card">
+    <h1>📸 Nova Compra</h1>
+    <p>Escolha como deseja enviar sua nota</p>
 
-<div class="form-group">
-    <label>🏪 Nome do Local</label>
-    <input type="text" id="inp-loja" placeholder="Ex: Padaria do Zé">
-</div>
-
-<div class="form-group">
-    <label>📅 Data</label>
-    <input type="date" id="inp-data">
-</div>
-
-<hr style="border:0; border-top:1px dashed #ccc; margin: 20px 0;">
-
-<div style="background: #f8f9fa; padding: 15px; border-radius: 12px;">
-    <h3 style="margin:0 0 10px 0; font-size:1rem;">Adicionar Item</h3>
-    
-    <div class="form-group">
-        <input type="text" id="inp-produto" placeholder="Nome do produto..." onkeyup="buscarSugestao(this.value)">
-        <div id="lista-sugestoes" class="autocomplete-list"></div>
-        <div id="hint-preco" class="price-hint" onclick="usarPrecoSugerido()">💡 Último pago: R$ 0,00</div>
+    <div class="preview-container">
+        <span class="preview-placeholder" id="placeholder-icon">🧾</span>
+        <img id="preview">
     </div>
 
-    <div style="display:flex; gap:10px;">
-        <div style="flex:1">
-            <input type="number" id="inp-preco" placeholder="R$ Unit." step="0.01">
-        </div>
-        <div style="width:80px">
-            <input type="number" id="inp-qtd" placeholder="Qtd" value="1">
-        </div>
+    <div class="action-grid">
+        <button class="btn-select btn-camera" onclick="document.getElementById('cameraInput').click()">
+            <span class="btn-icon">📷</span>
+            Câmera
+        </button>
+        
+        <button class="btn-select btn-gallery" onclick="document.getElementById('galleryInput').click()">
+            <span class="btn-icon">🖼️</span>
+            Galeria
+        </button>
     </div>
+
+    <input type="file" id="cameraInput" class="hidden-input" accept="image/*" capture="environment" onchange="processarArquivo(this)">
     
-    <button class="btn-add" onclick="adicionarItem()">➕ Adicionar à Lista</button>
+    <input type="file" id="galleryInput" class="hidden-input" accept="image/*" onchange="processarArquivo(this)">
+
+    <button onclick="enviarNota()" id="btn-enviar" class="btn-main" disabled>Processar Nota</button>
+    <button onclick="voltar()" class="btn-voltar">Cancelar</button>
 </div>
 
-<div id="lista-itens" class="items-list"></div>
-
-<button class="btn-finish" onclick="salvarNota()">✅ Finalizar Nota (R$ <span id="total-geral">0,00</span>)</button>
+<div class="loading-overlay" id="loading">
+    <div class="spinner"></div>
+    <div style="font-weight:bold; color:#333">Lendo Nota Fiscal...</div>
+    <div style="color:#666; font-size:0.9rem; margin-top:5px">Aguarde a Inteligência Artificial</div>
+</div>
 
 <script>
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
-    const cliente = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const API_URL = 'https://onde-compensa-api.onrender.com';
 
-    document.getElementById('inp-data').value = new Date().toISOString().split('T')[0];
-    let itens = [];
-    let ultimoPreco = 0;
+    let fileSelecionado = null;
+    let userId = null;
 
-    // --- AUTOCOMPLETE INTELIGENTE ---
-    let timerBusca;
-    async function buscarSugestao(texto) {
-        const lista = document.getElementById('lista-sugestoes');
-        const hint = document.getElementById('hint-preco');
-        
-        if(texto.length < 2) { lista.style.display='none'; hint.style.display='none'; return; }
-
-        clearTimeout(timerBusca);
-        timerBusca = setTimeout(async () => {
-            // Busca produtos com nome parecido no histórico
-            const { data } = await cliente
-                .from('receipt_items')
-                .select('raw_name, unit_price')
-                .ilike('raw_name', `%${texto}%`)
-                .order('id', {ascending: false}) // Pega os mais recentes
-                .limit(5);
-
-            if(data && data.length > 0) {
-                // Monta lista de sugestões
-                const unicos = [...new Set(data.map(i => i.raw_name))]; // Remove nomes duplicados
-                
-                lista.innerHTML = '';
-                unicos.forEach(nome => {
-                    const div = document.createElement('div');
-                    div.className = 'autocomplete-item';
-                    div.innerText = nome;
-                    div.onclick = () => selecionarProduto(nome);
-                    lista.appendChild(div);
-                });
-                lista.style.display = 'block';
-
-                // Sugere o preço do item mais recente encontrado
-                ultimoPreco = data[0].unit_price;
-                hint.innerText = `💡 Último pago: R$ ${parseFloat(ultimoPreco).toFixed(2)}`;
-                hint.style.display = 'inline-block';
-            }
-        }, 400);
+    async function checarLogin() {
+        const { data } = await supabaseClient.auth.getSession();
+        if (!data.session) return window.location.href = 'login.html';
+        userId = data.session.user.id;
     }
+    checarLogin();
 
-    function selecionarProduto(nome) {
-        document.getElementById('inp-produto').value = nome;
-        document.getElementById('lista-sugestoes').style.display = 'none';
-        document.getElementById('inp-preco').focus();
-    }
-
-    function usarPrecoSugerido() {
-        document.getElementById('inp-preco').value = ultimoPreco;
-        document.getElementById('hint-preco').style.display = 'none';
-    }
-
-    // --- LÓGICA DA LISTA ---
-    function adicionarItem() {
-        const nome = document.getElementById('inp-produto').value;
-        const preco = parseFloat(document.getElementById('inp-preco').value);
-        const qtd = parseFloat(document.getElementById('inp-qtd').value);
-
-        if(!nome || isNaN(preco)) return alert("Preencha nome e preço!");
-
-        itens.push({ nome, preco, qtd, total: preco * qtd });
-        renderizar();
-        
-        // Limpa campos para o próximo
-        document.getElementById('inp-produto').value = '';
-        document.getElementById('inp-preco').value = '';
-        document.getElementById('inp-qtd').value = '1';
-        document.getElementById('hint-preco').style.display = 'none';
-        document.getElementById('inp-produto').focus();
-    }
-
-    function renderizar() {
-        const container = document.getElementById('lista-itens');
-        container.innerHTML = '';
-        let total = 0;
-        
-        itens.forEach((item, index) => {
-            total += item.total;
-            container.innerHTML += `
-                <div class="item-row">
-                    <div class="item-info">
-                        <div>${item.nome}</div>
-                        <small>${item.qtd}x R$ ${item.preco.toFixed(2)}</small>
-                    </div>
-                    <div style="font-weight:bold;">R$ ${item.total.toFixed(2)}</div>
-                </div>`;
-        });
-        document.getElementById('total-geral').innerText = total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-    }
-
-    // --- SALVAR NO BANCO ---
-    async function salvarNota() {
-        if(itens.length === 0) return alert("Adicione pelo menos um item!");
-        
-        const nomeLoja = document.getElementById('inp-loja').value || 'Sem Nome';
-        const dataNota = document.getElementById('inp-data').value;
-        const btn = document.querySelector('.btn-finish');
-        
-        btn.innerText = "Salvando..."; btn.disabled = true;
-
-        try {
-            const { data: { session } } = await cliente.auth.getSession();
-            if(!session) return alert("Faça login!");
-
-            // 1. Cria ou Busca Loja (Simplificado)
-            // Aqui vamos criar uma nova se não existir, ou usar existente
-            let { data: loja } = await cliente.from('stores').select('id').ilike('name', nomeLoja).maybeSingle();
-            let lojaId;
+    // Função unificada que recebe o arquivo de qualquer um dos dois inputs
+    function processarArquivo(input) {
+        if (input.files && input.files[0]) {
+            fileSelecionado = input.files[0];
+            const reader = new FileReader();
             
-            if(loja) {
-                lojaId = loja.id;
-            } else {
-                const { data: nova } = await cliente.from('stores').insert({ name: nomeLoja, city: 'Manual' }).select().single();
-                lojaId = nova.id;
+            reader.onload = function(e) {
+                document.getElementById('preview').src = e.target.result;
+                document.getElementById('preview').style.display = 'block';
+                document.getElementById('placeholder-icon').style.display = 'none';
+                
+                const btn = document.getElementById('btn-enviar');
+                btn.disabled = false;
+                btn.innerText = "Processar Nota";
             }
-
-            // 2. Cria a Nota
-            const totalGeral = itens.reduce((acc, i) => acc + i.total, 0);
-            const { data: nota, error: errNota } = await cliente.from('receipts').insert({
-                user_id: session.user.id,
-                store_id: lojaId,
-                total_amount: totalGeral,
-                issue_date: dataNota
-            }).select().single();
-
-            if(errNota) throw errNota;
-
-            // 3. Salva Itens
-            const itensFormatados = itens.map(i => ({
-                receipt_id: nota.id,
-                raw_name: i.nome,
-                unit_price: i.preco,
-                total_price: i.total,
-                quantity: i.qtd
-            }));
-
-            const { error: errItens } = await cliente.from('receipt_items').insert(itensFormatados);
-            if(errItens) throw errItens;
-
-            alert("Nota salva com sucesso! 🎉");
-            window.location.href = 'index.html';
-
-        } catch(e) {
-            console.error(e);
-            alert("Erro ao salvar: " + e.message);
-            btn.innerText = "Tentar Novamente"; btn.disabled = false;
+            
+            reader.readAsDataURL(input.files[0]);
         }
     }
+
+    async function enviarNota() {
+        if (!fileSelecionado || !userId) return;
+
+        document.getElementById('loading').style.display = 'flex';
+        
+        const formData = new FormData();
+        formData.append('file', fileSelecionado);
+        formData.append('userId', userId); 
+
+        try {
+            const response = await fetch(`${API_URL}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error(await response.text());
+
+            const resultado = await response.json();
+            console.log("Sucesso:", resultado);
+            window.location.href = 'index.html'; // Volta para o Dashboard
+
+        } catch (error) {
+            console.error(error);
+            alert("Erro: " + error.message);
+            document.getElementById('loading').style.display = 'none';
+        }
+    }
+
+    function voltar() { window.location.href = 'index.html'; }
 </script>
+
 </body>
 </html>
