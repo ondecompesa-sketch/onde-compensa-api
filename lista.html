@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lista Inteligente 🛒</title>
+    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2e7d32">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>Lista Inteligente 🛒</title>
+
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: -apple-system, system-ui, sans-serif; background: #f4f7fa; padding: 20px; padding-bottom: 90px; color: #333; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: #f4f7fa; padding: 20px; padding-bottom: 140px; color: #333; }
         .container { max-width: 600px; margin: 0 auto; }
         
         h1 { color: #2e7d32; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; margin-top: 0; }
@@ -25,7 +27,6 @@
         .item-name { font-weight: 600; font-size: 1.1rem; }
         .btn-del { color: #ef5350; background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; }
 
-        /* Resultado da Análise */
         .best-price-badge { 
             background: #e8f5e9; color: #1b5e20; padding: 8px; border-radius: 8px; 
             font-size: 0.85rem; margin-top: 8px; display: none; border: 1px solid #c8e6c9;
@@ -34,12 +35,31 @@
         .found .best-price-badge { display: block; }
         .not-found .best-price-badge { display: block; background: #eceff1; color: #607d8b; border-color: #cfd8dc; }
 
+        /* BARRA DE AÇÕES INFERIOR */
+        .bottom-actions {
+            position: fixed; bottom: 20px; left: 20px; right: 20px;
+            display: flex; flex-direction: column; gap: 10px; z-index: 100;
+        }
+
         .btn-analyze { 
-            position: fixed; bottom: 25px; left: 20px; right: 20px; 
             background: #007bff; color: white; padding: 16px; 
             border-radius: 15px; font-weight: bold; font-size: 1.1rem; 
             border: none; box-shadow: 0 4px 15px rgba(0,123,255,0.3); 
-            cursor: pointer; z-index: 100; display: flex; justify-content: center; gap: 10px;
+            cursor: pointer; display: flex; justify-content: center; gap: 10px; width: 100%;
+        }
+
+        .secondary-actions { display: flex; gap: 10px; }
+        
+        .btn-share {
+            flex: 2; background: #25D366; color: white; padding: 14px;
+            border-radius: 12px; font-weight: bold; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn-clear {
+            flex: 1; background: #ffebee; color: #c62828; padding: 14px;
+            border-radius: 12px; font-weight: bold; border: none; cursor: pointer;
         }
         
         .fab-back { position: fixed; top: 20px; right: 20px; background: white; color: #333; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-decoration: none; font-weight: bold; z-index: 200; }
@@ -62,9 +82,20 @@
         </div>
 </div>
 
-<button class="btn-analyze" onclick="analisarPrecos()">
-    <span>🔍</span> Ver Onde Comprar
-</button>
+<div class="bottom-actions">
+    <button class="btn-analyze" onclick="analisarPrecos()">
+        <span>🔍</span> Ver Onde Comprar
+    </button>
+    
+    <div class="secondary-actions">
+        <button class="btn-share" onclick="compartilharZap()">
+            📱 Enviar no Zap
+        </button>
+        <button class="btn-clear" onclick="limparLista()">
+            🗑️ Limpar
+        </button>
+    </div>
+</div>
 
 <script>
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
@@ -104,8 +135,7 @@
         const inp = document.getElementById('inp-item');
         const nome = inp.value.trim();
         if(!nome) return;
-        
-        listaItems.push({ nome, status: '', resultado: '' });
+        listaItems.push({ nome, status: '', resultado: '', precoNum: 0 }); // Adicionei precoNum
         salvar(); renderizar();
         inp.value = ''; inp.focus();
     }
@@ -113,6 +143,13 @@
     function remover(i) {
         listaItems.splice(i, 1);
         salvar(); renderizar();
+    }
+    
+    function limparLista() {
+        if(confirm("Tem certeza que deseja apagar a lista toda?")) {
+            listaItems = [];
+            salvar(); renderizar();
+        }
     }
 
     function salvar() { localStorage.setItem('minhaLista', JSON.stringify(listaItems)); }
@@ -132,34 +169,26 @@
             badge.innerText = 'Pesquisando preços...';
 
             try {
-                // 1. Busca produtos parecidos no banco (Usa a função RPC que ignora acentos)
-                // Se der erro no RPC, usa fallback simples
                 let { data } = await cliente.rpc('buscar_produtos', { termo: item.nome })
                     .select(`
                         unit_price, valid_until,
                         receipt:receipts ( store:stores ( name, city ) )
                     `)
-                    .limit(20); // Pega os 20 melhores matches
+                    .limit(20);
 
                 if (!data) data = [];
 
-                // 2. Filtra pela cidade (se tiver definida) e ordena por preço
                 let ofertas = data.filter(d => {
                     if(!d.receipt?.store) return false;
                     const cidadeLoja = d.receipt.store.city || '';
-                    
-                    // Lógica de Chave Mestra (RJ, Todas, etc)
                     const chavesMestras = ['rj', 'estado do rio', 'todas', 'brasil', 'rio de janeiro'];
                     const cLoja = cidadeLoja.toLowerCase();
                     const cMinha = minhaCidade.toLowerCase();
-
-                    // Se não tenho cidade, aceita tudo. Se tenho, filtra.
                     if(!minhaCidade) return true;
                     if(chavesMestras.some(k => cLoja.includes(k))) return true;
                     return cLoja.includes(cMinha);
                 });
 
-                // Ordena: Menor preço primeiro
                 ofertas.sort((a, b) => a.unit_price - b.unit_price);
 
                 card.classList.remove('loading');
@@ -167,9 +196,9 @@
                 if (ofertas.length > 0) {
                     const melhor = ofertas[0];
                     const nomeLoja = melhor.receipt.store.name;
-                    const preco = parseFloat(melhor.unit_price).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+                    item.precoNum = parseFloat(melhor.unit_price);
+                    const preco = item.precoNum.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
                     
-                    // Verifica se é oferta válida (encarte)
                     const hoje = new Date().toISOString().split('T')[0];
                     let icone = '💰';
                     if (melhor.valid_until && melhor.valid_until >= hoje) icone = '🔥 Oferta';
@@ -177,21 +206,49 @@
                     item.resultado = `${icone}: <b>${preco}</b> no <b>${nomeLoja}</b>`;
                     item.status = 'found';
                 } else {
-                    item.resultado = `Nenhum preço recente encontrado para sua cidade.`;
+                    item.resultado = `Nenhum preço recente encontrado.`;
                     item.status = 'not-found';
+                    item.precoNum = 0;
                 }
 
             } catch (e) {
                 console.error(e);
                 item.resultado = "Erro na busca.";
             }
-
-            // Atualiza visualmente um por um (efeito legal)
             renderizar(); 
         }
-
         salvar();
         btn.innerHTML = '<span>🔍</span> Atualizar Preços'; btn.disabled = false;
+    }
+
+    // --- FUNÇÃO DO WHATSAPP 📱 ---
+    function compartilharZap() {
+        if(listaItems.length === 0) return alert("Lista vazia!");
+
+        let texto = `🛒 *Minha Lista de Compras* (${minhaCidade})\n\n`;
+        let total = 0;
+
+        listaItems.forEach(item => {
+            const check = item.status === 'found' ? '✅' : '⬜';
+            // Remove o HTML da string de resultado para ficar limpo no zap
+            const info = item.resultado.replace(/<[^>]*>/g, '').replace('🔥 Oferta:', '').replace('💰:', '').trim();
+            
+            texto += `${check} *${item.nome}*\n`;
+            if(item.status === 'found') {
+                texto += `   ↳ ${info}\n`;
+                total += item.precoNum;
+            }
+        });
+
+        if(total > 0) {
+            texto += `\n💰 *Total Estimado: R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}*`;
+        }
+        
+        texto += `\n\n_Gerado por OndeCompensa App_`;
+
+        // Abre o WhatsApp
+        const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+        window.open(url, '_blank');
     }
 
     renderizar();
