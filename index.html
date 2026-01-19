@@ -27,7 +27,7 @@
         .user-location { font-size: 0.75rem; color: #007bff; background: #e3f2fd; padding: 2px 8px; border-radius: 10px; margin-top: 2px; display: inline-block; width: fit-content; border: 1px solid #b3e5fc; }
         .btn-menu { background: none; border: none; font-size: 1.5rem; color: #333; cursor: pointer; padding: 0 5px; }
 
-        /* MENU PRINCIPAL (NOVO LAYOUT 3 ITENS) */
+        /* MENU PRINCIPAL (GRID 3 ITENS) */
         .main-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 25px; }
         
         .menu-card { 
@@ -457,7 +457,50 @@
         });
     }
 
-    // --- TOUR LOGIC (Atualizado sem IA) ---
+    // --- FUNÇÃO DE DELETAR CORRIGIDA (DIAGNÓSTICO COMPLETO) ---
+    async function deletarNota(id) {
+        console.log("Tentando apagar ID:", id); // Log para debug
+
+        if(!id || id === 'undefined') {
+            return alert("Erro: ID da nota inválido. Recarregue a página.");
+        }
+
+        if(!confirm('Tem certeza que deseja EXCLUIR esta nota permanentemente?')) return;
+
+        // 1. Apagar Itens Primeiro (com verificação)
+        const { error: erroItens, count: qtdItens } = await clienteSupabase
+            .from('receipt_items')
+            .delete({ count: 'exact' })
+            .eq('receipt_id', id);
+
+        if (erroItens) {
+            console.error("Erro Itens:", erroItens);
+            return alert("Erro ao apagar itens: " + erroItens.message);
+        }
+
+        // 2. Apagar a Nota (com verificação)
+        const { error: erroNota, count: qtdNota } = await clienteSupabase
+            .from('receipts')
+            .delete({ count: 'exact' })
+            .eq('id', id);
+
+        if (erroNota) {
+            console.error("Erro Nota:", erroNota);
+            return alert("Erro ao apagar nota: " + erroNota.message);
+        }
+
+        // 3. Verificação de Sucesso Real
+        if (qtdNota === 0) {
+            // Se chegou aqui, o comando rodou sem erro, mas não apagou nada.
+            // 99% de chance de ser permissão RLS bloqueando.
+            alert("O sistema tentou apagar, mas o banco de dados disse que 'Nenhuma nota foi afetada'.\n\nIsso geralmente é problema de Permissão (RLS) no Supabase.");
+        } else {
+            alert(`Sucesso! Nota apagada.`);
+            carregar(); // Atualiza a tela
+        }
+    }
+
+    // --- TOUR LOGIC ---
     const passosTour = [
         { id: 'btn-ler-nota', titulo: '🧾 Ler Nota Fiscal', texto: 'Aponte a câmera para a nota fiscal e o sistema cadastra tudo automaticamente.' },
         { id: 'btn-lista-card', titulo: '📝 Minha Lista', texto: 'Monte sua lista antes de sair de casa.' },
@@ -468,7 +511,7 @@
     let passoAtual = 0;
 
     function verificarTour() {
-        if (!localStorage.getItem('tourVistoFullV5')) {
+        if (!localStorage.getItem('tourVistoFullV6')) {
             setTimeout(() => mostrarPasso(0), 1000);
         }
     }
@@ -508,7 +551,7 @@
     function encerrarTour() {
         document.getElementById('tour-ring').style.display = 'none';
         document.getElementById('tour-box').style.display = 'none';
-        localStorage.setItem('tourVistoFullV5', 'true');
+        localStorage.setItem('tourVistoFullV6', 'true');
     }
 
     // --- Modais e Ações ---
@@ -526,34 +569,7 @@
     }
     
     function fecharModal(e) { if(!e || e.target.className.includes('modal') || e.target.tagName==='BUTTON') document.getElementById('modalDetalhes').style.display='none'; }
-async function deletarNota(id) { 
-        if(!confirm('Tem certeza que deseja apagar esta nota e todos os itens dela?')) return;
-
-        // 1. Apaga os itens primeiro (para evitar erro de chave estrangeira)
-        const { error: erroItens } = await clienteSupabase
-            .from('receipt_items')
-            .delete()
-            .eq('receipt_id', id);
-
-        if (erroItens) {
-            alert("Erro ao apagar itens: " + erroItens.message);
-            return;
-        }
-
-        // 2. Apaga a nota (recibo)
-        const { error: erroNota } = await clienteSupabase
-            .from('receipts')
-            .delete()
-            .eq('id', id);
-
-        if (erroNota) {
-            alert("Erro ao apagar nota: " + erroNota.message);
-        } else {
-            // 3. Sucesso! Recarrega a tela
-            alert("Nota apagada com sucesso!");
-            carregar();
-        }
-    }    async function sair() { await clienteSupabase.auth.signOut(); window.location.href = 'login.html'; }
+    async function sair() { await clienteSupabase.auth.signOut(); window.location.href = 'login.html'; }
 
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
     iniciar();
