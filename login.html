@@ -2,59 +2,126 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Entrar - OndeCompensa</title>
+    
     <link rel="manifest" href="manifest.json">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta name="theme-color" content="#2e7d32">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; margin: 0; }
-        .login-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
-        h1 { color: #007bff; margin-bottom: 30px; }
-        .btn-google { background: white; color: #555; border: 1px solid #ddd; width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .btn-google:hover { background: #f8f9fa; }
-        .btn-google img { width: 20px; }
-        .divider { display: flex; align-items: center; margin: 20px 0; color: #999; font-size: 0.8rem; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            min-height: 100vh; background: #f4f7fa; margin: 0; padding: 20px; box-sizing: border-box;
+        }
+        
+        .brand-area { text-align: center; margin-bottom: 30px; animation: fadeIn 0.5s; }
+        .logo { font-size: 4rem; display: block; margin-bottom: 5px; }
+        .app-name { font-size: 1.8rem; font-weight: 800; color: #2e7d32; margin: 0; letter-spacing: -0.5px; }
+        .app-slogan { color: #666; margin: 5px 0 0 0; font-size: 0.95rem; }
+
+        .login-card { 
+            background: white; padding: 35px; border-radius: 24px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.06); width: 100%; max-width: 380px; 
+            text-align: center; animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .btn-google { 
+            background: white; color: #333; border: 1px solid #e0e0e0; 
+            width: 100%; padding: 14px; border-radius: 12px; font-weight: 600; font-size: 1rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; 
+            transition: 0.2s; margin-bottom: 25px; 
+        }
+        .btn-google:active { background: #f5f5f5; transform: scale(0.98); }
+        .btn-google img { width: 22px; }
+        
+        .divider { display: flex; align-items: center; margin: 20px 0; color: #999; font-size: 0.8rem; font-weight: 600; letter-spacing: 1px; }
         .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #eee; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-email { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .error { color: red; font-size: 0.9em; margin-top: 10px; display: none; }
+        .divider span { padding: 0 15px; }
+
+        .input-group { text-align: left; margin-bottom: 15px; }
+        label { display: block; font-size: 0.85rem; font-weight: 700; color: #555; margin-bottom: 6px; margin-left: 4px; }
+        input { 
+            width: 100%; padding: 16px; border: 2px solid #f0f0f0; 
+            border-radius: 12px; font-size: 1rem; outline: none; transition: 0.2s; background: #fafafa;
+            box-sizing: border-box; /* Garante que o padding não estoure a largura */
+        }
+        input:focus { border-color: #2e7d32; background: white; }
+
+        .btn-email { 
+            width: 100%; padding: 16px; background: #2e7d32; color: white; 
+            border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; 
+            cursor: pointer; margin-top: 10px; transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.2);
+        }
+        .btn-email:active { transform: scale(0.98); }
+        .btn-email:disabled { opacity: 0.7; cursor: wait; }
+
+        .error { 
+            background: #ffebee; color: #c62828; font-size: 0.9em; 
+            padding: 12px; border-radius: 8px; margin-top: 20px; 
+            display: none; text-align: left; border: 1px solid #ffcdd2;
+        }
+
+        .links { margin-top: 25px; font-size: 0.9rem; color: #666; }
+        .links a { color: #2e7d32; text-decoration: none; font-weight: 700; }
+
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
     </style>
 </head>
 <body>
 
+<div class="brand-area">
+    <span class="logo">🛒</span>
+    <h1 class="app-name">OndeCompensa</h1>
+    <p class="app-slogan">Sua economia começa aqui.</p>
+</div>
+
 <div class="login-card">
-    <h1>OndeCompensa</h1>
-    
     <button class="btn-google" onclick="loginGoogle()">
         <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G">
-        Entrar com Google
+        Continuar com Google
     </button>
 
-    <div class="divider"><span>OU USE EMAIL</span></div>
+    <div class="divider"><span>OU</span></div>
 
-    <input type="email" id="email" placeholder="seu@email.com">
-    <input type="password" id="senha" placeholder="Sua senha">
-    <button class="btn-email" onclick="loginEmail()">Entrar</button>
+    <div class="input-group">
+        <label>E-mail</label>
+        <input type="email" id="email" placeholder="seu@email.com">
+    </div>
     
-    <p class="error" id="msg-erro"></p>
-    <p style="margin-top:20px; font-size:0.9rem">Não tem conta? <a href="cadastro.html" style="color:#007bff">Cadastre-se</a></p>
+    <div class="input-group">
+        <label>Senha</label>
+        <input type="password" id="senha" placeholder="Sua senha">
+    </div>
+
+    <button class="btn-email" id="btn-entrar" onclick="loginEmail()">Entrar</button>
+    
+    <div class="error" id="msg-erro"></div>
+    
+    <div class="links">
+        Ainda não tem conta? <a href="cadastro.html">Cadastre-se</a>
+    </div>
 </div>
 
 <script>
     const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     
-    // Usem 'client' para evitar conflito de nomes
     let supabaseClient;
     try {
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        console.log("Sistema iniciado (v3)");
     } catch (e) {
         console.error("Erro fatal:", e);
-        alert("Erro ao iniciar sistema. Verifique o console.");
+        document.getElementById('msg-erro').innerText = "Erro ao carregar sistema. Recarregue a página.";
+        document.getElementById('msg-erro').style.display = 'block';
     }
 
-    // Verifica sessão
+    // Verifica sessão automaticamente
     async function verificarSessao() {
         if(!supabaseClient) return;
         const { data } = await supabaseClient.auth.getSession();
@@ -66,7 +133,6 @@
 
     // LOGIN GOOGLE
     async function loginGoogle() {
-        console.log("Clicou no Google");
         try {
             const siteUrl = window.location.origin; 
             const { data, error } = await supabaseClient.auth.signInWithOAuth({
@@ -81,20 +147,31 @@
 
     // LOGIN EMAIL
     async function loginEmail() {
-        console.log("Clicou no Email");
         const email = document.getElementById('email').value;
         const password = document.getElementById('senha').value;
         const msg = document.getElementById('msg-erro');
+        const btn = document.getElementById('btn-entrar');
         
-        if(!email || !password) return alert("Preencha tudo");
+        msg.style.display = 'none';
+
+        if(!email || !password) {
+            msg.innerText = "⚠️ Preencha e-mail e senha.";
+            msg.style.display = 'block';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Entrando...";
 
         try {
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) throw error;
             window.location.href = 'index.html';
         } catch (error) {
+            msg.innerText = "❌ " + (error.message === "Invalid login credentials" ? "E-mail ou senha incorretos." : error.message);
             msg.style.display = 'block';
-            msg.innerText = "Erro: " + error.message;
+            btn.disabled = false;
+            btn.innerText = "Entrar";
         }
     }
 </script>
