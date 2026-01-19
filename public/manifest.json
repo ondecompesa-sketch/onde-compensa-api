@@ -1,16 +1,37 @@
 {
   "name": "OndeCompensa",
   "short_name": "OndeCompensa",
-  "start_url": "./",
+  "description": "O seu assistente de compras inteligente. Compare preços, escaneie notas fiscais e economize no mercado com ajuda da IA.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#f0f2f5",
-  "theme_color": "#007bff",
-  "orientation": "portrait",
+  "theme_color": "#2e7d32",
+  "orientation": "portrait-primary",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["shopping", "finance", "productivity"],
   "icons": [
     {
       "src": "icon.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot-mobile.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "screenshot-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
     }
   ]
 }
