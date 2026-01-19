@@ -457,18 +457,13 @@
         });
     }
 
-    // --- FUNÇÃO DE DELETAR CORRIGIDA (DIAGNÓSTICO COMPLETO) ---
+    // --- FUNÇÃO DE DELETAR (RLS CORRIGIDO) ---
     async function deletarNota(id) {
-        console.log("Tentando apagar ID:", id); // Log para debug
-
-        if(!id || id === 'undefined') {
-            return alert("Erro: ID da nota inválido. Recarregue a página.");
-        }
-
+        if(!id || id === 'undefined') return alert("Erro: ID da nota inválido.");
         if(!confirm('Tem certeza que deseja EXCLUIR esta nota permanentemente?')) return;
 
-        // 1. Apagar Itens Primeiro (com verificação)
-        const { error: erroItens, count: qtdItens } = await clienteSupabase
+        // 1. Apagar Itens Primeiro
+        const { error: erroItens } = await clienteSupabase
             .from('receipt_items')
             .delete({ count: 'exact' })
             .eq('receipt_id', id);
@@ -478,7 +473,7 @@
             return alert("Erro ao apagar itens: " + erroItens.message);
         }
 
-        // 2. Apagar a Nota (com verificação)
+        // 2. Apagar a Nota
         const { error: erroNota, count: qtdNota } = await clienteSupabase
             .from('receipts')
             .delete({ count: 'exact' })
@@ -489,21 +484,19 @@
             return alert("Erro ao apagar nota: " + erroNota.message);
         }
 
-        // 3. Verificação de Sucesso Real
         if (qtdNota === 0) {
-            // Se chegou aqui, o comando rodou sem erro, mas não apagou nada.
-            // 99% de chance de ser permissão RLS bloqueando.
-            alert("O sistema tentou apagar, mas o banco de dados disse que 'Nenhuma nota foi afetada'.\n\nIsso geralmente é problema de Permissão (RLS) no Supabase.");
+            alert("Erro: O sistema não conseguiu apagar a nota. Verifique se você é o dono dela.");
         } else {
-            alert(`Sucesso! Nota apagada.`);
-            carregar(); // Atualiza a tela
+            alert("Nota apagada com sucesso!");
+            carregar();
         }
     }
 
-    // --- TOUR LOGIC ---
+    // --- TOUR LOGIC (Com Calculadora!) ---
     const passosTour = [
         { id: 'btn-ler-nota', titulo: '🧾 Ler Nota Fiscal', texto: 'Aponte a câmera para a nota fiscal e o sistema cadastra tudo automaticamente.' },
         { id: 'btn-lista-card', titulo: '📝 Minha Lista', texto: 'Monte sua lista antes de sair de casa.' },
+        { id: 'btn-calc-card', titulo: '🧮 Calculadora', texto: 'Some os itens do carrinho e controle sua meta de gastos em tempo real.' },
         { id: 'stats-area', titulo: '📊 Seus Gastos', texto: 'Acompanhe aqui quanto você já gastou no mês.' },
         { id: 'search-area', titulo: '🔍 Busca Inteligente', texto: 'Pesquise produtos e veja preços da comunidade.' },
         { id: 'fab-nova', titulo: '📷 Atalho Rápido', texto: 'Use este botão para escanear notas rapidamente.' }
@@ -511,7 +504,7 @@
     let passoAtual = 0;
 
     function verificarTour() {
-        if (!localStorage.getItem('tourVistoFullV6')) {
+        if (!localStorage.getItem('tourVistoFullV7')) { // Mudei a versão para V7 para forçar aparecer de novo
             setTimeout(() => mostrarPasso(0), 1000);
         }
     }
@@ -551,7 +544,7 @@
     function encerrarTour() {
         document.getElementById('tour-ring').style.display = 'none';
         document.getElementById('tour-box').style.display = 'none';
-        localStorage.setItem('tourVistoFullV6', 'true');
+        localStorage.setItem('tourVistoFullV7', 'true');
     }
 
     // --- Modais e Ações ---
