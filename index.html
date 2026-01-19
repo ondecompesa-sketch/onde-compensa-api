@@ -526,8 +526,34 @@
     }
     
     function fecharModal(e) { if(!e || e.target.className.includes('modal') || e.target.tagName==='BUTTON') document.getElementById('modalDetalhes').style.display='none'; }
-    async function deletarNota(id) { if(confirm('Apagar nota?')) { await clienteSupabase.from('receipts').delete().eq('id', id); carregar(); } }
-    async function sair() { await clienteSupabase.auth.signOut(); window.location.href = 'login.html'; }
+async function deletarNota(id) { 
+        if(!confirm('Tem certeza que deseja apagar esta nota e todos os itens dela?')) return;
+
+        // 1. Apaga os itens primeiro (para evitar erro de chave estrangeira)
+        const { error: erroItens } = await clienteSupabase
+            .from('receipt_items')
+            .delete()
+            .eq('receipt_id', id);
+
+        if (erroItens) {
+            alert("Erro ao apagar itens: " + erroItens.message);
+            return;
+        }
+
+        // 2. Apaga a nota (recibo)
+        const { error: erroNota } = await clienteSupabase
+            .from('receipts')
+            .delete()
+            .eq('id', id);
+
+        if (erroNota) {
+            alert("Erro ao apagar nota: " + erroNota.message);
+        } else {
+            // 3. Sucesso! Recarrega a tela
+            alert("Nota apagada com sucesso!");
+            carregar();
+        }
+    }    async function sair() { await clienteSupabase.auth.signOut(); window.location.href = 'login.html'; }
 
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
     iniciar();
