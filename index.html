@@ -27,23 +27,33 @@
         .user-location { font-size: 0.75rem; color: #007bff; background: #e3f2fd; padding: 2px 8px; border-radius: 10px; margin-top: 2px; display: inline-block; width: fit-content; border: 1px solid #b3e5fc; }
         .btn-menu { background: none; border: none; font-size: 1.5rem; color: #333; cursor: pointer; padding: 0 5px; }
 
-        /* MENU PRINCIPAL (GRID 2x2) */
+        /* MENU PRINCIPAL (NOVO LAYOUT 3 ITENS) */
         .main-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 25px; }
+        
         .menu-card { 
             background: white; padding: 20px 15px; border-radius: 18px; text-align: center; 
             text-decoration: none; color: #333; box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; 
-            transition: transform 0.1s, box-shadow 0.1s; height: 130px;
+            transition: transform 0.1s, box-shadow 0.1s; height: 130px; position: relative;
         }
         .menu-card:active { transform: scale(0.96); }
         .menu-icon { font-size: 2.2rem; margin-bottom: 5px; }
         .menu-label { font-weight: 700; font-size: 0.95rem; line-height: 1.2; }
         
-        /* Cores específicas para diferenciar as funções */
-        .card-nota { border-bottom: 4px solid #007bff; }   /* Azul para Leitura de Nota (Consumidor) */
-        .card-encarte { border-bottom: 4px solid #2e7d32; } /* Verde para Encarte (Abastecimento) */
-        .card-lista { border-bottom: 4px solid #fbc02d; }   /* Amarelo para Lista */
-        .card-calc { border-bottom: 4px solid #ef5350; }    /* Vermelho para Calculadora */
+        /* DESTAQUE PARA LER NOTA (Ocupa 2 colunas) */
+        .card-nota { 
+            grid-column: span 2; /* Ocupa a largura toda */
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white !important;
+            height: 100px; /* Um pouco mais compacto na altura */
+            flex-direction: row; /* Ícone ao lado do texto */
+            gap: 20px;
+        }
+        .card-nota .menu-icon { margin-bottom: 0; font-size: 2.5rem; }
+        .card-nota .menu-label { font-size: 1.2rem; text-align: left; }
+
+        .card-lista { border-bottom: 4px solid #fbc02d; }
+        .card-calc { border-bottom: 4px solid #ef5350; }
 
         /* DASHBOARD */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -63,27 +73,8 @@
         .search-input { flex: 1; padding: 12px; border: 1px solid #eee; border-radius: 10px; font-size: 1rem; outline: none; }
         .filter-select { padding: 10px; border: 1px solid #eee; border-radius: 10px; background: white; font-weight: bold; color: #555; outline: none; }
 
-        /* LISTA E FAB */
+        /* LISTA RECIBOS */
         .receipt-list { margin-top: 25px; display: flex; flex-direction: column; gap: 15px; }
-        .fab-container { position: fixed; bottom: 25px; right: 25px; z-index: 90; }
-        .fab-main { background: #2e7d32; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 20px rgba(46, 125, 50, 0.4); text-decoration: none; }
-
-        /* RESULTADOS DE BUSCA */
-        #area-busca { margin-top:10px; display:none; flex-direction:column; gap:10px; }
-        .rank-card { background: white; padding: 15px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid transparent; animation: fadeIn 0.3s; position: relative; }
-        .rank-1 { border-left-color: #ffd700; background: linear-gradient(to right, #fffae6, #fff); }
-        
-        /* Classes auxiliares */
-        .rank-content { flex: 1; display: flex; align-items: center; cursor: pointer; } 
-        .rank-badge { font-size: 1.5rem; margin-right: 10px; }
-        .rank-info h3 { margin: 0; font-size: 1rem; color: #333; }
-        .rank-info p { margin: 2px 0 0 0; font-size: 0.8rem; color: #666; }
-        .location-tag { font-size: 0.7rem; background: #e3f2fd; color: #007bff; padding: 2px 6px; border-radius: 4px; margin-left: 5px; display: inline-block; }
-        .rank-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
-        .price-big { font-size: 1.1rem; font-weight: 800; color: #2e7d32; }
-        .btn-to-calc { background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; gap: 5px; cursor: pointer; }
-
-        /* RECIBOS */
         .receipt-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); position: relative; overflow: hidden; }
         .receipt-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: #007bff; }
         .card-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
@@ -95,6 +86,23 @@
         .btn-action { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
         .btn-view { background: #e3f2fd; color: #1565c0; }
         .btn-del { background: #ffebee; color: #c62828; flex: 0 0 50px; }
+
+        /* RESULTADOS BUSCA */
+        #area-busca { margin-top:10px; display:none; flex-direction:column; gap:10px; }
+        .rank-card { background: white; padding: 15px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid transparent; animation: fadeIn 0.3s; position: relative; }
+        .rank-1 { border-left-color: #ffd700; background: linear-gradient(to right, #fffae6, #fff); }
+        .rank-content { flex: 1; display: flex; align-items: center; cursor: pointer; } 
+        .rank-badge { font-size: 1.5rem; margin-right: 10px; }
+        .rank-info h3 { margin: 0; font-size: 1rem; color: #333; }
+        .rank-info p { margin: 2px 0 0 0; font-size: 0.8rem; color: #666; }
+        .location-tag { font-size: 0.7rem; background: #e3f2fd; color: #007bff; padding: 2px 6px; border-radius: 4px; margin-left: 5px; display: inline-block; }
+        .rank-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+        .price-big { font-size: 1.1rem; font-weight: 800; color: #2e7d32; }
+        .btn-to-calc { background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+
+        /* FAB */
+        .fab-container { position: fixed; bottom: 25px; right: 25px; z-index: 90; }
+        .fab-main { background: #2e7d32; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 20px rgba(46, 125, 50, 0.4); text-decoration: none; }
 
         /* MODAL */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-end; }
@@ -133,17 +141,12 @@
     <div class="main-menu">
         <a href="nova-nota.html" class="menu-card card-nota" id="btn-ler-nota">
             <span class="menu-icon">🧾</span>
-            <span class="menu-label">Ler Nota<br>Fiscal</span>
+            <span class="menu-label">Ler Nota Fiscal<br><small style="font-size:0.8rem; opacity:0.8; font-weight:400">Clique para escanear</small></span>
         </a>
 
         <a href="lista.html" class="menu-card card-lista" id="btn-lista-card">
             <span class="menu-icon">📝</span>
             <span class="menu-label">Minha<br>Lista</span>
-        </a>
-
-        <a href="importar.html" class="menu-card card-encarte" id="btn-importar">
-            <span class="menu-icon">📸</span>
-            <span class="menu-label">Ler Encarte<br>(IA)</span>
         </a>
 
         <a href="calculadora.html" class="menu-card card-calc" id="btn-calc-card">
@@ -186,7 +189,7 @@
 </div>
 
 <div class="fab-container">
-    <a href="nova-nota.html" class="fab-main" id="fab-nova" title="Lançar Manualmente">＋</a>
+    <a href="nova-nota.html" class="fab-main" id="fab-nova" title="Ler Nota">📷</a>
 </div>
 
 <div id="modalDetalhes" class="modal-overlay" onclick="fecharModal(event)">
@@ -241,7 +244,6 @@
         atualizarDisplayCidade();
         carregar();
         
-        // Inicia o Tour
         verificarTour();
     }
 
@@ -304,7 +306,6 @@
 
         if (error) return console.error(error);
         
-        // Aplica Filtros
         let resultados = data || [];
         
         if (modoBusca === 'me') {
@@ -456,19 +457,18 @@
         });
     }
 
-    // --- TOUR LOGIC ---
+    // --- TOUR LOGIC (Atualizado sem IA) ---
     const passosTour = [
-        { id: 'btn-ler-nota', titulo: '🧾 Ler Nota Fiscal', texto: 'Aponte a câmera para o QR Code da nota e lance seus gastos automaticamente!' },
-        { id: 'btn-importar', titulo: '📸 Ler Encarte (IA)', texto: 'Função nova! Envie a foto do folheto do mercado e nossa IA extrai as ofertas.' },
+        { id: 'btn-ler-nota', titulo: '🧾 Ler Nota Fiscal', texto: 'Aponte a câmera para a nota fiscal e o sistema cadastra tudo automaticamente.' },
         { id: 'btn-lista-card', titulo: '📝 Minha Lista', texto: 'Monte sua lista antes de sair de casa.' },
         { id: 'stats-area', titulo: '📊 Seus Gastos', texto: 'Acompanhe aqui quanto você já gastou no mês.' },
         { id: 'search-area', titulo: '🔍 Busca Inteligente', texto: 'Pesquise produtos e veja preços da comunidade.' },
-        { id: 'fab-nova', titulo: '＋ Nova Nota', texto: 'Comprou algo sem nota fiscal? Lance aqui manualmente.' }
+        { id: 'fab-nova', titulo: '📷 Atalho Rápido', texto: 'Use este botão para escanear notas rapidamente.' }
     ];
     let passoAtual = 0;
 
     function verificarTour() {
-        if (!localStorage.getItem('tourVistoFullV4')) {
+        if (!localStorage.getItem('tourVistoFullV5')) {
             setTimeout(() => mostrarPasso(0), 1000);
         }
     }
@@ -508,7 +508,7 @@
     function encerrarTour() {
         document.getElementById('tour-ring').style.display = 'none';
         document.getElementById('tour-box').style.display = 'none';
-        localStorage.setItem('tourVistoFullV4', 'true');
+        localStorage.setItem('tourVistoFullV5', 'true');
     }
 
     // --- Modais e Ações ---
