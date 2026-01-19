@@ -1,22 +1,23 @@
-const CACHE_NAME = 'ondecompensa-v2'; // Mudei para v2 para forçar atualização
+const CACHE_NAME = 'ondecompensa-v3'; // Mudamos para v3 para forçar atualização
 const urlsToCache = [
   './',
   './index.html',
+  './lista.html',         // <--- O item novo!
   './login.html',
-  './lista.html',
   './nova-nota.html',
   './perfil.html',
-  './oferta.html',        // Novo
-  './importar.html',      // Novo
-  './calculadora.html',   // Novo
+  './oferta.html',
+  './importar.html',
+  './calculadora.html',
   './icon.png',
   './manifest.json',
+  // Bibliotecas externas essenciais
   'https://cdn.jsdelivr.net/npm/chart.js',
   'https://unpkg.com/@supabase/supabase-js@2'
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting(); // Força a atualização imediata
+  self.skipWaiting(); // Força o app a atualizar na hora
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
@@ -29,7 +30,7 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cache => {
           if (cache !== CACHE_NAME) {
-            return caches.delete(cache); // Limpa o cache antigo (v1)
+            return caches.delete(cache); // Apaga a versão velha
           }
         })
       );
