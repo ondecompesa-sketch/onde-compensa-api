@@ -567,7 +567,7 @@
         });
     }
 
-    // --- FUNÇÃO DE HISTÓRICO DO PRODUTO (VOLTOU!) ---
+    // --- FUNÇÃO DE HISTÓRICO DO PRODUTO ---
     function abrirRelatorioProduto(nomeProduto) {
         const historico = [];
         
@@ -651,7 +651,7 @@
     function fecharModal(e) { if(!e || e.target.className.includes('modal') || e.target.tagName==='BUTTON') document.getElementById('modalDetalhes').style.display='none'; }
     async function sair() { await clienteSupabase.auth.signOut(); window.location.href = 'login.html'; }
 
-    // TOUR
+    // TOUR - ATUALIZADO (V12)
     const passosTour = [
         { 
             id: 'btn-ler-nota', 
@@ -675,20 +675,20 @@
         },
         { 
             id: 'search-area', 
-            titulo: '🌍 Preços da Comunidade', 
-            texto: 'O coração do app! Pesquise um produto (ex: "Leite") e veja quanto outras pessoas da sua cidade estão pagando. O propósito é sabermos juntos onde é mais barato comprar.' 
+            titulo: '🔍 Busca e Filtros', 
+            texto: 'Aqui é a central de busca! Alterne entre "Minhas Notas" (seu histórico), "Comunidade" (preços da cidade) ou "Ofertas". Use o filtro de data 📅 para ver gastos de meses passados.' 
         }
     ];
 
     let passoAtual = 0;
-    // Função para iniciar tour manual pelo botão ?
+    
     function iniciarTourManual() {
-        localStorage.removeItem('tourVistoFullV11'); // Reseta a chave
+        localStorage.removeItem('tourVistoFullV12'); 
         passoAtual = 0;
         mostrarPasso(0);
     }
 
-    function verificarTour() { if (!localStorage.getItem('tourVistoFullV11')) setTimeout(() => mostrarPasso(0), 1000); }
+    function verificarTour() { if (!localStorage.getItem('tourVistoFullV12')) setTimeout(() => mostrarPasso(0), 1000); }
     
     function mostrarPasso(index) {
         if (index >= passosTour.length) { encerrarTour(); return; }
@@ -706,7 +706,7 @@
         passoAtual = index;
     }
     function proximoPasso() { passoAtual++; mostrarPasso(passoAtual); }
-    function encerrarTour() { document.getElementById('tour-ring').style.display = 'none'; document.getElementById('tour-box').style.display = 'none'; localStorage.setItem('tourVistoFullV11', 'true'); }
+    function encerrarTour() { document.getElementById('tour-ring').style.display = 'none'; document.getElementById('tour-box').style.display = 'none'; localStorage.setItem('tourVistoFullV12', 'true'); }
 
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
     iniciar();
