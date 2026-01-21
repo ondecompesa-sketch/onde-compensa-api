@@ -25,7 +25,10 @@
         .greeting { font-size: 0.8rem; color: #888; }
         .user-name { font-size: 1rem; font-weight: 700; color: #333; }
         .user-location { font-size: 0.75rem; color: #007bff; background: #e3f2fd; padding: 2px 8px; border-radius: 10px; margin-top: 2px; display: inline-block; width: fit-content; border: 1px solid #b3e5fc; }
-        .btn-menu { background: none; border: none; font-size: 1.5rem; color: #333; cursor: pointer; padding: 0 5px; }
+        /* Botões do Topo */
+        .header-actions { display: flex; gap: 15px; align-items: center; }
+        .btn-menu { background: none; border: none; font-size: 1.5rem; color: #333; cursor: pointer; padding: 0; }
+        .btn-help { font-size: 1.2rem; background: #e8f5e9; color: #2e7d32; width: 35px; height: 35px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
 
         /* MENU PRINCIPAL */
         .main-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; margin-bottom: 25px; }
@@ -105,7 +108,7 @@
 
         /* TOUR */
         .highlight-ring { position: fixed; border: 4px solid #2e7d32; border-radius: 50%; box-shadow: 0 0 0 9999px rgba(0,0,0,0.7); pointer-events: none; z-index: 998; display: none; transition: all 0.3s; }
-        .tour-box { position: fixed; background: white; padding: 20px; border-radius: 16px; width: 280px; box-shadow: 0 5px 25px rgba(0,0,0,0.3); z-index: 1000; display: none; }
+        .tour-box { position: fixed; background: white; padding: 20px; border-radius: 16px; width: 280px; box-shadow: 0 5px 25px rgba(0,0,0,0.3); z-index: 2100; display: none; }
         .tour-box h3 { margin: 0 0 10px 0; color: #2e7d32; font-size: 1.1rem; }
         .tour-box p { margin: 0 0 20px 0; color: #555; line-height: 1.5; font-size: 0.95rem; }
         .tour-actions { display: flex; justify-content: flex-end; gap: 10px; }
@@ -125,7 +128,8 @@
         </div>
     </div>
     <div class="header-actions">
-        <button class="btn-menu" onclick="sair()">🚪</button>
+        <button class="btn-help" onclick="iniciarTourManual()" title="Ajuda / Tutorial">❓</button>
+        <button class="btn-menu" onclick="sair()" title="Sair">🚪</button>
     </div>
 </div>
 
@@ -200,7 +204,7 @@
     </div>
 
     <div style="padding: 20px; color:#666; font-size:0.9rem; text-align:center;">
-        <p>Estes dados refletem o período selecionado no filtro principal (Mês/Ano).</p>
+        <p id="msg-grafico">Selecione uma opção acima para visualizar.</p>
     </div>
 </div>
 
@@ -479,7 +483,7 @@
         document.getElementById('top-categoria').innerText = topC;
     }
 
-    // --- FUNÇÕES DE RELATÓRIO (MODAL) ---
+    // --- FUNÇÕES DE RELATÓRIO (MODAL E GRÁFICOS) ---
     function abrirRelatorios() {
         document.getElementById('modalRelatorios').style.display = 'flex';
         // Simula clique na primeira aba para carregar
@@ -495,26 +499,33 @@
         if (chartInstance) chartInstance.destroy();
 
         if (tipo === 'mercados') {
+            document.getElementById('msg-grafico').innerText = "Veja em quais estabelecimentos você mais gasta.";
             gerarGraficoBarra(ctx, statsMercados, 'Gasto por Mercado (R$)');
         } else if (tipo === 'categorias') {
+            document.getElementById('msg-grafico').innerText = "Distribuição dos seus gastos por setor.";
             gerarGraficoRosca(ctx, statsCategorias);
         } else if (tipo === 'produtos') {
+            document.getElementById('msg-grafico').innerText = "Toque na barra de um produto para ver seu histórico de preços.";
             // Pegar top 10 produtos
             const topProdutos = Object.fromEntries(
                 Object.entries(statsProdutos).sort(([,a],[,b]) => b-a).slice(0, 10)
             );
-            gerarGraficoBarra(ctx, topProdutos, 'Top 10 Produtos (R$)');
+            // ATENÇÃO: Aqui passamos true para ativar o clique
+            gerarGraficoBarra(ctx, topProdutos, 'Top 10 Produtos (R$)', true);
         }
     }
 
-    function gerarGraficoBarra(ctx, dados, label) {
+    function gerarGraficoBarra(ctx, dados, label, interativo = false) {
+        const labels = Object.keys(dados);
+        const values = Object.values(dados);
+
         chartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: Object.keys(dados),
+                labels: labels,
                 datasets: [{
                     label: label,
-                    data: Object.values(dados),
+                    data: values,
                     backgroundColor: '#007bff',
                     borderRadius: 5
                 }]
@@ -523,7 +534,15 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: { y: { beginAtZero: true } },
-                plugins: { legend: { display: false } }
+                plugins: { legend: { display: false } },
+                // SÓ ATIVA O CLIQUE SE FOR O GRÁFICO DE PRODUTOS
+                onClick: interativo ? (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const nomeProduto = labels[index];
+                        abrirRelatorioProduto(nomeProduto);
+                    }
+                } : null
             }
         });
     }
@@ -546,6 +565,54 @@
                 plugins: { legend: { position: 'bottom' } }
             }
         });
+    }
+
+    // --- FUNÇÃO DE HISTÓRICO DO PRODUTO (VOLTOU!) ---
+    function abrirRelatorioProduto(nomeProduto) {
+        const historico = [];
+        
+        // Varrer todas as notas para achar esse produto
+        todasAsCompras.forEach(nota => {
+            nota.receipt_items.forEach(item => {
+                if (item.raw_name.trim().toUpperCase() === nomeProduto) {
+                    historico.push({
+                        data: new Date(nota.issue_date),
+                        loja: nota.store?.name || 'Loja',
+                        preco: parseFloat(item.unit_price)
+                    });
+                }
+            });
+        });
+
+        // Ordenar por data (mais recente primeiro)
+        historico.sort((a, b) => b.data - a.data);
+
+        // Preencher o Modal com um layout específico para histórico
+        document.getElementById('modal-titulo').innerText = nomeProduto;
+        document.getElementById('footer-modal-nota').style.display = 'none'; // Esconde total da nota pois é histórico
+        
+        let html = `<div style="margin-bottom:15px; font-size:0.9rem; color:#666;">Histórico de Preços</div>`;
+        
+        if (historico.length === 0) {
+            html += `<div>Sem histórico.</div>`;
+        } else {
+            historico.forEach(h => {
+                const dataFmt = h.data.toLocaleDateString('pt-BR');
+                const precoFmt = h.preco.toLocaleString('pt-BR', {style:'currency',currency:'BRL'});
+                
+                html += `
+                    <div class="item-row" style="align-items: center;">
+                        <div style="flex:1">
+                            <div style="font-weight:600; color:#333;">${h.loja}</div>
+                            <div style="font-size:0.8rem; color:#999;">${dataFmt}</div>
+                        </div>
+                        <div style="font-weight:700; color:#2e7d32; font-size:1.1rem;">${precoFmt}</div>
+                    </div>`;
+            });
+        }
+
+        document.getElementById('lista-itens-modal').innerHTML = html;
+        document.getElementById('modalDetalhes').style.display = 'flex';
     }
 
     // --- FUNÇÕES GERAIS ---
@@ -584,7 +651,7 @@
     function fecharModal(e) { if(!e || e.target.className.includes('modal') || e.target.tagName==='BUTTON') document.getElementById('modalDetalhes').style.display='none'; }
     async function sair() { await clienteSupabase.auth.signOut(); window.location.href = 'login.html'; }
 
-    // TOUR - NOVOS TEXTOS COM FOCO EM PROPÓSITO E COMUNIDADE
+    // TOUR
     const passosTour = [
         { 
             id: 'btn-ler-nota', 
@@ -614,8 +681,14 @@
     ];
 
     let passoAtual = 0;
-    // Mudei a chave do localStorage para V10 para forçar o tour a aparecer de novo para você testar
-    function verificarTour() { if (!localStorage.getItem('tourVistoFullV10')) setTimeout(() => mostrarPasso(0), 1000); }
+    // Função para iniciar tour manual pelo botão ?
+    function iniciarTourManual() {
+        localStorage.removeItem('tourVistoFullV11'); // Reseta a chave
+        passoAtual = 0;
+        mostrarPasso(0);
+    }
+
+    function verificarTour() { if (!localStorage.getItem('tourVistoFullV11')) setTimeout(() => mostrarPasso(0), 1000); }
     
     function mostrarPasso(index) {
         if (index >= passosTour.length) { encerrarTour(); return; }
@@ -633,7 +706,7 @@
         passoAtual = index;
     }
     function proximoPasso() { passoAtual++; mostrarPasso(passoAtual); }
-    function encerrarTour() { document.getElementById('tour-ring').style.display = 'none'; document.getElementById('tour-box').style.display = 'none'; localStorage.setItem('tourVistoFullV10', 'true'); }
+    function encerrarTour() { document.getElementById('tour-ring').style.display = 'none'; document.getElementById('tour-box').style.display = 'none'; localStorage.setItem('tourVistoFullV11', 'true'); }
 
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
     iniciar();
