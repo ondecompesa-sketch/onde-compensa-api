@@ -40,13 +40,12 @@
         .menu-icon { font-size: 2.2rem; margin-bottom: 5px; }
         .menu-label { font-weight: 700; font-size: 0.95rem; line-height: 1.2; }
         
-        /* DESTAQUE PARA LER NOTA (Ocupa 2 colunas) */
         .card-nota { 
-            grid-column: span 2; /* Ocupa a largura toda */
+            grid-column: span 2; 
             background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
             color: white !important;
-            height: 100px; /* Um pouco mais compacto na altura */
-            flex-direction: row; /* Ícone ao lado do texto */
+            height: 100px; 
+            flex-direction: row; 
             gap: 20px;
         }
         .card-nota .menu-icon { margin-bottom: 0; font-size: 2.5rem; }
@@ -60,8 +59,10 @@
         .stat-card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); text-align: center; }
         .stat-val { font-size: 1.2rem; font-weight: 800; color: #2e7d32; display: block; margin-top: 5px; }
         .stat-lbl { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
-        .chart-container { background: white; margin-top: 15px; padding: 20px; border-radius: 16px; height: 220px; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         
+        .chart-container { background: white; margin-top: 15px; padding: 20px; border-radius: 16px; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .chart-title { font-size: 0.9rem; font-weight: 700; color: #555; margin-bottom: 10px; display: block; }
+
         /* BUSCA */
         .search-wrapper { margin-top: 20px; background: white; border-radius: 16px; padding: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 10px; }
         .search-tabs { display: flex; background: #f0f2f5; border-radius: 12px; padding: 4px; gap: 4px; }
@@ -143,12 +144,10 @@
             <span class="menu-icon">🧾</span>
             <span class="menu-label">Ler Nota Fiscal<br><small style="font-size:0.8rem; opacity:0.8; font-weight:400">Clique para escanear</small></span>
         </a>
-
         <a href="lista.html" class="menu-card card-lista" id="btn-lista-card">
             <span class="menu-icon">📝</span>
             <span class="menu-label">Minha<br>Lista</span>
         </a>
-
         <a href="calculadora.html" class="menu-card card-calc" id="btn-calc-card">
             <span class="menu-icon">🧮</span>
             <span class="menu-label">Calc.<br>Mercado</span>
@@ -166,8 +165,14 @@
         </div>
     </div>
 
-    <div class="chart-container">
+    <div class="chart-container" style="height: 250px;">
+        <span class="chart-title">Gastos por Categoria</span>
         <canvas id="meuGrafico"></canvas>
+    </div>
+
+    <div class="chart-container" style="height: 300px;">
+        <span class="chart-title">Top 5 Produtos Mais Caros (Toque para Detalhes)</span>
+        <canvas id="graficoProdutos"></canvas>
     </div>
 
     <div class="search-wrapper" id="search-area">
@@ -195,11 +200,11 @@
 <div id="modalDetalhes" class="modal-overlay" onclick="fecharModal(event)">
     <div class="modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 style="margin:0; font-size:1.4rem; color:#333;" id="modal-titulo">Detalhes</h2>
+            <h2 style="margin:0; font-size:1.3rem; color:#333;" id="modal-titulo">Detalhes</h2>
             <button onclick="fecharModal(null)" style="background:#f0f2f5; border:none; width:35px; height:35px; border-radius:50%; font-weight:bold; cursor:pointer;">✕</button>
         </div>
         <div id="lista-itens-modal"></div>
-        <div style="margin-top:25px; padding-top:15px; border-top:2px dashed #eee; display:flex; justify-content:space-between; align-items:center;">
+        <div style="margin-top:25px; padding-top:15px; border-top:2px dashed #eee; display:flex; justify-content:space-between; align-items:center; display:none;" id="footer-modal-nota">
             <span style="color:#666;">Total da Nota</span>
             <span style="font-size:1.6rem; font-weight:800; color:#2e7d32;" id="modal-total"></span>
         </div>
@@ -225,6 +230,7 @@
     let todasAsCompras = [];
     let resultadosBusca = []; 
     let chartInstance = null;
+    let chartProdutosInstance = null; // Variável para o novo gráfico
     let userId = null;
     let modoBusca = 'me';
     let minhaCidade = localStorage.getItem('minhaCidade') || '';
@@ -243,7 +249,6 @@
 
         atualizarDisplayCidade();
         carregar();
-        
         verificarTour();
     }
 
@@ -268,7 +273,7 @@
             
             const { data, error } = await clienteSupabase
                 .from('receipts')
-                .select(`id, total_amount, issue_date, image_url, store:stores ( name ), receipt_items ( id, total_price, raw_name, quantity, unit_measure, product:products ( category ) )`)
+                .select(`id, total_amount, issue_date, image_url, store:stores ( name ), receipt_items ( id, total_price, unit_price, raw_name, quantity, unit_measure, product:products ( category ) )`)
                 .eq('user_id', userId)
                 .gt('total_amount', 0) 
                 .order('issue_date', { ascending: false });
@@ -431,20 +436,33 @@
     }
 
     function calcularEstatisticas(dados) {
-        let cats = {}; let total = 0;
+        let cats = {}; 
+        let total = 0;
+        let produtosMap = {}; // Armazena total por produto
+
         dados.forEach(n => {
             total += parseFloat(n.total_amount);
             n.receipt_items.forEach(i => {
+                // Estatísticas de Categoria
                 let c = i.product?.category || 'Outros';
                 if (!cats[c]) cats[c] = 0;
                 cats[c] += parseFloat(i.total_price);
+
+                // Estatísticas de Produtos
+                let nomeProd = i.raw_name.trim().toUpperCase();
+                if (!produtosMap[nomeProd]) produtosMap[nomeProd] = 0;
+                produtosMap[nomeProd] += parseFloat(i.total_price);
             });
         });
+
         document.getElementById('total-geral').innerText = total.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+        
         let topC = '-', max = 0;
         for (const [c, v] of Object.entries(cats)) { if (v > max) { max = v; topC = c; } }
         document.getElementById('top-categoria').innerText = topC;
+        
         atualizarGrafico(cats);
+        atualizarGraficoProdutos(produtosMap); // Novo gráfico
     }
 
     function atualizarGrafico(cats) {
@@ -457,102 +475,124 @@
         });
     }
 
-    // --- FUNÇÃO DE DELETAR (RLS CORRIGIDO) ---
+    // --- NOVO GRÁFICO: TOP PRODUTOS ---
+    function atualizarGraficoProdutos(produtosMap) {
+        // Converte para array, ordena e pega top 5
+        const sortedProds = Object.entries(produtosMap)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+
+        const labels = sortedProds.map(p => p[0]);
+        const data = sortedProds.map(p => p[1]);
+
+        const ctx = document.getElementById('graficoProdutos').getContext('2d');
+        if (chartProdutosInstance) chartProdutosInstance.destroy();
+
+        chartProdutosInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Gasto (R$)',
+                    data: data,
+                    backgroundColor: '#007bff',
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { font: { size: 10 }, autoSkip: false, maxRotation: 45, minRotation: 45 } },
+                    y: { beginAtZero: true }
+                },
+                // --- AQUI ACONTECE A MÁGICA DO CLIQUE ---
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const nomeProduto = labels[index];
+                        abrirRelatorioProduto(nomeProduto);
+                    }
+                }
+            }
+        });
+    }
+
+    // --- RELATÓRIO DO PRODUTO (MODAL) ---
+    function abrirRelatorioProduto(nomeProduto) {
+        const historico = [];
+        
+        // Varrer todas as notas para achar esse produto
+        todasAsCompras.forEach(nota => {
+            nota.receipt_items.forEach(item => {
+                if (item.raw_name.trim().toUpperCase() === nomeProduto) {
+                    historico.push({
+                        data: new Date(nota.issue_date),
+                        loja: nota.store?.name || 'Loja',
+                        preco: parseFloat(item.unit_price)
+                    });
+                }
+            });
+        });
+
+        // Ordenar por data (mais recente primeiro)
+        historico.sort((a, b) => b.data - a.data);
+
+        // Preencher o Modal
+        document.getElementById('modal-titulo').innerText = nomeProduto;
+        document.getElementById('modal-total').parentElement.style.display = 'none'; // Esconde total geral
+        
+        let html = `<div style="margin-bottom:15px; font-size:0.9rem; color:#666;">Histórico de Preços</div>`;
+        
+        if (historico.length === 0) {
+            html += `<div>Sem histórico.</div>`;
+        } else {
+            historico.forEach(h => {
+                const dataFmt = h.data.toLocaleDateString('pt-BR');
+                const precoFmt = h.preco.toLocaleString('pt-BR', {style:'currency',currency:'BRL'});
+                
+                html += `
+                    <div class="item-row" style="align-items: center;">
+                        <div style="flex:1">
+                            <div style="font-weight:600; color:#333;">${h.loja}</div>
+                            <div style="font-size:0.8rem; color:#999;">${dataFmt}</div>
+                        </div>
+                        <div style="font-weight:700; color:#2e7d32; font-size:1.1rem;">${precoFmt}</div>
+                    </div>`;
+            });
+        }
+
+        document.getElementById('lista-itens-modal').innerHTML = html;
+        document.getElementById('modalDetalhes').style.display = 'flex';
+    }
+
+    // --- FUNÇÕES GERAIS ---
     async function deletarNota(id) {
         if(!id || id === 'undefined') return alert("Erro: ID da nota inválido.");
         if(!confirm('Tem certeza que deseja EXCLUIR esta nota permanentemente?')) return;
 
-        // 1. Apagar Itens Primeiro
         const { error: erroItens } = await clienteSupabase
-            .from('receipt_items')
-            .delete({ count: 'exact' })
-            .eq('receipt_id', id);
+            .from('receipt_items').delete({ count: 'exact' }).eq('receipt_id', id);
+        if (erroItens) return alert("Erro ao apagar itens: " + erroItens.message);
 
-        if (erroItens) {
-            console.error("Erro Itens:", erroItens);
-            return alert("Erro ao apagar itens: " + erroItens.message);
-        }
-
-        // 2. Apagar a Nota
         const { error: erroNota, count: qtdNota } = await clienteSupabase
-            .from('receipts')
-            .delete({ count: 'exact' })
-            .eq('id', id);
+            .from('receipts').delete({ count: 'exact' }).eq('id', id);
+        if (erroNota) return alert("Erro ao apagar nota: " + erroNota.message);
 
-        if (erroNota) {
-            console.error("Erro Nota:", erroNota);
-            return alert("Erro ao apagar nota: " + erroNota.message);
-        }
-
-        if (qtdNota === 0) {
-            alert("Erro: O sistema não conseguiu apagar a nota. Verifique se você é o dono dela.");
-        } else {
-            alert("Nota apagada com sucesso!");
-            carregar();
-        }
+        if (qtdNota === 0) alert("Erro: O sistema não conseguiu apagar a nota. Verifique se você é o dono dela.");
+        else { alert("Nota apagada com sucesso!"); carregar(); }
     }
 
-    // --- TOUR LOGIC (Com Calculadora!) ---
-    const passosTour = [
-        { id: 'btn-ler-nota', titulo: '🧾 Ler Nota Fiscal', texto: 'Aponte a câmera para a nota fiscal e o sistema cadastra tudo automaticamente.' },
-        { id: 'btn-lista-card', titulo: '📝 Minha Lista', texto: 'Monte sua lista antes de sair de casa.' },
-        { id: 'btn-calc-card', titulo: '🧮 Calculadora', texto: 'Some os itens do carrinho e controle sua meta de gastos em tempo real.' },
-        { id: 'stats-area', titulo: '📊 Seus Gastos', texto: 'Acompanhe aqui quanto você já gastou no mês.' },
-        { id: 'search-area', titulo: '🔍 Busca Inteligente', texto: 'Pesquise produtos e veja preços da comunidade.' },
-        { id: 'fab-nova', titulo: '📷 Atalho Rápido', texto: 'Use este botão para escanear notas rapidamente.' }
-    ];
-    let passoAtual = 0;
-
-    function verificarTour() {
-        if (!localStorage.getItem('tourVistoFullV7')) { // Mudei a versão para V7 para forçar aparecer de novo
-            setTimeout(() => mostrarPasso(0), 1000);
-        }
-    }
-
-    function mostrarPasso(index) {
-        if (index >= passosTour.length) { encerrarTour(); return; }
-        const passo = passosTour[index];
-        const el = document.getElementById(passo.id);
-        if (!el) { proximoPasso(); return; }
-
-        const rect = el.getBoundingClientRect();
-        const ring = document.getElementById('tour-ring');
-        const box = document.getElementById('tour-box');
-
-        ring.style.display = 'block';
-        ring.style.width = (rect.width + 10) + 'px';
-        ring.style.height = (rect.height + 10) + 'px';
-        ring.style.top = (rect.top - 5) + 'px';
-        ring.style.left = (rect.left - 5) + 'px';
-        ring.style.borderRadius = window.getComputedStyle(el).borderRadius;
-
-        document.getElementById('tour-title').innerText = passo.titulo;
-        document.getElementById('tour-desc').innerText = passo.texto;
-        
-        box.style.display = 'block';
-        if (rect.top > window.innerHeight / 2) {
-            box.style.bottom = (window.innerHeight - rect.top + 20) + 'px'; box.style.top = 'auto';
-        } else {
-            box.style.top = (rect.bottom + 20) + 'px'; box.style.bottom = 'auto';
-        }
-        box.style.left = '50%'; box.style.transform = 'translateX(-50%)';
-
-        passoAtual = index;
-    }
-
-    function proximoPasso() { passoAtual++; mostrarPasso(passoAtual); }
-    function encerrarTour() {
-        document.getElementById('tour-ring').style.display = 'none';
-        document.getElementById('tour-box').style.display = 'none';
-        localStorage.setItem('tourVistoFullV7', 'true');
-    }
-
-    // --- Modais e Ações ---
+    // Modal de Notas (Reutilizado)
     function abrirNotaPorId(id) {
         const nota = todasAsCompras.find(n => n.id === id);
         if(!nota) return;
         document.getElementById('modal-titulo').innerText = nota.store?.name || 'Loja';
-        document.getElementById('modal-total').innerText = parseFloat(nota.total_amount).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+        const total = parseFloat(nota.total_amount).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+        document.getElementById('modal-total').innerText = total;
+        document.getElementById('footer-modal-nota').style.display = 'flex'; // Mostra footer total
+
         let html = '';
         nota.receipt_items.forEach(i => {
              html += `<div class="item-row"><div><b>${i.raw_name}</b><br><small>${i.quantity}x • ${i.product?.category||'Geral'}</small></div><b>${parseFloat(i.total_price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</b></div>`;
@@ -563,6 +603,36 @@
     
     function fecharModal(e) { if(!e || e.target.className.includes('modal') || e.target.tagName==='BUTTON') document.getElementById('modalDetalhes').style.display='none'; }
     async function sair() { await clienteSupabase.auth.signOut(); window.location.href = 'login.html'; }
+
+    // TOUR
+    const passosTour = [
+        { id: 'btn-ler-nota', titulo: '🧾 Ler Nota Fiscal', texto: 'Aponte a câmera para a nota fiscal e o sistema cadastra tudo automaticamente.' },
+        { id: 'btn-lista-card', titulo: '📝 Minha Lista', texto: 'Monte sua lista antes de sair de casa.' },
+        { id: 'btn-calc-card', titulo: '🧮 Calculadora', texto: 'Some os itens do carrinho e controle sua meta de gastos em tempo real.' },
+        { id: 'stats-area', titulo: '📊 Seus Gastos', texto: 'Acompanhe aqui quanto você já gastou no mês.' },
+        { id: 'graficoProdutos', titulo: '📈 Análise de Preços', texto: 'Toque nas barras para ver o histórico de preços de cada produto!' },
+        { id: 'search-area', titulo: '🔍 Busca Inteligente', texto: 'Pesquise produtos e veja preços da comunidade.' },
+        { id: 'fab-nova', titulo: '📷 Atalho Rápido', texto: 'Use este botão para escanear notas rapidamente.' }
+    ];
+    let passoAtual = 0;
+    function verificarTour() { if (!localStorage.getItem('tourVistoFullV8')) setTimeout(() => mostrarPasso(0), 1000); }
+    function mostrarPasso(index) {
+        if (index >= passosTour.length) { encerrarTour(); return; }
+        const passo = passosTour[index];
+        const el = document.getElementById(passo.id);
+        if (!el) { proximoPasso(); return; }
+        const rect = el.getBoundingClientRect();
+        const ring = document.getElementById('tour-ring');
+        const box = document.getElementById('tour-box');
+        ring.style.display = 'block'; ring.style.width = (rect.width+10)+'px'; ring.style.height = (rect.height+10)+'px'; ring.style.top = (rect.top-5)+'px'; ring.style.left = (rect.left-5)+'px'; ring.style.borderRadius = window.getComputedStyle(el).borderRadius;
+        document.getElementById('tour-title').innerText = passo.titulo; document.getElementById('tour-desc').innerText = passo.texto;
+        box.style.display = 'block'; 
+        if (rect.top > window.innerHeight/2) { box.style.bottom = (window.innerHeight-rect.top+20)+'px'; box.style.top = 'auto'; } else { box.style.top = (rect.bottom+20)+'px'; box.style.bottom = 'auto'; }
+        box.style.left = '50%'; box.style.transform = 'translateX(-50%)';
+        passoAtual = index;
+    }
+    function proximoPasso() { passoAtual++; mostrarPasso(passoAtual); }
+    function encerrarTour() { document.getElementById('tour-ring').style.display = 'none'; document.getElementById('tour-box').style.display = 'none'; localStorage.setItem('tourVistoFullV8', 'true'); }
 
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
     iniciar();
