@@ -44,11 +44,11 @@
         .stat-val { font-size: 1.2rem; font-weight: 800; color: #2e7d32; display: block; margin-top: 5px; }
         .stat-lbl { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
         
-        /* BOTÃO DE RELATÓRIOS (NOVO) */
+        /* BOTÃO DE RELATÓRIOS */
         .btn-reports { width: 100%; background: white; border: 2px solid #e0e0e0; color: #555; padding: 15px; border-radius: 16px; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; margin-bottom: 20px; }
         .btn-reports:active { background: #f5f5f5; transform: scale(0.98); }
 
-        /* MODAL RELATÓRIOS (NOVO ESTILO) */
+        /* MODAL RELATÓRIOS */
         .reports-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f7fa; z-index: 2000; flex-direction: column; overflow-y: auto; }
         .reports-header { background: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 10; }
         .reports-tabs { display: flex; gap: 10px; padding: 15px 20px; overflow-x: auto; background: white; border-bottom: 1px solid #eee; }
@@ -157,7 +157,7 @@
         </div>
     </div>
 
-    <button class="btn-reports" onclick="abrirRelatorios()">
+    <button id="btn-relatorios" class="btn-reports" onclick="abrirRelatorios()">
         📊 Ver Gráficos e Análises
     </button>
 
@@ -234,14 +234,13 @@
     const clienteSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
     let todasAsCompras = [];
-    let dadosFiltradosGlobal = []; // Guarda os dados do mês atual para os gráficos
+    let dadosFiltradosGlobal = []; 
     let resultadosBusca = []; 
     let chartInstance = null;
     let userId = null;
     let modoBusca = 'me';
     let minhaCidade = localStorage.getItem('minhaCidade') || '';
     
-    // Variáveis para guardar estatísticas
     let statsCategorias = {};
     let statsMercados = {};
     let statsProdutos = {};
@@ -585,15 +584,39 @@
     function fecharModal(e) { if(!e || e.target.className.includes('modal') || e.target.tagName==='BUTTON') document.getElementById('modalDetalhes').style.display='none'; }
     async function sair() { await clienteSupabase.auth.signOut(); window.location.href = 'login.html'; }
 
-    // TOUR
+    // TOUR - NOVOS TEXTOS COM FOCO EM PROPÓSITO E COMUNIDADE
     const passosTour = [
-        { id: 'btn-ler-nota', titulo: '🧾 Ler Nota Fiscal', texto: 'Aponte a câmera para a nota fiscal e o sistema cadastra tudo automaticamente.' },
-        { id: 'btn-lista-card', titulo: '📝 Minha Lista', texto: 'Monte sua lista antes de sair de casa.' },
-        { id: 'stats-area', titulo: '📊 Seus Gastos', texto: 'Veja o resumo do mês. Para detalhes, clique no botão de Relatórios abaixo.' },
-        { id: 'search-area', titulo: '🔍 Busca Inteligente', texto: 'Pesquise produtos e veja preços da comunidade.' }
+        { 
+            id: 'btn-ler-nota', 
+            titulo: '🤖 Leitor com IA', 
+            texto: 'Aponte a câmera para o QR Code. O sistema lê os itens, preços e local da compra sozinho, salvando seu histórico sem você digitar nada.' 
+        },
+        { 
+            id: 'btn-lista-card', 
+            titulo: '📝 Planejamento', 
+            texto: 'Crie sua lista antes de sair. Isso ajuda a manter o foco, evita compras por impulso e garante que você não esqueça nada.' 
+        },
+        { 
+            id: 'btn-calc-card', 
+            titulo: '🧮 Controle Real', 
+            texto: 'Use a calculadora enquanto coloca itens no carrinho. Ela te avisa se você atingir seu limite de gastos, evitando surpresas no caixa.' 
+        },
+        { 
+            id: 'btn-relatorios', 
+            titulo: '📊 Inteligência', 
+            texto: 'Clique aqui para ver seus gráficos. Descubra qual mercado é mais barato para o seu perfil e para onde seu dinheiro está indo.' 
+        },
+        { 
+            id: 'search-area', 
+            titulo: '🌍 Preços da Comunidade', 
+            texto: 'O coração do app! Pesquise um produto (ex: "Leite") e veja quanto outras pessoas da sua cidade estão pagando. O propósito é sabermos juntos onde é mais barato comprar.' 
+        }
     ];
+
     let passoAtual = 0;
-    function verificarTour() { if (!localStorage.getItem('tourVistoFullV9')) setTimeout(() => mostrarPasso(0), 1000); }
+    // Mudei a chave do localStorage para V10 para forçar o tour a aparecer de novo para você testar
+    function verificarTour() { if (!localStorage.getItem('tourVistoFullV10')) setTimeout(() => mostrarPasso(0), 1000); }
+    
     function mostrarPasso(index) {
         if (index >= passosTour.length) { encerrarTour(); return; }
         const passo = passosTour[index];
@@ -610,7 +633,7 @@
         passoAtual = index;
     }
     function proximoPasso() { passoAtual++; mostrarPasso(passoAtual); }
-    function encerrarTour() { document.getElementById('tour-ring').style.display = 'none'; document.getElementById('tour-box').style.display = 'none'; localStorage.setItem('tourVistoFullV9', 'true'); }
+    function encerrarTour() { document.getElementById('tour-ring').style.display = 'none'; document.getElementById('tour-box').style.display = 'none'; localStorage.setItem('tourVistoFullV10', 'true'); }
 
     if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
     iniciar();
