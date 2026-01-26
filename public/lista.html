@@ -50,23 +50,32 @@
         .item-total { font-weight: 800; color: #2e7d32; font-size: 1.1rem; }
         .btn-del { color: #ef5350; background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0 0 0 10px; }
 
-        /* STATUS DA BUSCA (RESULTADO DETALHADO) */
+        /* STATUS DA BUSCA */
         .best-price-badge { background: #e8f5e9; color: #1b5e20; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-top: 5px; display: none; border: 1px solid #c8e6c9; line-height: 1.4; }
-        
         .prod-real-name { font-weight: 600; display: block; margin-bottom: 2px; text-transform: uppercase; font-size: 0.75rem; color: #555; }
-        
         .list-item.loading .best-price-badge { display: block; background: #fff3e0; color: #e65100; border-color: #ffe0b2; }
         .list-item.found .best-price-badge { display: block; }
         .list-item.not-found .best-price-badge { display: block; background: #eceff1; color: #607d8b; border-color: #cfd8dc; }
 
         /* MODAL ENCARTES */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-end; }
-        .modal-content { background: white; width: 100%; max-height: 80vh; border-top-left-radius: 25px; border-top-right-radius: 25px; padding: 20px; overflow-y: auto; animation: slideUp 0.3s ease; }
+        .modal-content { background: white; width: 100%; max-height: 80vh; border-top-left-radius: 25px; border-top-right-radius: 25px; padding: 20px; overflow-y: auto; animation: slideUp 0.3s ease; display:flex; flex-direction:column; }
+        
+        /* CARD DE LOJA (NOVO) */
+        .store-folder-card { background: white; border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.03); transition: 0.2s; }
+        .store-folder-card:active { transform: scale(0.98); background: #f9f9f9; }
+        .store-icon { font-size: 1.5rem; margin-right: 10px; }
+        .store-count { background: #e3f2fd; color: #1565c0; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+
+        /* CARD DE OFERTA */
         .oferta-card { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
         .oferta-info h4 { margin: 0; color: #333; }
         .oferta-info p { margin: 2px 0 0 0; font-size: 0.85rem; color: #666; }
         .oferta-price { font-weight: 800; color: #d32f2f; font-size: 1.1rem; margin-right: 10px; }
         .btn-add-offer { background: #2e7d32; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; }
+
+        .modal-header-custom { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px; }
+
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         /* BARRA INFERIOR */
@@ -120,12 +129,16 @@
 
 <div id="modalEncartes" class="modal-overlay" onclick="fecharModal(event)">
     <div class="modal-content">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
-            <h3 style="margin:0; color:#e65100;">📰 Ofertas Ativas</h3>
-            <button onclick="document.getElementById('modalEncartes').style.display='none'" style="border:none; background:none; font-size:1.5rem;">×</button>
+        <div class="modal-header-custom">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button id="btn-back-lojas" onclick="renderizarLojas()" style="display:none; border:none; background:#f0f0f0; width:30px; height:30px; border-radius:50%; font-weight:bold; cursor:pointer;">←</button>
+                <h3 id="titulo-modal-encartes" style="margin:0; color:#e65100;">Selecione o Mercado</h3>
+            </div>
+            <button onclick="document.getElementById('modalEncartes').style.display='none'" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">×</button>
         </div>
+        
         <div id="lista-ofertas-db">
-            <div style="text-align:center; padding:20px; color:#999;">Carregando ofertas...</div>
+            <div style="text-align:center; padding:20px; color:#999;">Carregando...</div>
         </div>
     </div>
 </div>
@@ -137,6 +150,9 @@
 
     let listaItems = JSON.parse(localStorage.getItem('minhaLista') || '[]');
     const minhaCidade = localStorage.getItem('minhaCidade') || '';
+
+    // Cache temporário de ofertas para não ficar buscando no banco toda hora
+    let ofertasCache = [];
 
     // Compatibilidade
     listaItems = listaItems.map(item => ({ ...item, qtd: item.qtd || 1, precoManual: item.precoManual || 0, precoNum: item.precoNum || 0 }));
@@ -165,7 +181,7 @@
             el.className = `list-item ${item.status || ''}`;
             el.id = `item-${index}`;
             
-            const origem = item.origem ? `<span class="item-origin">📰 Encarte: ${item.origem}</span>` : '';
+            const origem = item.origem ? `<span class="item-origin">📰 ${item.origem}</span>` : '';
             const textoPreco = precoEfetivo > 0 ? `${item.qtd}x de ${precoEfetivo.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}` : `${item.qtd} un.`;
 
             el.innerHTML = `
@@ -209,8 +225,15 @@
         inpNome.value = ''; inpQtd.value = '1'; inpPreco.value = '';
         if(!nomeOverride) inpNome.focus();
         
+        // Se veio do modal, não fecha, apenas notifica (para adicionar mais itens da mesma loja)
         if(nomeOverride) {
-            document.getElementById('modalEncartes').style.display = 'none';
+            // Feedback visual rápido
+            const btn = event.target; 
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✔'; btn.style.background = '#43a047';
+            setTimeout(() => { btn.innerHTML = originalText; btn.style.background = '#2e7d32'; }, 1000);
+            
+            // Já roda a análise automática no fundo
             setTimeout(() => analisarPrecos(), 500);
         }
         
@@ -225,12 +248,14 @@
         if(confirm("Limpar tudo?")) { listaItems = []; renderizar(); }
     }
 
-    // --- ENCARTES ---
+    // --- NOVA LÓGICA DE ENCARTES COM PASTAS DE MERCADO ---
     async function abrirEncartes() {
         document.getElementById('modalEncartes').style.display = 'flex';
-        const div = document.getElementById('lista-ofertas-db');
+        document.getElementById('lista-ofertas-db').innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Carregando encartes...</div>';
+        
         const hoje = new Date().toISOString().split('T')[0];
 
+        // Busca TODAS as ofertas válidas
         const { data, error } = await cliente
             .from('receipt_items')
             .select(`
@@ -238,28 +263,77 @@
                 receipt:receipts ( store:stores ( name, city ) )
             `)
             .gte('valid_until', hoje)
-            .limit(20);
+            .limit(100); // Aumentei o limite para pegar variedade
 
         if(error || !data || data.length === 0) {
-            div.innerHTML = '<div style="padding:20px; text-align:center">Nenhum encarte ativo encontrado hoje.</div>';
+            document.getElementById('lista-ofertas-db').innerHTML = '<div style="padding:20px; text-align:center">Nenhum encarte ativo hoje.</div>';
             return;
         }
 
+        // Salva no cache e renderiza a lista de LOJAS
+        ofertasCache = data;
+        renderizarLojas();
+    }
+
+    function renderizarLojas() {
+        // Configura Header
+        document.getElementById('titulo-modal-encartes').innerText = 'Selecione o Mercado';
+        document.getElementById('btn-back-lojas').style.display = 'none';
+        
+        const div = document.getElementById('lista-ofertas-db');
         div.innerHTML = '';
-        data.forEach(oferta => {
-            const loja = oferta.receipt?.store?.name || 'Mercado';
+
+        // Agrupa por Nome da Loja
+        const lojasMap = {};
+        
+        ofertasCache.forEach(item => {
+            const nomeLoja = item.receipt?.store?.name || 'Outros';
+            if(!lojasMap[nomeLoja]) lojasMap[nomeLoja] = 0;
+            lojasMap[nomeLoja]++;
+        });
+
+        // Cria os cards das lojas
+        const nomesLojas = Object.keys(lojasMap).sort();
+        
+        nomesLojas.forEach(loja => {
+            const qtd = lojasMap[loja];
+            const card = document.createElement('div');
+            card.className = 'store-folder-card';
+            card.onclick = () => renderizarProdutosDaLoja(loja);
+            card.innerHTML = `
+                <div style="display:flex; align-items:center;">
+                    <span class="store-icon">🏪</span>
+                    <span style="font-weight:600; font-size:1.1rem; color:#333;">${loja}</span>
+                </div>
+                <span class="store-count">${qtd} ofertas</span>
+            `;
+            div.appendChild(card);
+        });
+    }
+
+    function renderizarProdutosDaLoja(nomeLoja) {
+        // Configura Header
+        document.getElementById('titulo-modal-encartes').innerText = nomeLoja;
+        document.getElementById('btn-back-lojas').style.display = 'block';
+
+        const div = document.getElementById('lista-ofertas-db');
+        div.innerHTML = '';
+
+        // Filtra só produtos dessa loja
+        const produtos = ofertasCache.filter(item => (item.receipt?.store?.name || 'Outros') === nomeLoja);
+
+        produtos.forEach(oferta => {
             const preco = parseFloat(oferta.unit_price);
-            
             const card = document.createElement('div');
             card.className = 'oferta-card';
             card.innerHTML = `
                 <div class="oferta-info">
                     <h4>${oferta.raw_name}</h4>
-                    <p>🏪 ${loja}</p>
+                    <p style="color:#2e7d32;">Vence em: ${new Date(oferta.valid_until).toLocaleDateString('pt-BR')}</p>
                 </div>
                 <div style="display:flex; align-items:center;">
                     <span class="oferta-price">R$ ${preco.toFixed(2)}</span>
-                    <button class="btn-add-offer" onclick="adicionar('${oferta.raw_name}', ${preco}, '${loja}')">＋</button>
+                    <button class="btn-add-offer" onclick="adicionar('${oferta.raw_name}', ${preco}, '${nomeLoja}')">＋</button>
                 </div>
             `;
             div.appendChild(card);
@@ -284,7 +358,6 @@
             if(badge) badge.innerText = 'Comparando...';
 
             try {
-                // AQUI ESTÁ A MUDANÇA: Buscamos 'raw_name' (Nome Real)
                 let { data } = await cliente.rpc('buscar_produtos', { termo: item.nome })
                     .select('raw_name, unit_price, receipt:receipts(store:stores(name, city))')
                     .limit(10);
@@ -303,12 +376,11 @@
                     const top = melhores[0];
                     const p = parseFloat(top.unit_price);
                     const loja = top.receipt.store.name;
-                    const nomeReal = top.raw_name; // O Nome do Cupom!
+                    const nomeReal = top.raw_name;
 
                     const dif = item.precoManual - p;
                     const economia = dif > 0 ? `(Economize R$ ${dif.toFixed(2)})` : '';
                     
-                    // MOSTRA O NOME REAL PEQUENO EM CIMA
                     item.resultado = `<span class="prod-real-name">${nomeReal}</span>⚠️ Mais barato no <b>${loja}</b>: R$ ${p.toFixed(2)} ${economia}`;
                     item.status = 'not-found'; 
                 } else {
@@ -337,7 +409,6 @@
             texto += `${i.qtd}x *${i.nome}*\n`;
             if(i.origem) texto += `   📰 Encarte: R$ ${i.precoManual.toFixed(2)} (${i.origem})\n`;
             if(i.resultado && i.resultado.includes('Mais barato')) {
-                // Remove HTML para o Zap
                 const limpo = i.resultado.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
                 texto += `   ↳ ${limpo}\n`;
             }
