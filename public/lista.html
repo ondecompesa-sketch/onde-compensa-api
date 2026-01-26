@@ -14,27 +14,29 @@
         body { font-family: -apple-system, system-ui, sans-serif; background: #f4f7fa; padding: 20px; padding-bottom: 140px; color: #333; }
         .container { max-width: 600px; margin: 0 auto; }
         
-        /* HEADER COM VOLTAR E TOTAL */
+        /* HEADER */
         .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
         h1 { color: #2e7d32; font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 10px; }
         .fab-back { background: white; color: #333; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-decoration: none; font-weight: bold; }
 
-        /* PAINEL DE ORÇAMENTO (NOVO) */
+        /* PAINEL DE ORÇAMENTO */
         .budget-card { background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%); color: white; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3); display: flex; justify-content: space-between; align-items: center; }
         .budget-info h2 { margin: 0; font-size: 1.8rem; font-weight: 800; }
         .budget-info span { font-size: 0.85rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
         .item-count { background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
         
-        /* INPUTS MELHORADOS */
+        /* INPUTS */
         .input-group { background: white; padding: 15px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
         .row-inputs { display: flex; gap: 10px; }
         input { padding: 12px; border: 1px solid #eee; border-radius: 10px; font-size: 1rem; outline: none; background: #fafafa; transition: 0.2s; }
         input:focus { background: white; border-color: #2e7d32; }
         .input-nome { width: 100%; }
         .input-curto { flex: 1; text-align: center; }
-        .btn-add { background: #2e7d32; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; }
-        .btn-add:active { transform: scale(0.98); }
         
+        .action-row { display: flex; gap: 10px; }
+        .btn-add { flex: 2; background: #2e7d32; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .btn-encarte { flex: 1; background: #ff9800; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+
         /* LISTA */
         .list-container { display: flex; flex-direction: column; gap: 10px; }
         .list-item { background: white; padding: 15px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; border-left: 5px solid #ddd; transition: 0.3s; }
@@ -43,23 +45,33 @@
         .item-info { display: flex; flex-direction: column; }
         .item-name { font-weight: 600; font-size: 1.1rem; color: #333; }
         .item-meta { font-size: 0.85rem; color: #666; }
+        .item-origin { font-size: 0.75rem; background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 2px; width: fit-content; }
         
         .item-total { font-weight: 800; color: #2e7d32; font-size: 1.1rem; }
         .btn-del { color: #ef5350; background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0 0 0 10px; }
 
-        /* STATUS DA BUSCA */
-        .best-price-badge { background: #e8f5e9; color: #1b5e20; padding: 8px; border-radius: 8px; font-size: 0.85rem; margin-top: 5px; display: none; border: 1px solid #c8e6c9; }
-        .list-item.loading { border-left-color: #ff9800; }
+        /* STATUS DA BUSCA (RESULTADO DETALHADO) */
+        .best-price-badge { background: #e8f5e9; color: #1b5e20; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-top: 5px; display: none; border: 1px solid #c8e6c9; line-height: 1.4; }
+        
+        .prod-real-name { font-weight: 600; display: block; margin-bottom: 2px; text-transform: uppercase; font-size: 0.75rem; color: #555; }
+        
         .list-item.loading .best-price-badge { display: block; background: #fff3e0; color: #e65100; border-color: #ffe0b2; }
-        .list-item.found { border-left-color: #2e7d32; }
         .list-item.found .best-price-badge { display: block; }
-        .list-item.not-found { border-left-color: #607d8b; }
         .list-item.not-found .best-price-badge { display: block; background: #eceff1; color: #607d8b; border-color: #cfd8dc; }
 
-        /* BARRA DE AÇÕES INFERIOR */
+        /* MODAL ENCARTES */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-end; }
+        .modal-content { background: white; width: 100%; max-height: 80vh; border-top-left-radius: 25px; border-top-right-radius: 25px; padding: 20px; overflow-y: auto; animation: slideUp 0.3s ease; }
+        .oferta-card { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
+        .oferta-info h4 { margin: 0; color: #333; }
+        .oferta-info p { margin: 2px 0 0 0; font-size: 0.85rem; color: #666; }
+        .oferta-price { font-weight: 800; color: #d32f2f; font-size: 1.1rem; margin-right: 10px; }
+        .btn-add-offer { background: #2e7d32; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* BARRA INFERIOR */
         .bottom-actions { position: fixed; bottom: 20px; left: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100; }
         .btn-analyze { background: #007bff; color: white; padding: 16px; border-radius: 15px; font-weight: bold; font-size: 1.1rem; border: none; box-shadow: 0 4px 15px rgba(0,123,255,0.3); cursor: pointer; display: flex; justify-content: center; gap: 10px; width: 100%; transition: 0.2s; }
-        .btn-analyze:active { transform: scale(0.98); }
         .secondary-actions { display: flex; gap: 10px; }
         .btn-share { flex: 2; background: #25D366; color: white; padding: 14px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3); }
         .btn-clear { flex: 1; background: #ffebee; color: #c62828; padding: 14px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; }
@@ -82,12 +94,15 @@
     </div>
 
     <div class="input-group">
-        <input type="text" id="inp-item" class="input-nome" placeholder="Nome do produto (ex: Arroz 5kg)">
+        <input type="text" id="inp-item" class="input-nome" placeholder="Nome do produto (ex: Feijão)">
         <div class="row-inputs">
             <input type="number" id="inp-qtd" class="input-curto" placeholder="Qtd" value="1">
-            <input type="number" id="inp-preco" class="input-curto" placeholder="Preço Est." step="0.01">
+            <input type="number" id="inp-preco" class="input-curto" placeholder="Preço" step="0.01">
         </div>
-        <button class="btn-add" onclick="adicionar()">＋ Adicionar à Lista</button>
+        <div class="action-row">
+            <button class="btn-add" onclick="adicionar()">＋ Adicionar</button>
+            <button class="btn-encarte" onclick="abrirEncartes()">📰 Encartes</button>
+        </div>
     </div>
 
     <div id="lista" class="list-container"></div>
@@ -97,14 +112,21 @@
     <button class="btn-analyze" onclick="analisarPrecos()">
         <span>🔍</span> Ver Onde Comprar
     </button>
-    
     <div class="secondary-actions">
-        <button class="btn-share" onclick="compartilharZap()">
-            📱 Enviar Zap
-        </button>
-        <button class="btn-clear" onclick="limparLista()">
-            🗑️ Limpar
-        </button>
+        <button class="btn-share" onclick="compartilharZap()">📱 Zap</button>
+        <button class="btn-clear" onclick="limparLista()">🗑️ Limpar</button>
+    </div>
+</div>
+
+<div id="modalEncartes" class="modal-overlay" onclick="fecharModal(event)">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+            <h3 style="margin:0; color:#e65100;">📰 Ofertas Ativas</h3>
+            <button onclick="document.getElementById('modalEncartes').style.display='none'" style="border:none; background:none; font-size:1.5rem;">×</button>
+        </div>
+        <div id="lista-ofertas-db">
+            <div style="text-align:center; padding:20px; color:#999;">Carregando ofertas...</div>
+        </div>
     </div>
 </div>
 
@@ -113,17 +135,11 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
     const cliente = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Recupera lista antiga ou inicia nova
     let listaItems = JSON.parse(localStorage.getItem('minhaLista') || '[]');
     const minhaCidade = localStorage.getItem('minhaCidade') || '';
 
-    // Garante compatibilidade se o usuário tiver dados da versão antiga (sem qtd/precoManual)
-    listaItems = listaItems.map(item => ({
-        ...item,
-        qtd: item.qtd || 1,
-        precoManual: item.precoManual || 0,
-        precoNum: item.precoNum || 0
-    }));
+    // Compatibilidade
+    listaItems = listaItems.map(item => ({ ...item, qtd: item.qtd || 1, precoManual: item.precoManual || 0, precoNum: item.precoNum || 0 }));
 
     function renderizar() {
         const div = document.getElementById('lista');
@@ -135,17 +151,13 @@
         let totalQtd = 0;
 
         if(listaItems.length === 0) {
-            div.innerHTML = '<div style="text-align:center; padding:30px; color:#999;">Sua lista está vazia.<br>Comece a planejar! 🛒</div>';
-            totalEl.innerText = "R$ 0,00";
-            countEl.innerText = "0 itens";
-            return;
+            div.innerHTML = '<div style="text-align:center; padding:30px; color:#999;">Lista vazia.<br>Use os Encartes ou adicione manualmente!</div>';
+            totalEl.innerText = "R$ 0,00"; countEl.innerText = "0 itens"; return;
         }
 
         listaItems.forEach((item, index) => {
-            // LÓGICA DO PREÇO: Se o sistema achou um preço (precoNum), usa ele. Se não, usa o manual.
             const precoEfetivo = item.precoNum > 0 ? item.precoNum : item.precoManual;
             const subtotal = precoEfetivo * item.qtd;
-            
             totalGeral += subtotal;
             totalQtd += item.qtd;
 
@@ -153,15 +165,14 @@
             el.className = `list-item ${item.status || ''}`;
             el.id = `item-${index}`;
             
-            // Texto descritivo (ex: "3x de R$ 5,00")
-            const textoPreco = precoEfetivo > 0 
-                ? `${item.qtd}x de ${precoEfetivo.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}` 
-                : `${item.qtd} un. (Sem preço)`;
+            const origem = item.origem ? `<span class="item-origin">📰 Encarte: ${item.origem}</span>` : '';
+            const textoPreco = precoEfetivo > 0 ? `${item.qtd}x de ${precoEfetivo.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}` : `${item.qtd} un.`;
 
             el.innerHTML = `
                 <div class="item-header">
                     <div class="item-info">
                         <span class="item-name">${item.nome}</span>
+                        ${origem}
                         <span class="item-meta">${textoPreco}</span>
                     </div>
                     <div style="display:flex; align-items:center;">
@@ -181,157 +192,161 @@
         localStorage.setItem('minhaLista', JSON.stringify(listaItems));
     }
 
-    function adicionar() {
+    function adicionar(nomeOverride, precoOverride, origemOverride) {
         const inpNome = document.getElementById('inp-item');
         const inpQtd = document.getElementById('inp-qtd');
         const inpPreco = document.getElementById('inp-preco');
 
-        const nome = inpNome.value.trim();
+        const nome = nomeOverride || inpNome.value.trim();
         const qtd = parseFloat(inpQtd.value) || 1;
-        const precoManual = parseFloat(inpPreco.value.replace(',', '.')) || 0;
+        const precoManual = precoOverride || parseFloat(inpPreco.value.replace(',', '.')) || 0;
+        const origem = origemOverride || '';
 
-        if(!nome) return alert("Digite o nome do produto!");
+        if(!nome) return alert("Digite o nome!");
 
-        // Adiciona novo item completo
-        listaItems.unshift({ 
-            nome, 
-            qtd, 
-            precoManual, 
-            status: '', 
-            resultado: '', 
-            precoNum: 0 
-        });
+        listaItems.unshift({ nome, qtd, precoManual, origem, status: '', resultado: '', precoNum: 0 });
         
-        // Limpa campos
-        inpNome.value = '';
-        inpQtd.value = '1';
-        inpPreco.value = '';
-        inpNome.focus();
+        inpNome.value = ''; inpQtd.value = '1'; inpPreco.value = '';
+        if(!nomeOverride) inpNome.focus();
+        
+        if(nomeOverride) {
+            document.getElementById('modalEncartes').style.display = 'none';
+            setTimeout(() => analisarPrecos(), 500);
+        }
         
         renderizar();
     }
 
     function remover(i) {
-        if(confirm("Remover este item?")) {
-            listaItems.splice(i, 1);
-            renderizar();
-        }
+        if(confirm("Remover item?")) { listaItems.splice(i, 1); renderizar(); }
     }
     
     function limparLista() {
-        if(confirm("Tem certeza que deseja apagar a lista toda?")) {
-            listaItems = [];
-            renderizar();
-        }
+        if(confirm("Limpar tudo?")) { listaItems = []; renderizar(); }
     }
 
-    // --- CÉREBRO DA OPERAÇÃO 🧠 (BUSCA NO SUPABASE) ---
+    // --- ENCARTES ---
+    async function abrirEncartes() {
+        document.getElementById('modalEncartes').style.display = 'flex';
+        const div = document.getElementById('lista-ofertas-db');
+        const hoje = new Date().toISOString().split('T')[0];
+
+        const { data, error } = await cliente
+            .from('receipt_items')
+            .select(`
+                raw_name, unit_price, valid_until,
+                receipt:receipts ( store:stores ( name, city ) )
+            `)
+            .gte('valid_until', hoje)
+            .limit(20);
+
+        if(error || !data || data.length === 0) {
+            div.innerHTML = '<div style="padding:20px; text-align:center">Nenhum encarte ativo encontrado hoje.</div>';
+            return;
+        }
+
+        div.innerHTML = '';
+        data.forEach(oferta => {
+            const loja = oferta.receipt?.store?.name || 'Mercado';
+            const preco = parseFloat(oferta.unit_price);
+            
+            const card = document.createElement('div');
+            card.className = 'oferta-card';
+            card.innerHTML = `
+                <div class="oferta-info">
+                    <h4>${oferta.raw_name}</h4>
+                    <p>🏪 ${loja}</p>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <span class="oferta-price">R$ ${preco.toFixed(2)}</span>
+                    <button class="btn-add-offer" onclick="adicionar('${oferta.raw_name}', ${preco}, '${loja}')">＋</button>
+                </div>
+            `;
+            div.appendChild(card);
+        });
+    }
+    
+    function fecharModal(e) { if(e.target.id === 'modalEncartes') e.target.style.display = 'none'; }
+
+    // --- CÉREBRO DA OPERAÇÃO 🧠 ---
     async function analisarPrecos() {
         const btn = document.querySelector('.btn-analyze');
-        btn.innerHTML = '⏳ Pesquisando...'; btn.disabled = true;
+        btn.innerHTML = '⏳ Buscando detalhes...'; btn.disabled = true;
 
         for (let i = 0; i < listaItems.length; i++) {
             const item = listaItems[i];
-            const badge = document.getElementById(`badge-${i}`);
-            const card = document.getElementById(`item-${i}`);
             
-            // Só pesquisa se ainda não encontrou ou se for forçado
-            if(item.status === 'found') continue; 
+            if(item.status === 'found' && !item.origem) continue; 
 
-            card.classList.remove('found', 'not-found');
+            const card = document.getElementById(`item-${i}`);
+            const badge = document.getElementById(`badge-${i}`);
             card.classList.add('loading');
-            if(badge) badge.innerText = 'Pesquisando preços...';
+            if(badge) badge.innerText = 'Comparando...';
 
             try {
+                // AQUI ESTÁ A MUDANÇA: Buscamos 'raw_name' (Nome Real)
                 let { data } = await cliente.rpc('buscar_produtos', { termo: item.nome })
-                    .select(`
-                        unit_price, valid_until,
-                        receipt:receipts ( store:stores ( name, city ) )
-                    `)
-                    .limit(20);
+                    .select('raw_name, unit_price, receipt:receipts(store:stores(name, city))')
+                    .limit(10);
 
                 if (!data) data = [];
 
-                // Filtra por cidade
-                let ofertas = data.filter(d => {
-                    if(!d.receipt?.store) return false;
-                    const cidadeLoja = (d.receipt.store.city || '').toLowerCase();
-                    const cMinha = minhaCidade.toLowerCase();
-                    const chaves = ['rj', 'rio de janeiro', 'todas', 'brasil'];
-                    if(!minhaCidade) return true;
-                    if(chaves.some(k => cidadeLoja.includes(k))) return true;
-                    return cidadeLoja.includes(cMinha);
-                });
+                const melhores = data.filter(d => {
+                    const p = parseFloat(d.unit_price);
+                    if (item.precoManual > 0 && p >= item.precoManual) return false;
+                    return true;
+                }).sort((a,b) => a.unit_price - b.unit_price);
 
-                ofertas.sort((a, b) => a.unit_price - b.unit_price);
                 card.classList.remove('loading');
-                
-                if (ofertas.length > 0) {
-                    const melhor = ofertas[0];
-                    const nomeLoja = melhor.receipt.store.name;
-                    item.precoNum = parseFloat(melhor.unit_price); // Atualiza o preço real!
+
+                if (melhores.length > 0) {
+                    const top = melhores[0];
+                    const p = parseFloat(top.unit_price);
+                    const loja = top.receipt.store.name;
+                    const nomeReal = top.raw_name; // O Nome do Cupom!
+
+                    const dif = item.precoManual - p;
+                    const economia = dif > 0 ? `(Economize R$ ${dif.toFixed(2)})` : '';
                     
-                    const precoFmt = item.precoNum.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-                    const hoje = new Date().toISOString().split('T')[0];
-                    let icone = '💰';
-                    if (melhor.valid_until && melhor.valid_until >= hoje) icone = '🔥 Oferta';
-
-                    item.resultado = `${icone}: <b>${precoFmt}</b> no <b>${nomeLoja}</b>`;
-                    item.status = 'found';
+                    // MOSTRA O NOME REAL PEQUENO EM CIMA
+                    item.resultado = `<span class="prod-real-name">${nomeReal}</span>⚠️ Mais barato no <b>${loja}</b>: R$ ${p.toFixed(2)} ${economia}`;
+                    item.status = 'not-found'; 
                 } else {
-                    // Se não achou, mantém o preço manual se houver
-                    item.resultado = item.precoManual > 0 
-                        ? `Preço online não encontrado. Usando seu manual.`
-                        : `Nenhum preço encontrado.`;
-                    item.status = 'not-found';
-                    item.precoNum = 0; // Zera para o sistema usar o Manual
+                    if(item.origem) {
+                        item.resultado = `✅ O preço do Encarte (${item.origem}) é o melhor encontrado!`;
+                        item.status = 'found';
+                        item.precoNum = item.precoManual;
+                    } else {
+                        item.resultado = "Produto exato não encontrado.";
+                        item.status = 'not-found';
+                    }
                 }
-
-            } catch (e) {
-                console.error(e);
-                item.resultado = "Erro na busca.";
-            }
-            // Renderiza a cada item para ir atualizando o Total lá em cima em tempo real!
-            renderizar(); 
+            } catch (e) { console.error(e); }
+            renderizar();
         }
         btn.innerHTML = '<span>🔍</span> Atualizar Preços'; btn.disabled = false;
     }
 
-    // --- WHATSAPP COM QUANTIDADES E TOTAIS ---
+    // --- ZAP ---
     function compartilharZap() {
         if(listaItems.length === 0) return alert("Lista vazia!");
-
-        let texto = `🛒 *Minha Lista de Compras* (${minhaCidade || 'Geral'})\n\n`;
-        let totalZap = 0;
-
-        listaItems.forEach(item => {
-            const check = item.status === 'found' ? '✅' : (item.precoManual > 0 ? '📝' : '⬜');
-            const precoEfetivo = item.precoNum > 0 ? item.precoNum : item.precoManual;
-            const subtotal = precoEfetivo * item.qtd;
-            totalZap += subtotal;
-
-            // Limpa HTML para texto puro
-            let info = "";
-            if(item.status === 'found') {
-                info = item.resultado.replace(/<[^>]*>/g, '').replace('🔥 Oferta:', '').replace('💰:', '').trim();
-            } else if (item.precoManual > 0) {
-                info = `Orçado: R$ ${item.precoManual.toFixed(2)}`;
+        let texto = `🛒 *Lista OndeCompensa* (${minhaCidade})\n\n`;
+        let total = 0;
+        listaItems.forEach(i => {
+            const p = i.precoNum > 0 ? i.precoNum : i.precoManual;
+            texto += `${i.qtd}x *${i.nome}*\n`;
+            if(i.origem) texto += `   📰 Encarte: R$ ${i.precoManual.toFixed(2)} (${i.origem})\n`;
+            if(i.resultado && i.resultado.includes('Mais barato')) {
+                // Remove HTML para o Zap
+                const limpo = i.resultado.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                texto += `   ↳ ${limpo}\n`;
             }
-
-            texto += `${check} *${item.qtd}x ${item.nome}*\n`;
-            if(info) texto += `   ↳ ${info}\n`;
+            total += (p * i.qtd);
         });
-
-        if(totalZap > 0) {
-            texto += `\n💰 *Total Estimado: R$ ${totalZap.toLocaleString('pt-BR', {minimumFractionDigits: 2})}*`;
-        }
-        
-        texto += `\n\n_Gerado por OndeCompensa App_`;
-        const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
-        window.open(url, '_blank');
+        texto += `\n💰 Total: R$ ${total.toFixed(2)}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
     }
 
-    // Inicia
     renderizar();
 </script>
 </body>
