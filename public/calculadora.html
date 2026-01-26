@@ -3,206 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Calculadora Inteligente</title>
-    <meta name="theme-color" content="#007bff">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Calculadora - OndeCompensa</title>
+    <meta name="theme-color" content="#2e7d32">
+    
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; margin: 0; padding: 0; padding-bottom: 90px; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #f4f7fa; margin: 0; padding: 20px; padding-bottom: 80px; color: #333; }
         
-        .header-total {
-            background: #fff; padding: 25px 20px; text-align: center;
-            position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            border-bottom-left-radius: 24px; border-bottom-right-radius: 24px;
-        }
-        .valor-total { font-size: 3.2rem; font-weight: 800; color: #2e7d32; margin: 5px 0 15px 0; letter-spacing: -1px; transition: color 0.3s; }
-        .valor-total.estourou { color: #d32f2f; }
+        /* HEADER */
+        .header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+        .btn-voltar { background: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); color: #333; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+        h1 { margin: 0; font-size: 1.5rem; color: #2e7d32; }
 
-        .meta-wrapper { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .progress-bg { width: 100%; max-width: 220px; height: 10px; background: #f1f3f5; border-radius: 10px; overflow: hidden; }
-        .progress-fill { height: 100%; background: #2e7d32; width: 0%; transition: width 0.5s; }
-        .btn-meta { background: #fff; border: 1px solid #e0e0e0; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; color: #666; font-weight: 600; cursor: pointer; }
+        /* ABAS */
+        .tabs { display: flex; background: #e0e0e0; padding: 5px; border-radius: 12px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; border: none; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; background: transparent; color: #666; transition: 0.3s; }
+        .tab-btn.active { background: white; color: #2e7d32; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
-        .add-area { 
-            background: white; margin: 20px 15px; padding: 20px; 
-            border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
-            display: flex; flex-direction: column; gap: 12px;
-        }
-        
-        input { width: 100%; padding: 14px; border: 1px solid #eee; border-radius: 12px; font-size: 1.1rem; outline: none; background: #f9f9f9; }
-        input:focus { border-color: #007bff; background: #fff; }
-        
-        .row-inputs { display: flex; gap: 10px; }
-        .btn-add { width: 100%; padding: 16px; background: #007bff; color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 1.1rem; cursor: pointer; margin-top: 5px; }
+        /* CONTEÚDO DAS ABAS */
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
 
-        /* RADAR DE PREÇO */
-        #sugestao-preco {
-            background: #fff3cd; color: #856404; border: 1px solid #ffeeba;
-            padding: 10px; border-radius: 10px; font-size: 0.9rem;
-            display: none; align-items: center; gap: 8px; animation: fadeIn 0.3s; cursor: pointer;
-        }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+        /* ESTILOS DA CALCULADORA DE CARRINHO */
+        .display-total { background: #2e7d32; color: white; padding: 30px 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3); }
+        .total-label { font-size: 0.9rem; opacity: 0.9; display: block; margin-bottom: 5px; }
+        .total-value { font-size: 2.5rem; font-weight: 800; display: block; }
+        .input-group { background: white; padding: 15px; border-radius: 16px; display: flex; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        input { flex: 1; padding: 12px; border: 1px solid #eee; border-radius: 10px; font-size: 1.1rem; outline: none; }
+        .btn-add { background: #2e7d32; color: white; border: none; padding: 0 20px; border-radius: 10px; font-weight: bold; font-size: 1.2rem; cursor: pointer; }
+        .lista-itens { margin-top: 20px; list-style: none; padding: 0; }
+        .item-carrinho { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 
-        .item-list { list-style: none; padding: 0; margin: 0 15px; }
-        .item-row { background: white; padding: 16px; margin-bottom: 12px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-        .item-name { font-weight: 700; font-size: 1.05rem; color: #333; display: block; }
-        .item-calc { font-size: 0.9rem; color: #888; }
-        .btn-remove { background: #fff5f5; color: #e53935; border: none; width: 40px; height: 40px; border-radius: 12px; margin-left: 12px; font-size: 1.4rem; }
+        /* ESTILOS DO COMPARADOR (NOVO) */
+        .compare-card { background: white; padding: 20px; border-radius: 16px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; border-left: 5px solid transparent; }
+        .compare-card h3 { margin: 0 0 15px 0; font-size: 1.1rem; color: #555; }
+        .row { display: flex; gap: 10px; }
+        .resultado-box { margin-top: 20px; padding: 20px; border-radius: 16px; text-align: center; display: none; }
+        .winner { border-left-color: #2e7d32; background: #e8f5e9; }
+        .loser { border-left-color: #d32f2f; opacity: 0.7; }
+        .badge-economia { background: #2e7d32; color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-top: 10px; display: inline-block; }
 
-        .fab-back { position: fixed; bottom: 25px; left: 25px; background: white; color: #333; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-decoration: none; font-size: 24px; z-index: 200; }
+        @keyframes fadeIn { from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
     </style>
 </head>
 <body>
 
-<div class="header-total">
-    <div style="font-size:0.85rem; color:#888; font-weight:600;">Total Previsto</div>
-    <div class="valor-total" id="display-total">R$ 0,00</div>
-    <div class="meta-wrapper">
-        <div class="progress-bg"><div class="progress-fill" id="progress-bar"></div></div>
-        <button class="btn-meta" onclick="definirMeta()">🎯 Meta: <span id="label-meta">Definir</span></button>
+    <div class="header">
+        <a href="index.html" class="btn-voltar">←</a>
+        <h1>Calculadora</h1>
     </div>
-</div>
 
-<div class="add-area">
-    <input type="text" id="inp-nome" placeholder="Nome do produto (Opcional)" onkeyup="buscarMelhorPreco(this.value)">
-    
-    <div id="sugestao-preco"></div>
-
-    <div class="row-inputs">
-        <div style="flex: 2;"><input type="number" id="inp-preco" placeholder="R$ Preço" step="0.01" inputmode="decimal"></div>
-        <div style="flex: 1;"><input type="number" id="inp-qtd" value="1" style="text-align:center" inputmode="numeric"></div>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="mudarAba('carrinho')">🛒 Somar Carrinho</button>
+        <button class="tab-btn" onclick="mudarAba('comparador')">⚖️ Qual Compensa?</button>
     </div>
-    <button class="btn-add" onclick="adicionarItem()">Adicionar ao Carrinho</button>
-</div>
 
-<div id="lista-itens" class="item-list"></div>
-<a href="index.html" class="fab-back">⬅</a>
+    <div id="tab-carrinho" class="tab-content active">
+        <div class="display-total">
+            <span class="total-label">Total do Carrinho</span>
+            <span class="total-value" id="display-soma">R$ 0,00</span>
+        </div>
+
+        <div class="input-group">
+            <input type="number" id="novo-valor" placeholder="Valor (Ex: 12.99)" step="0.01">
+            <button class="btn-add" onclick="adicionarAoCarrinho()">＋</button>
+        </div>
+
+        <ul id="lista-carrinho" class="lista-itens"></ul>
+        
+        <button onclick="limparCarrinho()" style="width:100%; padding:15px; background:#ffebee; color:#c62828; border:none; border-radius:12px; font-weight:bold; margin-top:20px; cursor:pointer;">🗑️ Limpar Carrinho</button>
+    </div>
+
+    <div id="tab-comparador" class="tab-content">
+        <div style="text-align:center; color:#666; margin-bottom:20px; font-size:0.9rem;">
+            Preencha os dados das duas embalagens para saber qual sai mais barato.
+        </div>
+
+        <div class="compare-card" id="card-a">
+            <h3>🅰️ Opção 1</h3>
+            <div class="row">
+                <input type="number" id="peso-a" placeholder="Peso/Qtd (ex: 3000)">
+                <input type="number" id="preco-a" placeholder="Preço (ex: 20.00)">
+            </div>
+        </div>
+
+        <div class="compare-card" id="card-b">
+            <h3>🅱️ Opção 2</h3>
+            <div class="row">
+                <input type="number" id="peso-b" placeholder="Peso/Qtd (ex: 1600)">
+                <input type="number" id="preco-b" placeholder="Preço (ex: 11.00)">
+            </div>
+        </div>
+
+        <button onclick="calcularMelhorOpcao()" style="width:100%; background:#007bff; color:white; padding:15px; border:none; border-radius:12px; font-size:1.1rem; font-weight:bold; cursor:pointer; box-shadow:0 4px 10px rgba(0,123,255,0.3);">🔍 Comparar Agora</button>
+
+        <div id="resultado-comparacao" class="resultado-box">
+            <h2 id="titulo-resultado" style="margin:0; color:#2e7d32;"></h2>
+            <p id="desc-resultado" style="margin:10px 0; color:#555;"></p>
+            <div id="badge-econ" class="badge-economia"></div>
+        </div>
+    </div>
 
 <script>
-    // --- CONFIGURAÇÃO ---
-    const SUPABASE_URL = 'https://sjhvftndaplufqnrjxcs.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaHZmdG5kYXBsdWZxbnJqeGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MDYxMDgsImV4cCI6MjA4MzM4MjEwOH0.bNstvXQ7m2Zt-0UatKmdkxM95-Ft4SRBc1JGGITSnzk';
-    
-    // Mudei o nome da variável para evitar conflito com qualquer código antigo
-    const clienteSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    let itens = [];
-    let meta = localStorage.getItem('metaCarrinho') || 0;
-    let timerBusca = null;
-
-    function carregarDados() {
-        try { itens = JSON.parse(localStorage.getItem('carrinhoTemp') || '[]'); } catch (e) { itens = []; }
-        renderizar();
-        atualizarMetaDisplay();
-    }
-    carregarDados();
-
-    // --- FUNÇÃO DO RADAR DE PREÇO ---
-    function buscarMelhorPreco(texto) {
-        const divDica = document.getElementById('sugestao-preco');
-        divDica.style.display = 'none';
-
-        if(texto.length < 3) return;
-
-        clearTimeout(timerBusca);
-        timerBusca = setTimeout(async () => {
-            // Busca o menor preço (incluindo encartes válidos)
-            const { data, error } = await clienteSupabase
-                .from('receipt_items')
-                .select(`
-                    unit_price, 
-                    raw_name,
-                    valid_until,
-                    receipt:receipts ( store:stores ( name ) )
-                `)
-                .ilike('raw_name', `%${texto}%`)
-                .order('unit_price', { ascending: true }) // Mais barato primeiro
-                .limit(1);
-
-            if(data && data.length > 0) {
-                const item = data[0];
-                const loja = item.receipt?.store?.name || 'Mercado';
-                const preco = item.unit_price;
-                const isEncarte = item.valid_until && item.valid_until >= new Date().toISOString().split('T')[0];
-                
-                const icone = isEncarte ? '🔥' : '💡';
-                
-                divDica.innerHTML = `${icone} Melhor preço: <b>R$ ${parseFloat(preco).toFixed(2)}</b> no <b>${loja}</b>`;
-                divDica.style.display = 'flex';
-                
-                divDica.onclick = () => {
-                    document.getElementById('inp-preco').value = preco;
-                    divDica.style.display = 'none';
-                };
-            }
-        }, 500);
-    }
-
-    function adicionarItem() {
-        const nomeInp = document.getElementById('inp-nome');
-        const precoInp = document.getElementById('inp-preco');
-        const qtdInp = document.getElementById('inp-qtd');
-
-        const nome = nomeInp.value || 'Item ' + (itens.length + 1);
-        const preco = parseFloat(precoInp.value);
-        const qtd = parseFloat(qtdInp.value);
-
-        if (!preco || isNaN(preco)) { alert("Digite o preço!"); precoInp.focus(); return; }
-
-        itens.unshift({ id: Date.now(), nome, preco, qtd, total: preco * qtd });
-        salvar(); renderizar();
+    // --- LÓGICA DAS ABAS ---
+    function mudarAba(aba) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         
-        nomeInp.value = ''; precoInp.value = ''; qtdInp.value = '1';
-        document.getElementById('sugestao-preco').style.display = 'none'; // Esconde dica
-        nomeInp.focus(); 
+        if(aba === 'carrinho') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('tab-carrinho').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('tab-comparador').classList.add('active');
+        }
     }
 
-    function removerItem(id) { itens = itens.filter(i => i.id !== id); salvar(); renderizar(); }
+    // --- LÓGICA DO CARRINHO ---
+    let totalCarrinho = 0;
+    let itensCarrinho = [];
 
-    function renderizar() {
-        const lista = document.getElementById('lista-itens');
-        const displayTotal = document.getElementById('display-total');
-        const barra = document.getElementById('progress-bar');
+    // Carregar do LocalStorage se existir
+    const salvo = localStorage.getItem('carrinhoTemp');
+    if(salvo) {
+        itensCarrinho = JSON.parse(salvo);
+        atualizarTelaCarrinho();
+    }
+
+    function adicionarAoCarrinho() {
+        const input = document.getElementById('novo-valor');
+        const valor = parseFloat(input.value.replace(',', '.'));
         
+        if (!valor || valor <= 0) return alert("Digite um valor válido!");
+        
+        itensCarrinho.unshift({ id: Date.now(), valor: valor });
+        input.value = '';
+        input.focus();
+        salvarEAtualizar();
+    }
+
+    function removerItem(id) {
+        itensCarrinho = itensCarrinho.filter(i => i.id !== id);
+        salvarEAtualizar();
+    }
+
+    function limparCarrinho() {
+        if(confirm("Zerar o carrinho?")) {
+            itensCarrinho = [];
+            salvarEAtualizar();
+        }
+    }
+
+    function salvarEAtualizar() {
+        localStorage.setItem('carrinhoTemp', JSON.stringify(itensCarrinho));
+        atualizarTelaCarrinho();
+    }
+
+    function atualizarTelaCarrinho() {
+        const lista = document.getElementById('lista-carrinho');
         lista.innerHTML = '';
-        let totalGeral = 0;
+        totalCarrinho = 0;
 
-        if(itens.length === 0) lista.innerHTML = '<div style="text-align:center; padding: 40px; opacity: 0.6;"><div style="font-size: 3rem;">🛒</div><div>Carrinho vazio</div></div>';
-
-        itens.forEach(item => {
-            totalGeral += item.total;
-            const div = document.createElement('div');
-            div.className = 'item-row';
-            div.innerHTML = `
-                <div style="flex:1">
-                    <span class="item-name">${item.nome}</span>
-                    <span class="item-calc">${item.qtd}x ${formatar(item.preco)}</span>
-                </div>
-                <div style="display:flex; align-items:center;">
-                    <span style="font-weight:800; font-size:1.1rem; color:#2e7d32;">${formatar(item.total)}</span>
-                    <button class="btn-remove" onclick="removerItem(${item.id})">&times;</button>
+        itensCarrinho.forEach(item => {
+            totalCarrinho += item.valor || item.preco; // Compatibilidade com itens vindos da busca
+            const li = document.createElement('li');
+            li.className = 'item-carrinho';
+            li.innerHTML = `
+                <span>${item.nome || 'Item avulso'}</span>
+                <div style="display:flex; align-items:center; gap:10px">
+                    <b>R$ ${(item.valor || item.preco).toFixed(2)}</b>
+                    <button onclick="removerItem(${item.id})" style="color:red; background:none; border:none; font-size:1.2rem;">×</button>
                 </div>
             `;
-            lista.appendChild(div);
+            lista.appendChild(li);
         });
 
-        displayTotal.innerText = formatar(totalGeral);
-        if (meta > 0) {
-            const pct = (totalGeral / meta) * 100;
-            barra.style.width = Math.min(pct, 100) + '%';
-            if (totalGeral > meta) { displayTotal.classList.add('estourou'); barra.style.backgroundColor = '#e53935'; } 
-            else { displayTotal.classList.remove('estourou'); barra.style.backgroundColor = '#2e7d32'; }
-        } else { barra.style.width = '0%'; }
+        document.getElementById('display-soma').innerText = totalCarrinho.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
     }
 
-    function definirMeta() {
-        const nova = prompt("Qual seu limite de gasto?", meta || "");
-        if (nova) { meta = parseFloat(nova.replace(',', '.')); localStorage.setItem('metaCarrinho', meta); atualizarMetaDisplay(); renderizar(); }
+    // --- LÓGICA DO COMPARADOR (A NOVA FUNÇÃO!) ---
+    function calcularMelhorOpcao() {
+        // Limpa estilos anteriores
+        document.getElementById('card-a').classList.remove('winner', 'loser');
+        document.getElementById('card-b').classList.remove('winner', 'loser');
+        document.getElementById('resultado-comparacao').style.display = 'none';
+
+        const pesoA = parseFloat(document.getElementById('peso-a').value);
+        const precoA = parseFloat(document.getElementById('preco-a').value);
+        const pesoB = parseFloat(document.getElementById('peso-b').value);
+        const precoB = parseFloat(document.getElementById('preco-b').value);
+
+        if(!pesoA || !precoA || !pesoB || !precoB) return alert("Preencha todos os campos das duas opções!");
+
+        // Calcula preço por unidade (ex: preço por grama/ml)
+        const unitA = precoA / pesoA;
+        const unitB = precoB / pesoB;
+
+        const box = document.getElementById('resultado-comparacao');
+        const titulo = document.getElementById('titulo-resultado');
+        const desc = document.getElementById('desc-resultado');
+        const badge = document.getElementById('badge-econ');
+
+        box.style.display = 'block';
+
+        if (unitA < unitB) {
+            // A é mais barato
+            document.getElementById('card-a').classList.add('winner');
+            document.getElementById('card-b').classList.add('loser');
+            
+            const economia = ((1 - (unitA / unitB)) * 100).toFixed(1);
+            titulo.innerText = "🏆 Opção 1 Venceu!";
+            box.style.background = "#e8f5e9";
+            badge.innerText = `Você economiza ${economia}%`;
+            desc.innerHTML = `O preço proporcional é <b>menor</b> na Opção 1.<br>Leve ele!`;
+        } else if (unitB < unitA) {
+            // B é mais barato
+            document.getElementById('card-b').classList.add('winner');
+            document.getElementById('card-a').classList.add('loser');
+
+            const economia = ((1 - (unitB / unitA)) * 100).toFixed(1);
+            titulo.innerText = "🏆 Opção 2 Venceu!";
+            box.style.background = "#e8f5e9";
+            badge.innerText = `Você economiza ${economia}%`;
+            desc.innerHTML = `O preço proporcional é <b>menor</b> na Opção 2.<br>Leve ele!`;
+        } else {
+            // Empate
+            titulo.innerText = "🤝 Empate Técnico";
+            box.style.background = "#fff3cd";
+            badge.style.display = 'none';
+            desc.innerText = "O preço por medida é exatamente o mesmo. Leve o que for mais conveniente.";
+            return;
+        }
+        badge.style.display = 'inline-block';
     }
-    function atualizarMetaDisplay() { document.getElementById('label-meta').innerText = meta > 0 ? formatar(meta) : "Definir"; }
-    function salvar() { localStorage.setItem('carrinhoTemp', JSON.stringify(itens)); }
-    function formatar(v) { return v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}); }
 </script>
+
 </body>
 </html>
